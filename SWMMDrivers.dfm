@@ -247,14 +247,14 @@ object Form1: TForm1
     Caption = 'Help'
     TabOrder = 12
   end
-  object btnRun: TButton
+  object btnNext: TButton
     Left = 374
     Top = 536
     Width = 75
     Height = 25
     Caption = 'Next'
     TabOrder = 13
-    OnClick = btnRunClick
+    OnClick = btnNextClick
   end
   object cbxTCu: TComboBox
     Left = 148

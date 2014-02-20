@@ -4,9 +4,20 @@ interface
 
 uses
   Winapi.Windows, Winapi.Messages, System.SysUtils, System.Variants,
-  System.Classes, Vcl.Graphics,
+  System.Classes, Vcl.Graphics, Generics.Defaults, Generics.Collections,
   Vcl.Controls, Vcl.Forms, Vcl.Dialogs, Vcl.StdCtrls, Vcl.ExtDlgs, Vcl.Grids,
   Vcl.ExtCtrls, UserInputConfirmationDlg;
+
+type
+  TConvertedFWTS = record // converted framework timeseries data structure
+    constituentName: string;
+    convFactor: Double;
+    convertedTS: TStringList;
+  end;
+
+const
+  constituentNames: array [0 .. 7] of string = ('FLOW', 'TSS', 'TP', 'DP',
+    'DZn', 'TZN', 'DCU', 'TCU');
 
 type
   TForm1 = class(TForm)
@@ -27,7 +38,7 @@ type
     Label2: TLabel;
     btnCancel: TButton;
     btnHelp: TButton;
-    btnRun: TButton;
+    btnNext: TButton;
     Label3: TLabel;
     Label4: TLabel;
     Label5: TLabel;
@@ -41,13 +52,20 @@ type
     procedure FormCreate(Sender: TObject);
     procedure btnSelectSWMMFileClick(Sender: TObject);
     procedure FormShow(Sender: TObject);
-    procedure btnRunClick(Sender: TObject);
+    procedure btnNextClick(Sender: TObject);
     procedure RadioGroup1Click(Sender: TObject);
 
   private
     { Private declarations }
   public
     { Public declarations }
+    procedure readInFrameworkTSFile(filePath: string; convGrid: TStringGrid;
+      var Conv: array of TConvertedFWTS; Sender: TObject);
+
+    procedure AssignConstituentInputsFromGrid(convGrid: TStringGrid;
+      var Conv: TConvertedFWTS; constituentName: string; rowNumber: integer;
+      Sender: TObject);
+
   end;
 
 var
@@ -57,11 +75,34 @@ implementation
 
 {$R *.dfm}
 
-procedure TForm1.btnRunClick(Sender: TObject);
+procedure TForm1.btnNextClick(Sender: TObject);
+
+var
+  frameworkTSFilePath: string;
+  ConvertedFWTSArr: array of TConvertedFWTS;
+  i: TUserInputVerificationFrm;
+var
+  tempStr: string;
+  constinuentName: string;
+  j: integer;
+  constituentCbxs: TArray<TComboBox>;
+  { const
+    constituentCbxs: array [0 .. 7] of TComboBox = (cbxFlow, cbxTSS, cbxTP, cbxDP,
+    cbxDZn, cbxTZn, cbxDCu, cbxTCu); }
+
 begin
   // Launch project form and force user to provide the project information
   SWMMUserInputVerificationFrm := TUserInputVerificationFrm.Create(Application);
+  frameworkTSFilePath :=
+    'C:\Users\dpankani\Documents\RAD Studio\Projects\SWMMDrivers\testfiles\RockCreekDemo.sct';
+  SetLength(ConvertedFWTSArr, 6);
+
   with SWMMUserInputVerificationFrm do
+  begin
+    // if Length(constituentCbxs) = 0 then
+    constituentCbxs := TArray<TComboBox>.Create(cbxFlow, cbxTSS, cbxTP, cbxDP,
+      cbxDZn, cbxTZn, cbxDCu, cbxTCu);
+
     try
       begin // populate dialog fields
         txtSwmmFilePath.Caption := Self.txtSwmmFilePath.Caption;
@@ -78,55 +119,155 @@ begin
         StringGrid1.Cells[1, 0] := 'SWMM Equivalent';
         StringGrid1.Cells[2, 0] := 'Unit Conversion Factor';
 
+        // Fill in confirmation string grid with user inputs
+        for j := Low(constituentNames) to High(constituentNames) do
+        begin
+          StringGrid1.Cells[0, j + 1] := constituentNames[j];
+          StringGrid1.Cells[1, j + 1] := 'Not Selected';
+          // set all cells to not select and overwrite selected ones later
+          StringGrid1.Cells[2, j + 1] := Self.StringGrid1.Cells[2, j + 1];
+          // copy unit conversion factors from this grid to other grid on user input verification form
+        end;
+
+        // Flow is a special case constituent which is always selected
+        StringGrid1.Cells[1, 1] := 'FLOW'; // flow is always selected
+        AssignConstituentInputsFromGrid(Self.StringGrid1, ConvertedFWTSArr[0],
+          'Flow', 1, Sender);
+
+        // save conversion factors and selected constituents into record array for use later
         // Framework Pollutants
-        StringGrid1.Cells[0, 1] := 'FLOW ';
-        StringGrid1.Cells[0, 2] := 'TSS';
-        StringGrid1.Cells[0, 3] := 'TP';
-        StringGrid1.Cells[0, 4] := 'DP ';
-        StringGrid1.Cells[0, 5] := 'DZn';
-        StringGrid1.Cells[0, 6] := 'TZN';
-        StringGrid1.Cells[0, 7] := 'DCU';
-        StringGrid1.Cells[0, 8] := 'TCU';
+        for j := Low(constituentNames) + 1 to High(constituentNames) do
+        begin
+          if constituentCbxs[j].ItemIndex <> -1 then
+          begin
+            StringGrid1.Cells[1, j + 1] := constituentCbxs[j].Items
+              [constituentCbxs[j].ItemIndex];
+            AssignConstituentInputsFromGrid(Self.StringGrid1,
+              ConvertedFWTSArr[j], constituentNames[j], j + 1, Sender);
+          end;
+        end;
 
-        // Selected SWMM Pollutants
-        if cbxFlow.ItemIndex <> -1 then
-          StringGrid1.Cells[1, 1] := cbxFlow.Items[cbxFlow.ItemIndex];
-
-        if cbxTSS.ItemIndex <> -1 then
+        { if cbxTSS.ItemIndex <> -1 then
+          begin
           StringGrid1.Cells[1, 2] := cbxTSS.Items[cbxTSS.ItemIndex];
+          AssignConstituentInputsFromGrid(Self.StringGrid1, ConvertedFWTSArr[1],
+          'TSS', 2, Sender);
+          end;
 
-        if cbxTP.ItemIndex <> -1 then
+          if cbxTP.ItemIndex <> -1 then
+          begin
           StringGrid1.Cells[1, 3] := cbxTP.Items[cbxTP.ItemIndex];
+          AssignConstituentInputsFromGrid(Self.StringGrid1, ConvertedFWTSArr[2],
+          'TP', 3, Sender);
+          end;
 
-        if cbxDP.ItemIndex <> -1 then
+          if cbxDP.ItemIndex <> -1 then
+          begin
           StringGrid1.Cells[1, 4] := cbxDP.Items[cbxDP.ItemIndex];
+          AssignConstituentInputsFromGrid(Self.StringGrid1, ConvertedFWTSArr[3],
+          'DP', 4, Sender);
+          end;
 
-        if cbxDZn.ItemIndex <> -1 then
+          if cbxDZn.ItemIndex <> -1 then
           StringGrid1.Cells[1, 5] := cbxDZn.Items[cbxDZn.ItemIndex];
+          AssignConstituentInputsFromGrid(Self.StringGrid1, ConvertedFWTSArr[4],
+          'DZn', 5, Sender);
 
-        if cbxTZn.ItemIndex <> -1 then
+          if cbxTZn.ItemIndex <> -1 then
+          begin
           StringGrid1.Cells[1, 6] := cbxTZn.Items[cbxTZn.ItemIndex];
+          AssignConstituentInputsFromGrid(Self.StringGrid1, ConvertedFWTSArr[5],
+          'TZN', 6, Sender);
+          end;
 
-        if cbxDCu.ItemIndex <> -1 then
+          if cbxDCu.ItemIndex <> -1 then
+          begin
           StringGrid1.Cells[1, 7] := cbxDCu.Items[cbxDCu.ItemIndex];
+          AssignConstituentInputsFromGrid(Self.StringGrid1, ConvertedFWTSArr[6],
+          'DCU', 7, Sender);
+          end;
 
-        if cbxTCu.ItemIndex <> -1 then
+          if cbxTCu.ItemIndex <> -1 then
+          begin
           StringGrid1.Cells[1, 8] := cbxTCu.Items[cbxTCu.ItemIndex];
+          AssignConstituentInputsFromGrid(Self.StringGrid1, ConvertedFWTSArr[7],
+          'TCU', 8, Sender);
+          end; }
 
         // copy unit conversion factors from this grid to other grid on user input verification form
-        StringGrid1.Cells[2, 1] := Self.StringGrid1.Cells[2, 1];
-        StringGrid1.Cells[2, 2] := Self.StringGrid1.Cells[2, 2];
-        StringGrid1.Cells[2, 3] := Self.StringGrid1.Cells[2, 3];
-        StringGrid1.Cells[2, 4] := Self.StringGrid1.Cells[2, 4];
-        StringGrid1.Cells[2, 5] := Self.StringGrid1.Cells[2, 5];
-        StringGrid1.Cells[2, 6] := Self.StringGrid1.Cells[2, 6];
-        StringGrid1.Cells[2, 7] := Self.StringGrid1.Cells[2, 7];
-        StringGrid1.Cells[2, 8] := Self.StringGrid1.Cells[2, 8];
+        { StringGrid1.Cells[2, 1] := Self.StringGrid1.Cells[2, 1];
+          StringGrid1.Cells[2, 2] := Self.StringGrid1.Cells[2, 2];
+          StringGrid1.Cells[2, 3] := Self.StringGrid1.Cells[2, 3];
+          StringGrid1.Cells[2, 4] := Self.StringGrid1.Cells[2, 4];
+          StringGrid1.Cells[2, 5] := Self.StringGrid1.Cells[2, 5];
+          StringGrid1.Cells[2, 6] := Self.StringGrid1.Cells[2, 6];
+          StringGrid1.Cells[2, 7] := Self.StringGrid1.Cells[2, 7];
+          StringGrid1.Cells[2, 8] := Self.StringGrid1.Cells[2, 8]; }
       end;
+      readInFrameworkTSFile(frameworkTSFilePath, StringGrid1,
+        ConvertedFWTSArr, Sender);
       SWMMUserInputVerificationFrm.ShowModal;
     finally
-      Free;
+      // ConvertedFWTSArr.Free;
     end;
+  end;
+end;
+
+procedure TForm1.AssignConstituentInputsFromGrid(convGrid: TStringGrid;
+  var Conv: TConvertedFWTS; constituentName: string; rowNumber: integer;
+  Sender: TObject);
+var
+  tempStr: string;
+begin
+  Conv.constituentName := constituentName;
+  tempStr := convGrid.Cells[2, rowNumber];
+  Conv.convFactor := StrToFloat(tempStr);
+end;
+
+procedure TForm1.readInFrameworkTSFile(filePath: string; convGrid: TStringGrid;
+  var Conv: array of TConvertedFWTS; Sender: TObject);
+var
+  FileContentsList: TStringList;
+  OutList: TStringList;
+  PollList: TStringList;
+  SwmmTokens: TStringList;
+  strLine: string;
+  // intTokenLoc: integer;
+  startDate: string;
+  endDate: string;
+  lineNumber: integer;
+  tempStrList: TStrings;
+begin
+
+  // 1. array of conversion factors
+  // 2. save outputs to same location as swmmm input file
+  // 3. no array of timeseries names + descriptions + filepaths
+
+  try
+    FileContentsList := TStringList.Create;
+    OutList := TStringList.Create;
+    tempStrList := TStringList.Create;
+
+    FileContentsList.LoadFromFile(filePath);
+    lineNumber := 0;
+    while lineNumber < FileContentsList.Count - 1 do
+    begin
+      strLine := FileContentsList[lineNumber];
+      // ignore comment lines
+      if (Pos('#', strLine) < 1) and (Length(strLine) > 1) then
+      begin
+        ExtractStrings([','], [], PChar(strLine), tempStrList);
+        // Writeln(strLine);
+        OutList.Add('test');
+      end;
+      inc(lineNumber);
+    end;
+    FileContentsList.Free;
+    OutList.Free;
+    tempStrList.Free;
+  finally
+
+  end;
 end;
 
 procedure TForm1.btnSelectSWMMFileClick(Sender: TObject);
@@ -257,49 +398,6 @@ begin
 
 end;
 
-{ procedure TForm1.WriteControlFile(Sender: TObject);
-  begin
-
-  AssignFile(CtrlFile, " controlFile.txt ");
-  Reset(CtrlFile);
-  if SaveDialog1.Execute then
-  begin
-  AssignFile(F2, SaveDialog1.FileName);
-  Rewrite(F2);
-  while not Eof(F1) do
-  begin
-  Read(F1, Ch);
-  Write(F2, Ch);
-  end;
-  CloseFile(F2);
-  end;
-  CloseFile(F1);
-  end;
-
-  // Save a TStringGrid to a file
-  procedure SaveStringGrid(StringGrid: TStringGrid; const FileName: TFileName);
-  var
-  CtrlFile: TextFile;
-  i, k: integer;
-  strLine: string;
-  begin
-  AssignFile(CtrlFile, FileName);
-  Rewrite(CtrlFile);
-  with StringGrid do
-  begin
-  // loop through cells
-  for i := 0 to RowCount - 1 do
-  begin
-  strLine := '';
-  for k := 0 to ColCount - 1 do
-  strLine = strLine + Cells[i, k];
-
-  Writeln(CtrlFile, strLine);
-  end;
-  end;
-  CloseFile(CtrlFile);
-  end;
-}
 procedure TForm1.FormShow(Sender: TObject);
 begin
 
@@ -351,4 +449,47 @@ begin
     btnSelectSWMMFile.Caption := 'Select SWMM Input File';
 end;
 
+{ procedure TForm1.WriteControlFile(Sender: TObject);
+  begin
+
+  AssignFile(CtrlFile, " controlFile.txt ");
+  Reset(CtrlFile);
+  if SaveDialog1.Execute then
+  begin
+  AssignFile(F2, SaveDialog1.FileName);
+  Rewrite(F2);
+  while not Eof(F1) do
+  begin
+  Read(F1, Ch);
+  Write(F2, Ch);
+  end;
+  CloseFile(F2);
+  end;
+  CloseFile(F1);
+  end;
+
+  // Save a TStringGrid to a file
+  procedure SaveStringGrid(StringGrid: TStringGrid; const FileName: TFileName);
+  var
+  CtrlFile: TextFile;
+  i, k: integer;
+  strLine: string;
+  begin
+  AssignFile(CtrlFile, FileName);
+  Rewrite(CtrlFile);
+  with StringGrid do
+  begin
+  // loop through cells
+  for i := 0 to RowCount - 1 do
+  begin
+  strLine := '';
+  for k := 0 to ColCount - 1 do
+  strLine = strLine + Cells[i, k];
+
+  Writeln(CtrlFile, strLine);
+  end;
+  end;
+  CloseFile(CtrlFile);
+  end;
+}
 end.
