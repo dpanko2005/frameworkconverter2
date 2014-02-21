@@ -104,6 +104,16 @@ object UserInputVerificationFrm: TUserInputVerificationFrm
     Height = 13
     Caption = 'txtErrors'
   end
+  object Label2: TLabel
+    Left = 32
+    Top = 375
+    Width = 364
+    Height = 26
+    Caption = 
+      '*Note: TSS - Total Suspended Solids, TP - Total Phosphorus, DP -' +
+      ' Dissolved Phosphorus, TZn - Total Zinc'
+    WordWrap = True
+  end
   object StringGrid1: TStringGrid
     Left = 32
     Top = 136
@@ -120,8 +130,26 @@ object UserInputVerificationFrm: TUserInputVerificationFrm
     ScrollBars = ssNone
     TabOrder = 0
     ColWidths = (
-      122
+      138
       112
       117)
+  end
+  object btnRun: TButton
+    Left = 344
+    Top = 432
+    Width = 75
+    Height = 25
+    Caption = 'Run'
+    TabOrder = 1
+    OnClick = btnRunClick
+  end
+  object btnCancel: TButton
+    Left = 263
+    Top = 432
+    Width = 75
+    Height = 25
+    Caption = 'Cancel'
+    TabOrder = 2
+    OnClick = btnCancelClick
   end
 end

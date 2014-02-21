@@ -56,16 +56,26 @@ type
     procedure RadioGroup1Click(Sender: TObject);
 
   private
+    workingDirPath: string;
     { Private declarations }
+    procedure saveTextFileToDisc(FileContentsList: TStringList;
+      filePath: string; Sender: TObject);
+
+    procedure saveTextFileToDiscWithDialog(FileContentsList: TStringList;
+      filePath: string; showDialog: Boolean; Sender: TObject);
+
+    procedure finalizeExport(var Conv: array of TConvertedFWTS;
+      filePathDir: string; Sender: TObject);
+
   public
     { Public declarations }
-    procedure readInFrameworkTSFile(filePath: string; convGrid: TStringGrid;
-      var Conv: array of TConvertedFWTS; Sender: TObject);
+    function readInFrameworkTSFile(filePath: string; convGrid: TStringGrid;
+      var Conv: TArray<TConvertedFWTS>; Sender: TObject)
+      : TArray<TConvertedFWTS>;
 
     procedure AssignConstituentInputsFromGrid(convGrid: TStringGrid;
       var Conv: TConvertedFWTS; constituentName: string; rowNumber: integer;
       Sender: TObject);
-
   end;
 
 var
@@ -79,24 +89,22 @@ procedure TForm1.btnNextClick(Sender: TObject);
 
 var
   frameworkTSFilePath: string;
-  ConvertedFWTSArr: array of TConvertedFWTS;
+  ConvertedFWTSArr: TArray<TConvertedFWTS>;
   i: TUserInputVerificationFrm;
-var
   tempStr: string;
   constinuentName: string;
   j: integer;
   constituentCbxs: TArray<TComboBox>;
-  { const
-    constituentCbxs: array [0 .. 7] of TComboBox = (cbxFlow, cbxTSS, cbxTP, cbxDP,
-    cbxDZn, cbxTZn, cbxDCu, cbxTCu); }
+  FileContentsList: TStringList;
+  tempModalResult: integer;
 
 begin
+
   // Launch project form and force user to provide the project information
   SWMMUserInputVerificationFrm := TUserInputVerificationFrm.Create(Application);
   frameworkTSFilePath :=
     'C:\Users\dpankani\Documents\RAD Studio\Projects\SWMMDrivers\testfiles\RockCreekDemo.sct';
   SetLength(ConvertedFWTSArr, 6);
-
   with SWMMUserInputVerificationFrm do
   begin
     // if Length(constituentCbxs) = 0 then
@@ -146,69 +154,37 @@ begin
               ConvertedFWTSArr[j], constituentNames[j], j + 1, Sender);
           end;
         end;
-
-        { if cbxTSS.ItemIndex <> -1 then
-          begin
-          StringGrid1.Cells[1, 2] := cbxTSS.Items[cbxTSS.ItemIndex];
-          AssignConstituentInputsFromGrid(Self.StringGrid1, ConvertedFWTSArr[1],
-          'TSS', 2, Sender);
-          end;
-
-          if cbxTP.ItemIndex <> -1 then
-          begin
-          StringGrid1.Cells[1, 3] := cbxTP.Items[cbxTP.ItemIndex];
-          AssignConstituentInputsFromGrid(Self.StringGrid1, ConvertedFWTSArr[2],
-          'TP', 3, Sender);
-          end;
-
-          if cbxDP.ItemIndex <> -1 then
-          begin
-          StringGrid1.Cells[1, 4] := cbxDP.Items[cbxDP.ItemIndex];
-          AssignConstituentInputsFromGrid(Self.StringGrid1, ConvertedFWTSArr[3],
-          'DP', 4, Sender);
-          end;
-
-          if cbxDZn.ItemIndex <> -1 then
-          StringGrid1.Cells[1, 5] := cbxDZn.Items[cbxDZn.ItemIndex];
-          AssignConstituentInputsFromGrid(Self.StringGrid1, ConvertedFWTSArr[4],
-          'DZn', 5, Sender);
-
-          if cbxTZn.ItemIndex <> -1 then
-          begin
-          StringGrid1.Cells[1, 6] := cbxTZn.Items[cbxTZn.ItemIndex];
-          AssignConstituentInputsFromGrid(Self.StringGrid1, ConvertedFWTSArr[5],
-          'TZN', 6, Sender);
-          end;
-
-          if cbxDCu.ItemIndex <> -1 then
-          begin
-          StringGrid1.Cells[1, 7] := cbxDCu.Items[cbxDCu.ItemIndex];
-          AssignConstituentInputsFromGrid(Self.StringGrid1, ConvertedFWTSArr[6],
-          'DCU', 7, Sender);
-          end;
-
-          if cbxTCu.ItemIndex <> -1 then
-          begin
-          StringGrid1.Cells[1, 8] := cbxTCu.Items[cbxTCu.ItemIndex];
-          AssignConstituentInputsFromGrid(Self.StringGrid1, ConvertedFWTSArr[7],
-          'TCU', 8, Sender);
-          end; }
-
-        // copy unit conversion factors from this grid to other grid on user input verification form
-        { StringGrid1.Cells[2, 1] := Self.StringGrid1.Cells[2, 1];
-          StringGrid1.Cells[2, 2] := Self.StringGrid1.Cells[2, 2];
-          StringGrid1.Cells[2, 3] := Self.StringGrid1.Cells[2, 3];
-          StringGrid1.Cells[2, 4] := Self.StringGrid1.Cells[2, 4];
-          StringGrid1.Cells[2, 5] := Self.StringGrid1.Cells[2, 5];
-          StringGrid1.Cells[2, 6] := Self.StringGrid1.Cells[2, 6];
-          StringGrid1.Cells[2, 7] := Self.StringGrid1.Cells[2, 7];
-          StringGrid1.Cells[2, 8] := Self.StringGrid1.Cells[2, 8]; }
       end;
-      readInFrameworkTSFile(frameworkTSFilePath, StringGrid1,
-        ConvertedFWTSArr, Sender);
-      SWMMUserInputVerificationFrm.ShowModal;
+      tempModalResult := SWMMUserInputVerificationFrm.ShowModal;
+      if (tempModalResult = mrOk) then
+      begin
+        ConvertedFWTSArr := readInFrameworkTSFile(frameworkTSFilePath,
+          StringGrid1, ConvertedFWTSArr, Sender);
+        finalizeExport(ConvertedFWTSArr, workingDirPath, Sender)
+      end;
     finally
       // ConvertedFWTSArr.Free;
+    end;
+  end;
+end;
+
+procedure TForm1.finalizeExport(var Conv: array of TConvertedFWTS;
+  filePathDir: string; Sender: TObject);
+var
+  rec: TConvertedFWTS;
+  filePath: string;
+  pathPrefix: string;
+  pathSuffix: string;
+begin
+  pathPrefix := filePathDir + '/FrameworkTS_';
+  pathSuffix := FormatDateTime('yyyymmddhhnnss', Now) + '.dat';
+
+  for rec in Conv do
+  begin
+    if ((rec.constituentName <> '') and (rec.convFactor <> 0)) then
+    begin
+      filePath := pathPrefix + rec.constituentName + pathSuffix;
+      saveTextFileToDisc(rec.convertedTS, filePath, Sender);
     end;
   end;
 end;
@@ -224,8 +200,8 @@ begin
   Conv.convFactor := StrToFloat(tempStr);
 end;
 
-procedure TForm1.readInFrameworkTSFile(filePath: string; convGrid: TStringGrid;
-  var Conv: array of TConvertedFWTS; Sender: TObject);
+function TForm1.readInFrameworkTSFile(filePath: string; convGrid: TStringGrid;
+  var Conv: TArray<TConvertedFWTS>; Sender: TObject): TArray<TConvertedFWTS>;
 var
   FileContentsList: TStringList;
   OutList: TStringList;
@@ -237,6 +213,10 @@ var
   endDate: string;
   lineNumber: integer;
   tempStrList: TStrings;
+  tempDateTimeStr: string;
+  tempValueStr: string;
+  i: integer;
+  j: integer;
 begin
 
   // 1. array of conversion factors
@@ -247,6 +227,11 @@ begin
     FileContentsList := TStringList.Create;
     OutList := TStringList.Create;
     tempStrList := TStringList.Create;
+    i := 0;
+    for i := Low(Conv) to High(Conv) - 1 do
+    begin
+      Conv[i].convertedTS := TStringList.Create;
+    end;
 
     FileContentsList.LoadFromFile(filePath);
     lineNumber := 0;
@@ -256,17 +241,66 @@ begin
       // ignore comment lines
       if (Pos('#', strLine) < 1) and (Length(strLine) > 1) then
       begin
+        tempStrList.Clear();
         ExtractStrings([','], [], PChar(strLine), tempStrList);
-        // Writeln(strLine);
-        OutList.Add('test');
+        { tempStrList.Text := StringReplace(strLine, ',', #13#10,
+          [rfReplaceAll]); }
+
+        tempDateTimeStr := tempStrList[0] + '/' + tempStrList[1] + '/' +
+          tempStrList[2] + ' ' + tempStrList[3];
+        i := 0;
+        for i := Low(Conv) to High(Conv) - 1 do
+        begin
+          j := i + 4;
+          if (j < tempStrList.Count - 1) then
+          begin
+            tempValueStr := tempStrList[j];
+            Conv[i].convertedTS.Add(tempDateTimeStr + '	' + tempValueStr);
+          end;
+        end;
       end;
       inc(lineNumber);
     end;
-    FileContentsList.Free;
-    OutList.Free;
-    tempStrList.Free;
   finally
+    FileContentsList.Free;
+    tempStrList.Free;
+  end;
+  result := Conv;
+end;
 
+procedure TForm1.saveTextFileToDisc(FileContentsList: TStringList;
+  filePath: string; Sender: TObject);
+var
+  savedfilePath: string;
+begin
+  // Save a new swmm file back to disc
+  if (FileContentsList <> nil) then
+  begin
+    { First check if the file exists. }
+    if FileExists(filePath) then
+      { If it exists, raise an exception. }
+      raise Exception.Create('File already exists. Cannot overwrite.')
+    else
+      FileContentsList.SaveToFile(filePath);
+  end;
+end;
+
+procedure TForm1.saveTextFileToDiscWithDialog(FileContentsList: TStringList;
+  filePath: string; showDialog: Boolean; Sender: TObject);
+var
+  savedfilePath: string;
+begin
+  // Save a new swmm file back to disc
+  if (showDialog) then
+  begin
+    { Execute a save file dialog. }
+    if SaveTextFileDialog1.Execute then
+      { First check if the file exists. }
+      if FileExists(SaveTextFileDialog1.FileName) then
+        { If it exists, raise an exception. }
+        raise Exception.Create('File already exists. Cannot overwrite.')
+      else
+        FileContentsList.SaveToFile(SaveTextFileDialog1.FileName);
   end;
 end;
 
@@ -296,11 +330,16 @@ begin
       { First check if the file exists. }
       if FileExists(OpenTextFileDialog1.FileName) then
       begin
+        // save the directory so can write TS to same directory later
+        workingDirPath := ExtractFileDir(OpenTextFileDialog1.FileName);
+
         { If it exists, load the data into the stringlist. }
         FileContentsList.LoadFromFile(OpenTextFileDialog1.FileName);
         txtSwmmFilePath.Caption := OpenTextFileDialog1.FileName;
+
         // Define a string list object, and point our variable at it
         SwmmTokens := TStringList.Create;
+
         // Add supported SWMM Node types to the list of tokens to parse
         SwmmTokens.Delimiter := ' '; // Each list item will be blank separated
         SwmmTokens.QuoteChar := '|'; // And each item will be quoted with |'s
@@ -317,6 +356,7 @@ begin
           begin
             strToken := LowerCase(SwmmTokens[i]);
             intTokenLoc := Pos(strToken, strLine);
+
             // check inputfile line to see if token present
             if intTokenLoc > 0 then
               break;
@@ -355,15 +395,6 @@ begin
           end;
           inc(lineNumber);
 
-          // Save a new swmm file back to disc
-          { Execute a save file dialog. }
-          // if SaveTextFileDialog1.Execute then
-          { First check if the file exists. }
-          // if FileExists(SaveTextFileDialog1.FileName) then
-          { If it exists, raise an exception. }
-          // raise Exception.Create('File already exists. Cannot overwrite.')
-          // else
-          // FileContentsList.SaveToFile(SaveTextFileDialog1.FileName);
         end;
         Memo1.Lines.AddStrings(PollList);
         Memo1.Lines.AddStrings(NodeList);

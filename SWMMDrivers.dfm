@@ -25,7 +25,7 @@ object Form1: TForm1
   end
   object Label2: TLabel
     Left = 8
-    Top = 487
+    Top = 463
     Width = 364
     Height = 26
     Caption = 
@@ -132,7 +132,7 @@ object Form1: TForm1
   object btnSelectSWMMFile: TButton
     Left = 200
     Top = 56
-    Width = 114
+    Width = 153
     Height = 25
     Caption = 'Browse...'
     TabOrder = 0
@@ -182,6 +182,7 @@ object Form1: TForm1
     Height = 21
     TabOrder = 4
     Text = 'Select SWMM Pollutant'
+    Visible = False
   end
   object cbxDCu: TComboBox
     Left = 147
