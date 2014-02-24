@@ -14,6 +14,7 @@ type
     Label3: TLabel;
     lblSWMMFilePath: TLabel;
     btnClose: TButton;
+    procedure btnCloseClick(Sender: TObject);
   private
     { Private declarations }
   public
@@ -26,5 +27,10 @@ var
 implementation
 
 {$R *.dfm}
+
+procedure TOperationStatusDlg.btnCloseClick(Sender: TObject);
+begin
+   ModalResult := mrOk;
+end;
 
 end.

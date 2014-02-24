@@ -6,13 +6,18 @@ uses
   Winapi.Windows, Winapi.Messages, System.SysUtils, System.Variants,
   System.Classes, Vcl.Graphics, Generics.Defaults, Generics.Collections,
   Vcl.Controls, Vcl.Forms, Vcl.Dialogs, Vcl.StdCtrls, Vcl.ExtDlgs, Vcl.Grids,
-  Vcl.ExtCtrls, UserInputConfirmationDlg;
+  Vcl.ExtCtrls, UserInputConfirmationDlg, OperationStatusDlgFrm;
 
 type
   TConvertedFWTS = record // converted framework timeseries data structure
+    tsName: string;
+    tsNodeName: string;
+    tsType: string; // FLOW or CONCEN
+    tsUnitsFactor: string; // default 1.0
     constituentName: string;
-    convFactor: Double;
+    convFactor: Double; // default 1.0
     convertedTS: TStringList;
+    convertedTSFilePath: string;
   end;
 
 const
@@ -61,11 +66,14 @@ type
     procedure saveTextFileToDisc(FileContentsList: TStringList;
       filePath: string; Sender: TObject);
 
-    procedure saveTextFileToDiscWithDialog(FileContentsList: TStringList;
-      filePath: string; showDialog: Boolean; Sender: TObject);
-
     procedure finalizeExport(var Conv: array of TConvertedFWTS;
       filePathDir: string; Sender: TObject);
+    procedure updateSWMMInputFile(var Conv: array of TConvertedFWTS;
+      SWMMTSList: TStringList; filePathDir: string; swmmInputFilePath: string;
+      Sender: TObject);
+
+  var
+    TSList: TStringList;
 
   public
     { Public declarations }
@@ -73,9 +81,9 @@ type
       var Conv: TArray<TConvertedFWTS>; Sender: TObject)
       : TArray<TConvertedFWTS>;
 
-    procedure AssignConstituentInputsFromGrid(convGrid: TStringGrid;
-      var Conv: TConvertedFWTS; constituentName: string; rowNumber: integer;
-      Sender: TObject);
+    procedure AssignConstituentInputsFromGrid(SWMMNodeName: string;
+      convGrid: TStringGrid; var Conv: TConvertedFWTS; constituentName: string;
+      rowNumber: integer; tsType: string; Sender: TObject);
   end;
 
 var
@@ -84,6 +92,137 @@ var
 implementation
 
 {$R *.dfm}
+
+procedure TForm1.updateSWMMInputFile(var Conv: array of TConvertedFWTS;
+  SWMMTSList: TStringList; filePathDir: string; swmmInputFilePath: string;
+  Sender: TObject);
+var
+  // FileContentsList: TStringList;
+  NewFileContentsList: TStringList;
+  TSList: TStringList;
+  // PollList: TStringList;
+  // SwmmTokens: TStringList;
+  lineNumber: integer;
+  intTokenLoc: integer;
+  strLine: string;
+  strToken: string;
+  strNodeName: string;
+  tempInt: integer;
+  i: integer;
+  tsBlockInsertPosition: integer;
+  tempRec: TConvertedFWTS;
+  pathSuffix: string;
+  newSWMMInputFilePath: string;
+begin
+  // FileContentsList := TStringList.Create;
+  NewFileContentsList := TStringList.Create;
+  TSList := TStringList.Create;
+  pathSuffix := FormatDateTime('yyyymmddhhnnss', Now) + '.inp';
+  newSWMMInputFilePath := filePathDir + '\' +
+    ChangeFileExt(ExtractFileName(swmmInputFilePath), '') + pathSuffix;
+  try
+
+    { First check if the file exists. }
+    if FileExists(swmmInputFilePath) then
+    begin
+
+      { If it exists, load the data into the stringlist. }
+      NewFileContentsList.LoadFromFile(OpenTextFileDialog1.FileName);
+
+      tsBlockInsertPosition := NewFileContentsList.IndexOf('[REPORTS]');
+      if (tsBlockInsertPosition < 0) then
+        tsBlockInsertPosition := NewFileContentsList.IndexOf('[CURVES]');
+      if (tsBlockInsertPosition < 0) then
+        tsBlockInsertPosition := NewFileContentsList.IndexOf('[TAGS]');
+      if (tsBlockInsertPosition < 0) then
+      begin
+        raise Exception.Create
+          ('Check SWMM input file format. Unable to write timeseries to SWMM input file');
+        Exit;
+      end;
+
+      // 1. Write TimeSeries Block
+      // check TS list that was passed in to see if input file already contains TS
+      if (SWMMTSList.Count > 0) then
+      begin
+        // timeseries section already exists in swmm input file so simply add to it - check for duplicate names
+        tsBlockInsertPosition := NewFileContentsList.IndexOf('[TIMESERIES]');
+        while (Pos(';;', NewFileContentsList[tsBlockInsertPosition + 1]) < 1) do
+        begin
+          inc(tsBlockInsertPosition);
+        end;
+      end
+      else
+      begin
+        // timeseries section does not already exist in swmm input file so write times series block and add to TS to it
+        NewFileContentsList.Insert(tsBlockInsertPosition, '[TIMESERIES]');
+        NewFileContentsList.Insert(tsBlockInsertPosition + 2,
+          ';;Name          	Type      	Path');
+        NewFileContentsList.Insert(tsBlockInsertPosition + 3,
+          ';;-------------- ---------- ---------- ----------');
+      end;
+
+      tempInt := 3;
+      for tempRec in Conv do
+      begin
+        if (tempRec.convertedTSFilePath <> '') then
+        begin
+          NewFileContentsList.Insert(tsBlockInsertPosition + tempInt,
+            tempRec.tsName + '      FILE      "' +
+            tempRec.convertedTSFilePath + '"');
+        end;
+        inc(tempInt);
+      end;
+      tsBlockInsertPosition := tsBlockInsertPosition + tempInt - 1;
+
+      // 2. Write Inflow Block
+      // check TS list that was passed in to see if input file already contains TS
+      if ((SWMMTSList.Count > 0) and (NewFileContentsList.IndexOf('[INFLOWS]') > -1)) then
+      begin
+        // Inflow section already exists in swmm input file so simply add to it - check for duplicate names
+        tsBlockInsertPosition := NewFileContentsList.IndexOf('[INFLOWS]');
+        while (Pos(';;', NewFileContentsList[tsBlockInsertPosition + 1]) < 1) do
+        begin
+          inc(tsBlockInsertPosition);
+        end;
+      end
+      else
+      begin
+        // Inflow section does not already exist in swmm input file so write times series block and add to TS to it
+        NewFileContentsList.Insert(tsBlockInsertPosition, '[INFLOWS]');
+        NewFileContentsList.Insert(tsBlockInsertPosition + 1,
+          ';;                                                 Param    Units    Scale    Baseline Baseline');
+        NewFileContentsList.Insert(tsBlockInsertPosition + 2,
+          ';;Node           Parameter        Time Series      Type     Factor   Factor   Value    Pattern');
+        NewFileContentsList.Insert(tsBlockInsertPosition + 3,
+          ';;-------------- ---------------- ---------------- -------- -------- -------- -------- --------');
+        tsBlockInsertPosition := tsBlockInsertPosition + 2;
+      end;
+
+      tempInt := 2;
+      for tempRec in Conv do
+      begin
+        if (tempRec.convertedTSFilePath <> '') then
+        begin
+          NewFileContentsList.Insert(tsBlockInsertPosition + tempInt,
+            tempRec.tsNodeName + '        ' + tempRec.constituentName +
+            '        ' + tempRec.tsName + '        ' + tempRec.tsType +
+            '        ' + tempRec.tsUnitsFactor + '        ' +
+            FloatToStr(tempRec.convFactor));
+        end;
+        inc(tempInt);
+      end;
+       NewFileContentsList.Insert(tsBlockInsertPosition + tempInt - 3,' ');
+        NewFileContentsList.Insert(tsBlockInsertPosition + tempInt - 3,' ');
+      saveTextFileToDisc(NewFileContentsList, newSWMMInputFilePath, Sender);
+    end
+    else
+      { Otherwise, raise an exception. }
+      raise Exception.Create('File does not exist.');
+  finally
+    NewFileContentsList.Free;
+  end;
+end;
 
 procedure TForm1.btnNextClick(Sender: TObject);
 
@@ -139,8 +278,8 @@ begin
 
         // Flow is a special case constituent which is always selected
         StringGrid1.Cells[1, 1] := 'FLOW'; // flow is always selected
-        AssignConstituentInputsFromGrid(Self.StringGrid1, ConvertedFWTSArr[0],
-          'Flow', 1, Sender);
+        AssignConstituentInputsFromGrid(txtSWMMNodeID.Caption, Self.StringGrid1,
+          ConvertedFWTSArr[0], 'Flow', 1, 'FLOW', Sender);
 
         // save conversion factors and selected constituents into record array for use later
         // Framework Pollutants
@@ -150,8 +289,9 @@ begin
           begin
             StringGrid1.Cells[1, j + 1] := constituentCbxs[j].Items
               [constituentCbxs[j].ItemIndex];
-            AssignConstituentInputsFromGrid(Self.StringGrid1,
-              ConvertedFWTSArr[j], constituentNames[j], j + 1, Sender);
+            AssignConstituentInputsFromGrid(txtSWMMNodeID.Caption,
+              Self.StringGrid1, ConvertedFWTSArr[j], constituentNames[j], j + 1,
+              'CONCEN', Sender);
           end;
         end;
       end;
@@ -160,7 +300,17 @@ begin
       begin
         ConvertedFWTSArr := readInFrameworkTSFile(frameworkTSFilePath,
           StringGrid1, ConvertedFWTSArr, Sender);
-        finalizeExport(ConvertedFWTSArr, workingDirPath, Sender)
+        finalizeExport(ConvertedFWTSArr, workingDirPath, Sender);
+
+        // populate operation status confirmation dialog
+        OperationStatusDlg.lblSWMMFilePath.Caption := 'test';
+        OperationStatusDlg.lblTSFilesCreated.Caption := 'test';
+        tempModalResult := OperationStatusDlg.ShowModal;
+
+        // write TS to swmm input file and save as new file
+        updateSWMMInputFile(ConvertedFWTSArr, TSList, workingDirPath,
+          Self.txtSwmmFilePath.Caption, Sender);
+        Self.Close;
       end;
     finally
       // ConvertedFWTSArr.Free;
@@ -171,30 +321,36 @@ end;
 procedure TForm1.finalizeExport(var Conv: array of TConvertedFWTS;
   filePathDir: string; Sender: TObject);
 var
-  rec: TConvertedFWTS;
+  // rec: TConvertedFWTS;
   filePath: string;
   pathPrefix: string;
   pathSuffix: string;
+  i: integer;
 begin
-  pathPrefix := filePathDir + '/FrameworkTS_';
+  pathPrefix := filePathDir + '\TS\FrameworkTS_';
   pathSuffix := FormatDateTime('yyyymmddhhnnss', Now) + '.dat';
 
-  for rec in Conv do
+  for i := Low(Conv) to High(Conv) - 1 do
   begin
-    if ((rec.constituentName <> '') and (rec.convFactor <> 0)) then
+    if ((Conv[i].constituentName <> '') and (Conv[i].convFactor <> 0)) then
     begin
-      filePath := pathPrefix + rec.constituentName + pathSuffix;
-      saveTextFileToDisc(rec.convertedTS, filePath, Sender);
+      filePath := pathPrefix + Conv[i].constituentName + pathSuffix;
+      Conv[i].convertedTSFilePath := filePath;
+      saveTextFileToDisc(Conv[i].convertedTS, filePath, Sender);
     end;
   end;
 end;
 
-procedure TForm1.AssignConstituentInputsFromGrid(convGrid: TStringGrid;
-  var Conv: TConvertedFWTS; constituentName: string; rowNumber: integer;
-  Sender: TObject);
+procedure TForm1.AssignConstituentInputsFromGrid(SWMMNodeName: string;
+  convGrid: TStringGrid; var Conv: TConvertedFWTS; constituentName: string;
+  rowNumber: integer; tsType: string; Sender: TObject);
 var
   tempStr: string;
 begin
+  Conv.tsNodeName := SWMMNodeName;
+  Conv.tsType := tsType;
+  Conv.tsName := 'FrameworkTS' + constituentName;
+  Conv.tsUnitsFactor := '1.0';
   Conv.constituentName := constituentName;
   tempStr := convGrid.Cells[2, rowNumber];
   Conv.convFactor := StrToFloat(tempStr);
@@ -206,7 +362,7 @@ var
   FileContentsList: TStringList;
   OutList: TStringList;
   PollList: TStringList;
-  SwmmTokens: TStringList;
+  // SwmmTokens: TStringList;
   strLine: string;
   // intTokenLoc: integer;
   startDate: string;
@@ -272,10 +428,26 @@ procedure TForm1.saveTextFileToDisc(FileContentsList: TStringList;
   filePath: string; Sender: TObject);
 var
   savedfilePath: string;
+  dirName: string;
 begin
   // Save a new swmm file back to disc
   if (FileContentsList <> nil) then
   begin
+    // check if directory exists
+    dirName := ExtractFilePath(filePath);
+    if (DirectoryExists(dirName) = false) then
+    begin
+      if CreateDir(dirName) then
+        // do nothing ShowMessage('New directory added OK')
+      else
+      begin
+        raise Exception.Create
+          ('Unable to create directory for saving timeseries - error : ' +
+          IntToStr(GetLastError));
+        Exit;
+      end;
+    end;
+
     { First check if the file exists. }
     if FileExists(filePath) then
       { If it exists, raise an exception. }
@@ -285,30 +457,12 @@ begin
   end;
 end;
 
-procedure TForm1.saveTextFileToDiscWithDialog(FileContentsList: TStringList;
-  filePath: string; showDialog: Boolean; Sender: TObject);
-var
-  savedfilePath: string;
-begin
-  // Save a new swmm file back to disc
-  if (showDialog) then
-  begin
-    { Execute a save file dialog. }
-    if SaveTextFileDialog1.Execute then
-      { First check if the file exists. }
-      if FileExists(SaveTextFileDialog1.FileName) then
-        { If it exists, raise an exception. }
-        raise Exception.Create('File already exists. Cannot overwrite.')
-      else
-        FileContentsList.SaveToFile(SaveTextFileDialog1.FileName);
-  end;
-end;
-
 procedure TForm1.btnSelectSWMMFileClick(Sender: TObject);
 var
   FileContentsList: TStringList;
   NodeList: TStringList;
   PollList: TStringList;
+  // TSList: TStringList;
   SwmmTokens: TStringList;
   lineNumber: integer;
   intTokenLoc: integer;
@@ -320,10 +474,12 @@ var
   // openFileFlag: Boolean;
   // dict : TDictionary<integer, TStringList> ;
 begin
+  FileContentsList := TStringList.Create;
+  NodeList := TStringList.Create;
+  PollList := TStringList.Create;
+  TSList := TStringList.Create;
+  intTokenLoc := 0;
   try
-    FileContentsList := TStringList.Create;
-    NodeList := TStringList.Create;
-    PollList := TStringList.Create;
     { Execute an open file dialog. }
     // openFileFlag := OpenTextFileDialog1.Execute;
     if OpenTextFileDialog1.Execute then
@@ -344,7 +500,7 @@ begin
         SwmmTokens.Delimiter := ' '; // Each list item will be blank separated
         SwmmTokens.QuoteChar := '|'; // And each item will be quoted with |'s
         SwmmTokens.DelimitedText :=
-          '|[DIVIDERS]| |[JUNCTIONS]| |[OUTFALLS]| |[STORAGE]| |[POLLUTANTS]|';
+          '|[DIVIDERS]| |[JUNCTIONS]| |[OUTFALLS]| |[STORAGE]| |[POLLUTANTS]| |[TIMESERIES]|';
 
         lineNumber := 0;
         // strToken := '[JUNCTIONS]';
@@ -386,6 +542,11 @@ begin
                   // if we are in the [POLLUTANTS] block save names to pollutants list
                   begin
                     PollList.Add(strNodeName);
+                  end
+                  else if i = 5 then
+                  // if we are in the [TIMESERIES] block save names to TIMESERIES list
+                  begin
+                    TSList.Add(strNodeName);
                   end
                   else // if we are not in the [POLLUTANTS] block save names to nodes list
                     NodeList.Add(strNodeName);
@@ -431,7 +592,6 @@ end;
 
 procedure TForm1.FormShow(Sender: TObject);
 begin
-
   Form1.color := clwhite;
   // customize stringGrid
   // column headers
@@ -463,64 +623,20 @@ begin
   RadioGroup1.Items.AddObject('Import from SWMM', TObject(0));
   RadioGroup1.Items.AddObject('Export to SWMM', TObject(1));
   RadioGroup1.ItemIndex := 0;
-
 end;
 
 procedure TForm1.RadioGroup1Click(Sender: TObject);
 var
   index: integer;
-  value: integer;
+  Value: integer;
 begin
   index := RadioGroup1.ItemIndex;
   Assert(index >= 0); // Sanity check
-  value := integer(RadioGroup1.Items.Objects[index]);
-  if (value = 0) then
+  Value := integer(RadioGroup1.Items.Objects[index]);
+  if (Value = 0) then
     btnSelectSWMMFile.Caption := 'Select SWMM Output File';
-  if (value = 1) then
+  if (Value = 1) then
     btnSelectSWMMFile.Caption := 'Select SWMM Input File';
 end;
 
-{ procedure TForm1.WriteControlFile(Sender: TObject);
-  begin
-
-  AssignFile(CtrlFile, " controlFile.txt ");
-  Reset(CtrlFile);
-  if SaveDialog1.Execute then
-  begin
-  AssignFile(F2, SaveDialog1.FileName);
-  Rewrite(F2);
-  while not Eof(F1) do
-  begin
-  Read(F1, Ch);
-  Write(F2, Ch);
-  end;
-  CloseFile(F2);
-  end;
-  CloseFile(F1);
-  end;
-
-  // Save a TStringGrid to a file
-  procedure SaveStringGrid(StringGrid: TStringGrid; const FileName: TFileName);
-  var
-  CtrlFile: TextFile;
-  i, k: integer;
-  strLine: string;
-  begin
-  AssignFile(CtrlFile, FileName);
-  Rewrite(CtrlFile);
-  with StringGrid do
-  begin
-  // loop through cells
-  for i := 0 to RowCount - 1 do
-  begin
-  strLine := '';
-  for k := 0 to ColCount - 1 do
-  strLine = strLine + Cells[i, k];
-
-  Writeln(CtrlFile, strLine);
-  end;
-  end;
-  CloseFile(CtrlFile);
-  end;
-}
 end.

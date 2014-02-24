@@ -62,5 +62,6 @@ object OperationStatusDlg: TOperationStatusDlg
     Height = 25
     Caption = 'Close'
     TabOrder = 0
+    OnClick = btnCloseClick
   end
 end
