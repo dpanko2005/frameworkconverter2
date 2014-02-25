@@ -2,8 +2,8 @@ object UserInputVerificationFrm: TUserInputVerificationFrm
   Left = 0
   Top = 0
   Caption = 'Input Verification'
-  ClientHeight = 540
-  ClientWidth = 554
+  ClientHeight = 433
+  ClientWidth = 408
   Color = clBtnFace
   Font.Charset = DEFAULT_CHARSET
   Font.Color = clWindowText
@@ -34,40 +34,12 @@ object UserInputVerificationFrm: TUserInputVerificationFrm
     Height = 13
     Caption = 'txtSWMMNodeID'
   end
-  object Label4: TLabel
+  object lblNumberOfConstituents: TLabel
     Left = 32
-    Top = 96
+    Top = 83
     Width = 100
     Height = 13
     Caption = 'Constituents (x of 8)'
-  end
-  object Label5: TLabel
-    Left = 25
-    Top = 424
-    Width = 107
-    Height = 13
-    Caption = 'Timeseries Start Date:'
-  end
-  object Label6: TLabel
-    Left = 25
-    Top = 448
-    Width = 101
-    Height = 13
-    Caption = 'Timeseries End Date:'
-  end
-  object Label7: TLabel
-    Left = 23
-    Top = 467
-    Width = 98
-    Height = 13
-    Caption = 'Timeseries File Path:'
-  end
-  object Label8: TLabel
-    Left = 25
-    Top = 486
-    Width = 33
-    Height = 13
-    Caption = 'Errors:'
   end
   object Label9: TLabel
     Left = 32
@@ -76,37 +48,16 @@ object UserInputVerificationFrm: TUserInputVerificationFrm
     Height = 13
     Caption = 'SWMM Node:'
   end
-  object txtTSStartDate: TLabel
-    Left = 152
-    Top = 424
-    Width = 73
-    Height = 13
-    Caption = 'txtTSStartDate'
-  end
-  object txtTSEndDate: TLabel
-    Left = 152
-    Top = 448
-    Width = 67
-    Height = 13
-    Caption = 'txtTSEndDate'
-  end
-  object txtTSFilePath: TLabel
-    Left = 152
-    Top = 464
-    Width = 64
-    Height = 13
-    Caption = 'txtTSFilePath'
-  end
   object txtErrors: TLabel
-    Left = 136
-    Top = 488
-    Width = 43
+    Left = 32
+    Top = 21
+    Width = 3
     Height = 13
-    Caption = 'txtErrors'
+    Caption = ' '
   end
   object Label2: TLabel
     Left = 32
-    Top = 375
+    Top = 341
     Width = 364
     Height = 26
     Caption = 
@@ -116,27 +67,27 @@ object UserInputVerificationFrm: TUserInputVerificationFrm
   end
   object StringGrid1: TStringGrid
     Left = 32
-    Top = 136
-    Width = 361
+    Top = 102
+    Width = 368
     Height = 233
     Color = clWhite
     ColCount = 3
     Ctl3D = False
     FixedColor = 16776176
     FixedCols = 0
-    RowCount = 9
+    RowCount = 10
     Options = [goFixedVertLine, goFixedHorzLine, goVertLine, goHorzLine, goRangeSelect, goEditing]
     ParentCtl3D = False
     ScrollBars = ssNone
     TabOrder = 0
     ColWidths = (
       138
-      112
+      105
       117)
   end
   object btnRun: TButton
-    Left = 344
-    Top = 432
+    Left = 318
+    Top = 398
     Width = 75
     Height = 25
     Caption = 'Run'
@@ -144,8 +95,8 @@ object UserInputVerificationFrm: TUserInputVerificationFrm
     OnClick = btnRunClick
   end
   object btnCancel: TButton
-    Left = 263
-    Top = 432
+    Left = 237
+    Top = 398
     Width = 75
     Height = 25
     Caption = 'Cancel'

@@ -13,16 +13,9 @@ type
     Label1: TLabel;
     txtSwmmFilePath: TLabel;
     txtSWMMNodeID: TLabel;
-    Label4: TLabel;
+    lblNumberOfConstituents: TLabel;
     StringGrid1: TStringGrid;
-    Label5: TLabel;
-    Label6: TLabel;
-    Label7: TLabel;
-    Label8: TLabel;
     Label9: TLabel;
-    txtTSStartDate: TLabel;
-    txtTSEndDate: TLabel;
-    txtTSFilePath: TLabel;
     txtErrors: TLabel;
     Label2: TLabel;
     btnRun: TButton;

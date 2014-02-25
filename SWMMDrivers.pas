@@ -31,7 +31,6 @@ type
     btnSelectSWMMFile: TButton;
     txtSwmmFilePath: TLabel;
     cbxSwmmNode: TComboBox;
-    Memo1: TMemo;
     StringGrid1: TStringGrid;
     cbxFlow: TComboBox;
     cbxDCu: TComboBox;
@@ -59,6 +58,7 @@ type
     procedure FormShow(Sender: TObject);
     procedure btnNextClick(Sender: TObject);
     procedure RadioGroup1Click(Sender: TObject);
+    procedure btnCancelClick(Sender: TObject);
 
   private
     workingDirPath: string;
@@ -68,9 +68,9 @@ type
 
     procedure finalizeExport(var Conv: array of TConvertedFWTS;
       filePathDir: string; Sender: TObject);
-    procedure updateSWMMInputFile(var Conv: array of TConvertedFWTS;
+    function updateSWMMInputFile(var Conv: array of TConvertedFWTS;
       SWMMTSList: TStringList; filePathDir: string; swmmInputFilePath: string;
-      Sender: TObject);
+      Sender: TObject): string;
 
   var
     TSList: TStringList;
@@ -84,6 +84,9 @@ type
     procedure AssignConstituentInputsFromGrid(SWMMNodeName: string;
       convGrid: TStringGrid; var Conv: TConvertedFWTS; constituentName: string;
       rowNumber: integer; tsType: string; Sender: TObject);
+
+    function checkForDuplicateTS(tsBlockInsertPosition: integer;
+      NewFileContentsList: TStringList; tsName: string): integer;
   end;
 
 var
@@ -93,15 +96,44 @@ implementation
 
 {$R *.dfm}
 
-procedure TForm1.updateSWMMInputFile(var Conv: array of TConvertedFWTS;
-  SWMMTSList: TStringList; filePathDir: string; swmmInputFilePath: string;
-  Sender: TObject);
+function TForm1.checkForDuplicateTS(tsBlockInsertPosition: integer;
+  NewFileContentsList: TStringList; tsName: string): integer;
 var
-  // FileContentsList: TStringList;
+  i: integer;
+begin
+  // check our cached list of TS names for a hit
+  if (TSList.IndexOf(tsName) > 0) then
+  begin
+    // duplicate TS exists in the swmmfile so return its line number so can overwrite
+    while ((Pos(';;', NewFileContentsList[tsBlockInsertPosition]) > 0)and
+      (tsBlockInsertPosition < NewFileContentsList.Count)) do
+    begin
+      inc(tsBlockInsertPosition);
+    end;
+
+    while ((Pos(tsName, NewFileContentsList[tsBlockInsertPosition]) = 0) and
+      (tsBlockInsertPosition < NewFileContentsList.Count)) do
+    begin
+      inc(tsBlockInsertPosition);
+    end;
+
+    if (Pos(tsName, NewFileContentsList[tsBlockInsertPosition]) > 0) then
+    begin
+      result := tsBlockInsertPosition;
+      Exit;
+    end
+    else
+      result := 0;
+  end;
+  result := 0;
+end;
+
+function TForm1.updateSWMMInputFile(var Conv: array of TConvertedFWTS;
+  SWMMTSList: TStringList; filePathDir: string; swmmInputFilePath: string;
+  Sender: TObject): string;
+var
   NewFileContentsList: TStringList;
   TSList: TStringList;
-  // PollList: TStringList;
-  // SwmmTokens: TStringList;
   lineNumber: integer;
   intTokenLoc: integer;
   strLine: string;
@@ -113,6 +145,7 @@ var
   tempRec: TConvertedFWTS;
   pathSuffix: string;
   newSWMMInputFilePath: string;
+  duplicateLineNumber:integer;
 begin
   // FileContentsList := TStringList.Create;
   NewFileContentsList := TStringList.Create;
@@ -151,6 +184,7 @@ begin
         begin
           inc(tsBlockInsertPosition);
         end;
+        // see check for duplicate TS names in swmm file on near line 196 below;
       end
       else
       begin
@@ -167,39 +201,48 @@ begin
       begin
         if (tempRec.convertedTSFilePath <> '') then
         begin
+          duplicateLineNumber := 0;
+          duplicateLineNumber := checkForDuplicateTS(tsBlockInsertPosition,
+            NewFileContentsList, tempRec.tsName);
+          if (duplicateLineNumber <> 0) then
+           NewFileContentsList.Delete(duplicateLineNumber);
+
           NewFileContentsList.Insert(tsBlockInsertPosition + tempInt,
             tempRec.tsName + '      FILE      "' +
             tempRec.convertedTSFilePath + '"');
         end;
         inc(tempInt);
       end;
-      tsBlockInsertPosition := tsBlockInsertPosition + tempInt - 1;
+      tsBlockInsertPosition := tsBlockInsertPosition + tempInt - 2;
 
       // 2. Write Inflow Block
       // check TS list that was passed in to see if input file already contains TS
-      if ((SWMMTSList.Count > 0) and (NewFileContentsList.IndexOf('[INFLOWS]') > -1)) then
+      if ((SWMMTSList.Count > 0) and (NewFileContentsList.IndexOf('[INFLOWS]')
+        > -1)) then
       begin
         // Inflow section already exists in swmm input file so simply add to it - check for duplicate names
-        tsBlockInsertPosition := NewFileContentsList.IndexOf('[INFLOWS]');
-        while (Pos(';;', NewFileContentsList[tsBlockInsertPosition + 1]) < 1) do
+        tsBlockInsertPosition := NewFileContentsList.IndexOf('[INFLOWS]') + 1;
+        while (Pos(';;', NewFileContentsList[tsBlockInsertPosition]) > 0) do
         begin
           inc(tsBlockInsertPosition);
         end;
+        //TODO check for duplicates names in inflow block
       end
       else
       begin
         // Inflow section does not already exist in swmm input file so write times series block and add to TS to it
-        NewFileContentsList.Insert(tsBlockInsertPosition, '[INFLOWS]');
-        NewFileContentsList.Insert(tsBlockInsertPosition + 1,
-          ';;                                                 Param    Units    Scale    Baseline Baseline');
+        NewFileContentsList.Insert(tsBlockInsertPosition, '');
+        NewFileContentsList.Insert(tsBlockInsertPosition + 1, '[INFLOWS]');
         NewFileContentsList.Insert(tsBlockInsertPosition + 2,
-          ';;Node           Parameter        Time Series      Type     Factor   Factor   Value    Pattern');
+          ';;                                                 Param    Units    Scale    Baseline Baseline');
         NewFileContentsList.Insert(tsBlockInsertPosition + 3,
+          ';;Node           Parameter        Time Series      Type     Factor   Factor   Value    Pattern');
+        NewFileContentsList.Insert(tsBlockInsertPosition + 4,
           ';;-------------- ---------------- ---------------- -------- -------- -------- -------- --------');
-        tsBlockInsertPosition := tsBlockInsertPosition + 2;
+        tsBlockInsertPosition := tsBlockInsertPosition + 5;
       end;
 
-      tempInt := 2;
+      tempInt := 0;
       for tempRec in Conv do
       begin
         if (tempRec.convertedTSFilePath <> '') then
@@ -212,38 +255,43 @@ begin
         end;
         inc(tempInt);
       end;
-       NewFileContentsList.Insert(tsBlockInsertPosition + tempInt - 3,' ');
-        NewFileContentsList.Insert(tsBlockInsertPosition + tempInt - 3,' ');
       saveTextFileToDisc(NewFileContentsList, newSWMMInputFilePath, Sender);
     end
     else
       { Otherwise, raise an exception. }
       raise Exception.Create('File does not exist.');
   finally
+    result := '';
     NewFileContentsList.Free;
   end;
+  result := newSWMMInputFilePath;
+end;
+
+procedure TForm1.btnCancelClick(Sender: TObject);
+begin
+  Self.Close;
 end;
 
 procedure TForm1.btnNextClick(Sender: TObject);
-
 var
-  frameworkTSFilePath: string;
   ConvertedFWTSArr: TArray<TConvertedFWTS>;
   i: TUserInputVerificationFrm;
-  tempStr: string;
-  constinuentName: string;
-  j: integer;
   constituentCbxs: TArray<TComboBox>;
   FileContentsList: TStringList;
+  tempStr: string;
+  frameworkTSFilePath: string;
+  constinuentName: string;
+  j: integer;
   tempModalResult: integer;
-
+  numSelectedConstituents: integer;
+  newSWMMInputFilePath: string;
 begin
 
   // Launch project form and force user to provide the project information
   SWMMUserInputVerificationFrm := TUserInputVerificationFrm.Create(Application);
   frameworkTSFilePath :=
     'C:\Users\dpankani\Documents\RAD Studio\Projects\SWMMDrivers\testfiles\RockCreekDemo.sct';
-  SetLength(ConvertedFWTSArr, 6);
+  SetLength(ConvertedFWTSArr, High(constituentNames));
   with SWMMUserInputVerificationFrm do
   begin
     // if Length(constituentCbxs) = 0 then
@@ -253,13 +301,9 @@ begin
     try
       begin // populate dialog fields
         txtSwmmFilePath.Caption := Self.txtSwmmFilePath.Caption;
-        if cbxSwmmNode.ItemIndex <> -1 then
-          txtSWMMNodeID.Caption := cbxSwmmNode.Items[cbxSwmmNode.ItemIndex];
 
-        { txtTSStartDate.Caption := Self.txtTSStartDate.Caption;
-          txtTSEndDate.Caption := Self.txtTSEndDate.Caption;
-          txtTSFilePath.Caption := Self.txtTSFilePath.Caption;
-          txtErrors.Caption := Self.txtErrors.Caption; }
+        if Self.cbxSwmmNode.ItemIndex <> -1 then
+          txtSWMMNodeID.Caption := cbxSwmmNode.Items[cbxSwmmNode.ItemIndex];
 
         // column headers
         StringGrid1.Cells[0, 0] := '* Framework Constituent';
@@ -273,7 +317,6 @@ begin
           StringGrid1.Cells[1, j + 1] := 'Not Selected';
           // set all cells to not select and overwrite selected ones later
           StringGrid1.Cells[2, j + 1] := Self.StringGrid1.Cells[2, j + 1];
-          // copy unit conversion factors from this grid to other grid on user input verification form
         end;
 
         // Flow is a special case constituent which is always selected
@@ -283,18 +326,27 @@ begin
 
         // save conversion factors and selected constituents into record array for use later
         // Framework Pollutants
-        for j := Low(constituentNames) + 1 to High(constituentNames) do
+        numSelectedConstituents := 1;
+        for j := Low(constituentNames) + 1 to High(constituentNames)-1 do
         begin
           if constituentCbxs[j].ItemIndex <> -1 then
           begin
-            StringGrid1.Cells[1, j + 1] := constituentCbxs[j].Items
+            StringGrid1.Cells[1, j+1] := constituentCbxs[j].Items
               [constituentCbxs[j].ItemIndex];
             AssignConstituentInputsFromGrid(txtSWMMNodeID.Caption,
-              Self.StringGrid1, ConvertedFWTSArr[j], constituentNames[j], j + 1,
+              Self.StringGrid1, ConvertedFWTSArr[j], constituentNames[j], j,
               'CONCEN', Sender);
+            inc(numSelectedConstituents);
           end;
         end;
       end;
+
+      { txtTSStartDate.Caption := Self.txtTSStartDate.Caption;
+        txtTSEndDate.Caption := Self.txtTSEndDate.Caption;
+        txtTSFilePath.Caption := Self.txtTSFilePath.Caption;
+        txtErrors.Caption := Self.txtErrors.Caption; }
+      lblNumberOfConstituents.Caption := 'Constituents (' +
+        IntToStr(numSelectedConstituents) + ' of 8 selected)';
       tempModalResult := SWMMUserInputVerificationFrm.ShowModal;
       if (tempModalResult = mrOk) then
       begin
@@ -302,9 +354,21 @@ begin
           StringGrid1, ConvertedFWTSArr, Sender);
         finalizeExport(ConvertedFWTSArr, workingDirPath, Sender);
 
+        // write exported TS to the confirmation dialog
+        j := 0;
+        for j := Low(ConvertedFWTSArr) to High(ConvertedFWTSArr) do
+        begin
+          if (ConvertedFWTSArr[j].convertedTSFilePath <> '') then
+            tempStr := tempStr + #13#10 + ConvertedFWTSArr[j]
+              .convertedTSFilePath;
+        end;
         // populate operation status confirmation dialog
-        OperationStatusDlg.lblSWMMFilePath.Caption := 'test';
-        OperationStatusDlg.lblTSFilesCreated.Caption := 'test';
+        newSWMMInputFilePath := workingDirPath + '\' +
+          ChangeFileExt(ExtractFileName(Self.txtSwmmFilePath.Caption), '') +
+          FormatDateTime('yyyymmddhhnnss', Now) + '.inp';
+        OperationStatusDlg.lblSWMMFilePath.Caption := newSWMMInputFilePath;
+
+        OperationStatusDlg.lblTSFilesCreated.Caption := tempStr;
         tempModalResult := OperationStatusDlg.ShowModal;
 
         // write TS to swmm input file and save as new file
@@ -321,7 +385,6 @@ end;
 procedure TForm1.finalizeExport(var Conv: array of TConvertedFWTS;
   filePathDir: string; Sender: TObject);
 var
-  // rec: TConvertedFWTS;
   filePath: string;
   pathPrefix: string;
   pathSuffix: string;
@@ -330,7 +393,7 @@ begin
   pathPrefix := filePathDir + '\TS\FrameworkTS_';
   pathSuffix := FormatDateTime('yyyymmddhhnnss', Now) + '.dat';
 
-  for i := Low(Conv) to High(Conv) - 1 do
+  for i := Low(Conv) to High(Conv) do
   begin
     if ((Conv[i].constituentName <> '') and (Conv[i].convFactor <> 0)) then
     begin
@@ -384,7 +447,7 @@ begin
     OutList := TStringList.Create;
     tempStrList := TStringList.Create;
     i := 0;
-    for i := Low(Conv) to High(Conv) - 1 do
+    for i := Low(Conv) to High(Conv) do
     begin
       Conv[i].convertedTS := TStringList.Create;
     end;
@@ -405,7 +468,7 @@ begin
         tempDateTimeStr := tempStrList[0] + '/' + tempStrList[1] + '/' +
           tempStrList[2] + ' ' + tempStrList[3];
         i := 0;
-        for i := Low(Conv) to High(Conv) - 1 do
+        for i := Low(Conv) to High(Conv) do
         begin
           j := i + 4;
           if (j < tempStrList.Count - 1) then
@@ -462,7 +525,6 @@ var
   FileContentsList: TStringList;
   NodeList: TStringList;
   PollList: TStringList;
-  // TSList: TStringList;
   SwmmTokens: TStringList;
   lineNumber: integer;
   intTokenLoc: integer;
@@ -548,7 +610,8 @@ begin
                   begin
                     TSList.Add(strNodeName);
                   end
-                  else // if we are not in the [POLLUTANTS] block save names to nodes list
+                  else
+                    // if we are not in the [POLLUTANTS] block save names to nodes list
                     NodeList.Add(strNodeName);
                 end;
               end;
@@ -557,8 +620,6 @@ begin
           inc(lineNumber);
 
         end;
-        Memo1.Lines.AddStrings(PollList);
-        Memo1.Lines.AddStrings(NodeList);
         cbxSwmmNode.Items := NodeList;
         cbxFlow.Items := PollList;
         cbxDCu.Items := PollList;
@@ -631,7 +692,8 @@ var
   Value: integer;
 begin
   index := RadioGroup1.ItemIndex;
-  Assert(index >= 0); // Sanity check
+  Assert(index >= 0);
+  // Sanity check
   Value := integer(RadioGroup1.Items.Objects[index]);
   if (Value = 0) then
     btnSelectSWMMFile.Caption := 'Select SWMM Output File';

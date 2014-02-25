@@ -15,9 +15,9 @@ object Form1: TForm1
   PixelsPerInch = 96
   TextHeight = 13
   object txtSwmmFilePath: TLabel
-    Left = 16
+    Left = 19
     Top = 61
-    Width = 46
+    Width = 286
     Height = 13
     Caption = 'File Name'
     Color = clInfoBk
@@ -130,9 +130,9 @@ object Form1: TForm1
     Height = 210
   end
   object btnSelectSWMMFile: TButton
-    Left = 200
-    Top = 56
-    Width = 153
+    Left = 168
+    Top = 30
+    Width = 146
     Height = 25
     Caption = 'Browse...'
     TabOrder = 0
@@ -145,15 +145,6 @@ object Form1: TForm1
     Height = 21
     TabOrder = 1
     Text = 'Select SWMM Node'
-  end
-  object Memo1: TMemo
-    Left = 8
-    Top = 567
-    Width = 185
-    Height = 89
-    Lines.Strings = (
-      'Memo1')
-    TabOrder = 2
   end
   object StringGrid1: TStringGrid
     Left = 8
@@ -169,7 +160,7 @@ object Form1: TForm1
     Options = [goFixedVertLine, goFixedHorzLine, goVertLine, goHorzLine, goRangeSelect, goEditing]
     ParentCtl3D = False
     ScrollBars = ssNone
-    TabOrder = 3
+    TabOrder = 2
     ColWidths = (
       136
       165
@@ -180,7 +171,7 @@ object Form1: TForm1
     Top = 250
     Width = 159
     Height = 21
-    TabOrder = 4
+    TabOrder = 3
     Text = 'Select SWMM Pollutant'
     Visible = False
   end
@@ -189,7 +180,7 @@ object Form1: TForm1
     Top = 399
     Width = 159
     Height = 21
-    TabOrder = 5
+    TabOrder = 4
     Text = 'Select SWMM Pollutant'
   end
   object cbxTZn: TComboBox
@@ -197,7 +188,7 @@ object Form1: TForm1
     Top = 374
     Width = 159
     Height = 21
-    TabOrder = 6
+    TabOrder = 5
     Text = 'Select SWMM Pollutant'
   end
   object cbxDZn: TComboBox
@@ -205,7 +196,7 @@ object Form1: TForm1
     Top = 349
     Width = 159
     Height = 21
-    TabOrder = 7
+    TabOrder = 6
     Text = 'Select SWMM Pollutant'
   end
   object cbxDP: TComboBox
@@ -213,7 +204,7 @@ object Form1: TForm1
     Top = 324
     Width = 159
     Height = 21
-    TabOrder = 8
+    TabOrder = 7
     Text = 'Select SWMM Pollutant'
   end
   object cbxTP: TComboBox
@@ -221,7 +212,7 @@ object Form1: TForm1
     Top = 299
     Width = 159
     Height = 21
-    TabOrder = 9
+    TabOrder = 8
     Text = 'Select SWMM Pollutant'
   end
   object cbxTSS: TComboBox
@@ -229,7 +220,7 @@ object Form1: TForm1
     Top = 274
     Width = 159
     Height = 21
-    TabOrder = 10
+    TabOrder = 9
     Text = 'Select SWMM Pollutant'
   end
   object btnCancel: TButton
@@ -238,7 +229,8 @@ object Form1: TForm1
     Width = 75
     Height = 25
     Caption = 'Cancel'
-    TabOrder = 11
+    TabOrder = 10
+    OnClick = btnCancelClick
   end
   object btnHelp: TButton
     Left = 278
@@ -246,7 +238,7 @@ object Form1: TForm1
     Width = 75
     Height = 25
     Caption = 'Help'
-    TabOrder = 12
+    TabOrder = 11
   end
   object btnNext: TButton
     Left = 374
@@ -254,7 +246,7 @@ object Form1: TForm1
     Width = 75
     Height = 25
     Caption = 'Next'
-    TabOrder = 13
+    TabOrder = 12
     OnClick = btnNextClick
   end
   object cbxTCu: TComboBox
@@ -262,7 +254,7 @@ object Form1: TForm1
     Top = 424
     Width = 159
     Height = 21
-    TabOrder = 14
+    TabOrder = 13
     Text = 'Select SWMM Pollutant'
   end
   object RadioGroup1: TRadioGroup
@@ -271,14 +263,15 @@ object Form1: TForm1
     Width = 133
     Height = 66
     Caption = 'Desired Operation'
-    TabOrder = 15
+    TabOrder = 14
     OnClick = RadioGroup1Click
   end
   object OpenTextFileDialog1: TOpenTextFileDialog
-    Left = 200
+    Left = 392
+    Top = 576
   end
   object SaveTextFileDialog1: TSaveTextFileDialog
-    Left = 256
-    Top = 8
+    Left = 400
+    Top = 632
   end
 end
