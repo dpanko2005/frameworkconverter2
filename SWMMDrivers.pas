@@ -70,6 +70,8 @@ type
     ErrsList: TStringList;
     operatingMode: string;
     swmmFilePath: string;
+    NodeNameList: TStringList;
+    PollList: TStringList;
     // stores existing swmm Inflow entry names in swmm inputfile
 
   public
@@ -372,7 +374,7 @@ begin
         if (operatingMode = opModes[0]) then
         begin
           swmmNodeResults := getSWMMNodeResults(swmmFilePath, selectedNodeName,
-            ConvertedFWTSArr);
+            ConvertedFWTSArr, NodeNameList,PollList);
         end
         else
         begin
@@ -527,8 +529,8 @@ procedure TForm1.btnSelectSWMMFileClick(Sender: TObject);
 var
   FileContentsList: TStringList;
   TempListArr: TArray<TStringList>;
-  NodeList: TStringList;
-  PollList: TStringList;
+  //NodeList: TStringList;
+  //PollList: TStringList;
   SwmmTokens: TStringList;
   lineNumber: integer;
   intTokenLoc: integer;
@@ -542,7 +544,7 @@ var
   // dict : TDictionary<integer, TStringList> ;
 begin
   FileContentsList := TStringList.Create;
-  NodeList := TStringList.Create;
+  NodeNameList := TStringList.Create;
   PollList := TStringList.Create;
   TSList := TStringList.Create;
   InflowsList := TStringList.Create;
@@ -567,7 +569,7 @@ begin
             ErrsList.Add(Errs[0]);
           // Unable to read pollutant names in SWMM input file
 
-          NodeList := TempListArr[0];
+          NodeNameList := TempListArr[0];
           PollList := TempListArr[1];
         end
         else
@@ -640,7 +642,7 @@ begin
                     end
                     else
                       // if we are not in the [POLLUTANTS] block save names to nodes list
-                      NodeList.Add(strNodeName);
+                      NodeNameList.Add(strNodeName);
                   end;
                 end;
               until intTokenLoc > 0;
@@ -656,7 +658,7 @@ begin
         raise Exception.Create('File does not exist.');
         Exit
       end;
-    cbxSwmmNode.Items := NodeList;
+    cbxSwmmNode.Items := NodeNameList;
     cbxFlow.Items := PollList;
     cbxDCu.Items := PollList;
     cbxTCu.Items := PollList;
@@ -667,8 +669,8 @@ begin
     cbxTSS.Items := PollList;
   finally
     FileContentsList.Free;
-    NodeList.Free;
-    PollList.Free;
+    //NodeNameList.Free;
+    //PollList.Free;
   end;
 
 end;
