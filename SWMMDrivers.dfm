@@ -146,7 +146,7 @@ object Form1: TForm1
     TabOrder = 1
     Text = 'Select SWMM Node'
   end
-  object StringGrid1: TStringGrid
+  object sgdUserInputGrid: TStringGrid
     Left = 8
     Top = 224
     Width = 441
@@ -156,7 +156,7 @@ object Form1: TForm1
     Ctl3D = False
     FixedColor = 16776176
     FixedCols = 0
-    RowCount = 9
+    RowCount = 10
     Options = [goFixedVertLine, goFixedHorzLine, goVertLine, goHorzLine, goRangeSelect, goEditing]
     ParentCtl3D = False
     ScrollBars = ssNone

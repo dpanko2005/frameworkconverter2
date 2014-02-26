@@ -6,23 +6,15 @@ uses
   Winapi.Windows, Winapi.Messages, System.SysUtils, System.Variants,
   System.Classes, Vcl.Graphics, Generics.Defaults, Generics.Collections,
   Vcl.Controls, Vcl.Forms, Vcl.Dialogs, Vcl.StdCtrls, Vcl.ExtDlgs, Vcl.Grids,
-  Vcl.ExtCtrls, UserInputConfirmationDlg, OperationStatusDlgFrm;
-
-type
-  TConvertedFWTS = record // converted framework timeseries data structure
-    tsName: string;
-    tsNodeName: string;
-    tsType: string; // FLOW or CONCEN
-    tsUnitsFactor: string; // default 1.0
-    constituentName: string;
-    convFactor: Double; // default 1.0
-    convertedTS: TStringList;
-    convertedTSFilePath: string;
-  end;
+  Vcl.ExtCtrls, UserInputConfirmationDlg, OperationStatusDlgFrm, SWMMIO;
 
 const
   constituentNames: array [0 .. 7] of string = ('FLOW', 'TSS', 'TP', 'DP',
     'DZn', 'TZN', 'DCU', 'TCU');
+  Errs: array [0 .. 1] of string =
+    ('An unknown error occured when reading the SWMM file',
+    'An unknown error occured when saving the new SWMM file');
+  opModes: array [0 .. 1] of string = ('import', 'export');
 
 type
   TForm1 = class(TForm)
@@ -31,7 +23,7 @@ type
     btnSelectSWMMFile: TButton;
     txtSwmmFilePath: TLabel;
     cbxSwmmNode: TComboBox;
-    StringGrid1: TStringGrid;
+    sgdUserInputGrid: TStringGrid;
     cbxFlow: TComboBox;
     cbxDCu: TComboBox;
     cbxTZn: TComboBox;
@@ -73,7 +65,12 @@ type
       Sender: TObject): string;
 
   var
-    TSList: TStringList;
+    TSList: TStringList; // stores existing swmm TS names in swmm inputfile
+    InflowsList: TStringList;
+    ErrsList: TStringList;
+    operatingMode: string;
+    swmmFilePath: string;
+    // stores existing swmm Inflow entry names in swmm inputfile
 
   public
     { Public declarations }
@@ -82,8 +79,8 @@ type
       : TArray<TConvertedFWTS>;
 
     procedure AssignConstituentInputsFromGrid(SWMMNodeName: string;
-      convGrid: TStringGrid; var Conv: TConvertedFWTS; constituentName: string;
-      rowNumber: integer; tsType: string; Sender: TObject);
+      var Conv: TConvertedFWTS; constituentName: string; convFactor: Double;
+      tsType: string; Sender: TObject);
 
     function checkForDuplicateTS(tsBlockInsertPosition: integer;
       NewFileContentsList: TStringList; tsName: string): integer;
@@ -105,7 +102,7 @@ begin
   if (TSList.IndexOf(tsName) > 0) then
   begin
     // duplicate TS exists in the swmmfile so return its line number so can overwrite
-    while ((Pos(';;', NewFileContentsList[tsBlockInsertPosition]) > 0)and
+    while ((Pos(';;', NewFileContentsList[tsBlockInsertPosition]) > 0) and
       (tsBlockInsertPosition < NewFileContentsList.Count)) do
     begin
       inc(tsBlockInsertPosition);
@@ -133,23 +130,25 @@ function TForm1.updateSWMMInputFile(var Conv: array of TConvertedFWTS;
   Sender: TObject): string;
 var
   NewFileContentsList: TStringList;
-  TSList: TStringList;
+  // TSList: TStringList;
   lineNumber: integer;
   intTokenLoc: integer;
-  strLine: string;
-  strToken: string;
-  strNodeName: string;
+  // strLine: string;
+  // strToken: string;
+  // strNodeName: string;
   tempInt: integer;
-  i: integer;
+  // i: integer;
   tsBlockInsertPosition: integer;
   tempRec: TConvertedFWTS;
   pathSuffix: string;
   newSWMMInputFilePath: string;
-  duplicateLineNumber:integer;
+  duplicateLineNumber: integer;
 begin
   // FileContentsList := TStringList.Create;
   NewFileContentsList := TStringList.Create;
-  TSList := TStringList.Create;
+  // TSList := TStringList.Create;
+  // InflowsList := TStringList.Create;
+
   pathSuffix := FormatDateTime('yyyymmddhhnnss', Now) + '.inp';
   newSWMMInputFilePath := filePathDir + '\' +
     ChangeFileExt(ExtractFileName(swmmInputFilePath), '') + pathSuffix;
@@ -158,7 +157,6 @@ begin
     { First check if the file exists. }
     if FileExists(swmmInputFilePath) then
     begin
-
       { If it exists, load the data into the stringlist. }
       NewFileContentsList.LoadFromFile(OpenTextFileDialog1.FileName);
 
@@ -205,7 +203,7 @@ begin
           duplicateLineNumber := checkForDuplicateTS(tsBlockInsertPosition,
             NewFileContentsList, tempRec.tsName);
           if (duplicateLineNumber <> 0) then
-           NewFileContentsList.Delete(duplicateLineNumber);
+            NewFileContentsList.Delete(duplicateLineNumber);
 
           NewFileContentsList.Insert(tsBlockInsertPosition + tempInt,
             tempRec.tsName + '      FILE      "' +
@@ -226,7 +224,7 @@ begin
         begin
           inc(tsBlockInsertPosition);
         end;
-        //TODO check for duplicates names in inflow block
+        // TODO check for duplicates names in inflow block
       end
       else
       begin
@@ -285,6 +283,8 @@ var
   tempModalResult: integer;
   numSelectedConstituents: integer;
   newSWMMInputFilePath: string;
+  selectedNodeName: string;
+  swmmNodeResults: TStringList;
 begin
 
   // Launch project form and force user to provide the project information
@@ -292,6 +292,8 @@ begin
   frameworkTSFilePath :=
     'C:\Users\dpankani\Documents\RAD Studio\Projects\SWMMDrivers\testfiles\RockCreekDemo.sct';
   SetLength(ConvertedFWTSArr, High(constituentNames));
+  swmmNodeResults := TStringList.Create();
+
   with SWMMUserInputVerificationFrm do
   begin
     // if Length(constituentCbxs) = 0 then
@@ -304,6 +306,7 @@ begin
 
         if Self.cbxSwmmNode.ItemIndex <> -1 then
           txtSWMMNodeID.Caption := cbxSwmmNode.Items[cbxSwmmNode.ItemIndex];
+        selectedNodeName := txtSWMMNodeID.Caption;
 
         // column headers
         StringGrid1.Cells[0, 0] := '* Framework Constituent';
@@ -316,35 +319,31 @@ begin
           StringGrid1.Cells[0, j + 1] := constituentNames[j];
           StringGrid1.Cells[1, j + 1] := 'Not Selected';
           // set all cells to not select and overwrite selected ones later
-          StringGrid1.Cells[2, j + 1] := Self.StringGrid1.Cells[2, j + 1];
+          StringGrid1.Cells[2, j + 1] := Self.sgdUserInputGrid.Cells[2, j + 1];
         end;
 
         // Flow is a special case constituent which is always selected
         StringGrid1.Cells[1, 1] := 'FLOW'; // flow is always selected
-        AssignConstituentInputsFromGrid(txtSWMMNodeID.Caption, Self.StringGrid1,
-          ConvertedFWTSArr[0], 'Flow', 1, 'FLOW', Sender);
+        AssignConstituentInputsFromGrid(selectedNodeName, ConvertedFWTSArr[0],
+          'FLOW', StrToFloat(Self.sgdUserInputGrid.Cells[2, 1]),
+          'FLOW', Sender);
 
         // save conversion factors and selected constituents into record array for use later
         // Framework Pollutants
         numSelectedConstituents := 1;
-        for j := Low(constituentNames) + 1 to High(constituentNames)-1 do
+        for j := Low(constituentNames) + 1 to High(constituentNames) do
         begin
           if constituentCbxs[j].ItemIndex <> -1 then
           begin
-            StringGrid1.Cells[1, j+1] := constituentCbxs[j].Items
+            StringGrid1.Cells[1, j + 1] := constituentCbxs[j].Items
               [constituentCbxs[j].ItemIndex];
             AssignConstituentInputsFromGrid(txtSWMMNodeID.Caption,
-              Self.StringGrid1, ConvertedFWTSArr[j], constituentNames[j], j,
-              'CONCEN', Sender);
+              ConvertedFWTSArr[j], constituentNames[j],
+              StrToFloat(Self.sgdUserInputGrid.Cells[2, 1]), 'CONCEN', Sender);
             inc(numSelectedConstituents);
           end;
         end;
       end;
-
-      { txtTSStartDate.Caption := Self.txtTSStartDate.Caption;
-        txtTSEndDate.Caption := Self.txtTSEndDate.Caption;
-        txtTSFilePath.Caption := Self.txtTSFilePath.Caption;
-        txtErrors.Caption := Self.txtErrors.Caption; }
       lblNumberOfConstituents.Caption := 'Constituents (' +
         IntToStr(numSelectedConstituents) + ' of 8 selected)';
       tempModalResult := SWMMUserInputVerificationFrm.ShowModal;
@@ -367,14 +366,21 @@ begin
           ChangeFileExt(ExtractFileName(Self.txtSwmmFilePath.Caption), '') +
           FormatDateTime('yyyymmddhhnnss', Now) + '.inp';
         OperationStatusDlg.lblSWMMFilePath.Caption := newSWMMInputFilePath;
-
         OperationStatusDlg.lblTSFilesCreated.Caption := tempStr;
         tempModalResult := OperationStatusDlg.ShowModal;
 
-        // write TS to swmm input file and save as new file
-        updateSWMMInputFile(ConvertedFWTSArr, TSList, workingDirPath,
-          Self.txtSwmmFilePath.Caption, Sender);
-        Self.Close;
+        if (operatingMode = opModes[0]) then
+        begin
+          swmmNodeResults := getSWMMNodeResults(swmmFilePath, selectedNodeName,
+            ConvertedFWTSArr);
+        end
+        else
+        begin
+          // write TS to swmm input file and save as new file
+          updateSWMMInputFile(ConvertedFWTSArr, TSList, workingDirPath,
+            Self.txtSwmmFilePath.Caption, Sender);
+          Self.Close;
+        end;
       end;
     finally
       // ConvertedFWTSArr.Free;
@@ -405,18 +411,15 @@ begin
 end;
 
 procedure TForm1.AssignConstituentInputsFromGrid(SWMMNodeName: string;
-  convGrid: TStringGrid; var Conv: TConvertedFWTS; constituentName: string;
-  rowNumber: integer; tsType: string; Sender: TObject);
-var
-  tempStr: string;
+  var Conv: TConvertedFWTS; constituentName: string; convFactor: Double;
+  tsType: string; Sender: TObject);
 begin
   Conv.tsNodeName := SWMMNodeName;
   Conv.tsType := tsType;
   Conv.tsName := 'FrameworkTS' + constituentName;
   Conv.tsUnitsFactor := '1.0';
   Conv.constituentName := constituentName;
-  tempStr := convGrid.Cells[2, rowNumber];
-  Conv.convFactor := StrToFloat(tempStr);
+  Conv.convFactor := convFactor;
 end;
 
 function TForm1.readInFrameworkTSFile(filePath: string; convGrid: TStringGrid;
@@ -523,6 +526,7 @@ end;
 procedure TForm1.btnSelectSWMMFileClick(Sender: TObject);
 var
   FileContentsList: TStringList;
+  TempListArr: TArray<TStringList>;
   NodeList: TStringList;
   PollList: TStringList;
   SwmmTokens: TStringList;
@@ -533,6 +537,7 @@ var
   strNodeName: string;
   tempInt: integer;
   i: integer;
+  // mode: string;
   // openFileFlag: Boolean;
   // dict : TDictionary<integer, TStringList> ;
 begin
@@ -540,6 +545,7 @@ begin
   NodeList := TStringList.Create;
   PollList := TStringList.Create;
   TSList := TStringList.Create;
+  InflowsList := TStringList.Create;
   intTokenLoc := 0;
   try
     { Execute an open file dialog. }
@@ -550,94 +556,121 @@ begin
       begin
         // save the directory so can write TS to same directory later
         workingDirPath := ExtractFileDir(OpenTextFileDialog1.FileName);
+        swmmFilePath := OpenTextFileDialog1.FileName;
 
-        { If it exists, load the data into the stringlist. }
-        FileContentsList.LoadFromFile(OpenTextFileDialog1.FileName);
-        txtSwmmFilePath.Caption := OpenTextFileDialog1.FileName;
-
-        // Define a string list object, and point our variable at it
-        SwmmTokens := TStringList.Create;
-
-        // Add supported SWMM Node types to the list of tokens to parse
-        SwmmTokens.Delimiter := ' '; // Each list item will be blank separated
-        SwmmTokens.QuoteChar := '|'; // And each item will be quoted with |'s
-        SwmmTokens.DelimitedText :=
-          '|[DIVIDERS]| |[JUNCTIONS]| |[OUTFALLS]| |[STORAGE]| |[POLLUTANTS]| |[TIMESERIES]|';
-
-        lineNumber := 0;
-        // strToken := '[JUNCTIONS]';
-        // strToken := LowerCase('[JUNCTIONS]');
-        while lineNumber < FileContentsList.Count - 1 do
+        if (operatingMode = opModes[0]) then
         begin
-          strLine := LowerCase(FileContentsList[lineNumber]);
-          for i := 0 to SwmmTokens.Count - 1 do
-          begin
-            strToken := LowerCase(SwmmTokens[i]);
-            intTokenLoc := Pos(strToken, strLine);
+          TempListArr := SWMMIO.getSWMMNodeNames(swmmFilePath);
+          if (TempListArr[0].Count < 1) then
+            ErrsList.Add(Errs[0]); // Unable to read nodes in SWMM input file
+          if (TempListArr[1].Count < 1) then
+            ErrsList.Add(Errs[0]);
+          // Unable to read pollutant names in SWMM input file
 
-            // check inputfile line to see if token present
-            if intTokenLoc > 0 then
-              break;
-          end;
+          NodeList := TempListArr[0];
+          PollList := TempListArr[1];
+        end
+        else
+        begin
+          { If it exists, load the data into the stringlist. }
+          FileContentsList.LoadFromFile(OpenTextFileDialog1.FileName);
+          txtSwmmFilePath.Caption := OpenTextFileDialog1.FileName;
 
-          // if token found read in node names
-          if intTokenLoc > 0 then
+          // Define a string list object, and point our variable at it
+          SwmmTokens := TStringList.Create;
+
+          // Add supported SWMM Node types to the list of tokens to parse
+          SwmmTokens.Delimiter := ' '; // Each list item will be blank separated
+          SwmmTokens.QuoteChar := '|'; // And each item will be quoted with |'s
+          SwmmTokens.DelimitedText :=
+            '|[DIVIDERS]| |[JUNCTIONS]| |[OUTFALLS]| |[STORAGE]| |[POLLUTANTS]| |[TIMESERIES]| |[INFLOWS]|';
+
+          lineNumber := 0;
+          // strToken := '[JUNCTIONS]';
+          // strToken := LowerCase('[JUNCTIONS]');
+          while lineNumber < FileContentsList.Count - 1 do
           begin
-            Repeat
-              inc(lineNumber);
-              strLine := FileContentsList[lineNumber];
-              intTokenLoc := Pos('[', strLine);
+            strLine := LowerCase(FileContentsList[lineNumber]);
+            for i := 0 to SwmmTokens.Count - 1 do
+            begin
+              strToken := LowerCase(SwmmTokens[i]);
+              intTokenLoc := Pos(strToken, strLine);
+
+              // check inputfile line to see if token present
               if intTokenLoc > 0 then
-              begin
-                dec(lineNumber);
                 break;
-              end;
-              // ignore comment lines
-              if (Pos(';;', strLine) < 1) and (Length(strLine) > 1) then
-              begin
-                // extract node name
-                tempInt := Pos(' ', strLine);
-                if tempInt > 0 then
-                begin
-                  strNodeName := Copy(strLine, 1, tempInt - 1);
-                  if i = 4 then
-                  // if we are in the [POLLUTANTS] block save names to pollutants list
-                  begin
-                    PollList.Add(strNodeName);
-                  end
-                  else if i = 5 then
-                  // if we are in the [TIMESERIES] block save names to TIMESERIES list
-                  begin
-                    TSList.Add(strNodeName);
-                  end
-                  else
-                    // if we are not in the [POLLUTANTS] block save names to nodes list
-                    NodeList.Add(strNodeName);
-                end;
-              end;
-            until intTokenLoc > 0;
-          end;
-          inc(lineNumber);
+            end;
 
-        end;
-        cbxSwmmNode.Items := NodeList;
-        cbxFlow.Items := PollList;
-        cbxDCu.Items := PollList;
-        cbxTCu.Items := PollList;
-        cbxTZn.Items := PollList;
-        cbxDZn.Items := PollList;
-        cbxDP.Items := PollList;
-        cbxTP.Items := PollList;
-        cbxTSS.Items := PollList;
+            // if token found read in node names
+            if intTokenLoc > 0 then
+            begin
+              Repeat
+                inc(lineNumber);
+                strLine := FileContentsList[lineNumber];
+                intTokenLoc := Pos('[', strLine);
+                if intTokenLoc > 0 then
+                begin
+                  dec(lineNumber);
+                  break;
+                end;
+                // ignore comment lines
+                if (Pos(';;', strLine) < 1) and (Length(strLine) > 1) then
+                begin
+                  // extract node name
+                  tempInt := Pos(' ', strLine);
+                  if tempInt > 0 then
+                  begin
+                    strNodeName := Copy(strLine, 1, tempInt - 1);
+                    if i = 4 then
+                    // if we are in the [POLLUTANTS] block save names to pollutants list
+                    begin
+                      PollList.Add(strNodeName);
+                    end
+                    else if i = 5 then
+                    // if we are in the [TIMESERIES] block save names to TIMESERIES list
+                    begin
+                      TSList.Add(strNodeName);
+                    end
+                    else if i = 6 then
+                    // if we are in the [INFLOWS] block save names to INFLOWS list
+                    begin
+                      tempInt := Pos(' ', strLine, tempInt + 1); //
+                      strNodeName := Copy(strLine, 1, tempInt - 1);
+                      InflowsList.Add(strNodeName);
+                    end
+                    else
+                      // if we are not in the [POLLUTANTS] block save names to nodes list
+                      NodeList.Add(strNodeName);
+                  end;
+                end;
+              until intTokenLoc > 0;
+            end;
+            inc(lineNumber);
+
+          end;
+        end
       end
       else
+      begin
         { Otherwise, raise an exception. }
         raise Exception.Create('File does not exist.');
+        Exit
+      end;
+    cbxSwmmNode.Items := NodeList;
+    cbxFlow.Items := PollList;
+    cbxDCu.Items := PollList;
+    cbxTCu.Items := PollList;
+    cbxTZn.Items := PollList;
+    cbxDZn.Items := PollList;
+    cbxDP.Items := PollList;
+    cbxTP.Items := PollList;
+    cbxTSS.Items := PollList;
   finally
     FileContentsList.Free;
     NodeList.Free;
     PollList.Free;
   end;
+
 end;
 
 procedure TForm1.FormCreate(Sender: TObject);
@@ -653,32 +686,33 @@ end;
 
 procedure TForm1.FormShow(Sender: TObject);
 begin
+  ErrsList := TStringList.Create();
   Form1.color := clwhite;
   // customize stringGrid
   // column headers
-  StringGrid1.Cells[0, 0] := '* Framework Constituent';
-  StringGrid1.Cells[1, 0] := 'SWMM Equivalent';
-  StringGrid1.Cells[2, 0] := 'Unit Conversion Factor';
+  sgdUserInputGrid.Cells[0, 0] := '* Framework Constituent';
+  sgdUserInputGrid.Cells[1, 0] := 'SWMM Equivalent';
+  sgdUserInputGrid.Cells[2, 0] := 'Unit Conversion Factor';
 
   // polutants
-  StringGrid1.Cells[0, 1] := 'FLOW ';
-  StringGrid1.Cells[0, 2] := 'TSS';
-  StringGrid1.Cells[0, 3] := 'TP';
-  StringGrid1.Cells[0, 4] := 'DP ';
-  StringGrid1.Cells[0, 5] := 'DZn';
-  StringGrid1.Cells[0, 6] := 'TZN';
-  StringGrid1.Cells[0, 7] := 'DCU';
-  StringGrid1.Cells[0, 8] := 'TCU';
+  sgdUserInputGrid.Cells[0, 1] := 'FLOW ';
+  sgdUserInputGrid.Cells[0, 2] := 'TSS';
+  sgdUserInputGrid.Cells[0, 3] := 'TP';
+  sgdUserInputGrid.Cells[0, 4] := 'DP ';
+  sgdUserInputGrid.Cells[0, 5] := 'DZn';
+  sgdUserInputGrid.Cells[0, 6] := 'TZN';
+  sgdUserInputGrid.Cells[0, 7] := 'DCU';
+  sgdUserInputGrid.Cells[0, 8] := 'TCU';
 
   // unit conversion factors
-  StringGrid1.Cells[2, 1] := '1.00';
-  StringGrid1.Cells[2, 2] := '1.00';
-  StringGrid1.Cells[2, 3] := '1.00';
-  StringGrid1.Cells[2, 4] := '1.00 ';
-  StringGrid1.Cells[2, 5] := '1.00';
-  StringGrid1.Cells[2, 6] := '1.00';
-  StringGrid1.Cells[2, 7] := '1.00';
-  StringGrid1.Cells[2, 8] := '1.00';
+  sgdUserInputGrid.Cells[2, 1] := '1.00';
+  sgdUserInputGrid.Cells[2, 2] := '1.00';
+  sgdUserInputGrid.Cells[2, 3] := '1.00';
+  sgdUserInputGrid.Cells[2, 4] := '1.00 ';
+  sgdUserInputGrid.Cells[2, 5] := '1.00';
+  sgdUserInputGrid.Cells[2, 6] := '1.00';
+  sgdUserInputGrid.Cells[2, 7] := '1.00';
+  sgdUserInputGrid.Cells[2, 8] := '1.00';
 
   // mode of operation radio buttons
   RadioGroup1.Items.AddObject('Import from SWMM', TObject(0));
@@ -689,16 +723,22 @@ end;
 procedure TForm1.RadioGroup1Click(Sender: TObject);
 var
   index: integer;
-  Value: integer;
+  val: integer;
 begin
   index := RadioGroup1.ItemIndex;
   Assert(index >= 0);
   // Sanity check
-  Value := integer(RadioGroup1.Items.Objects[index]);
-  if (Value = 0) then
+  val := integer(RadioGroup1.Items.Objects[index]);
+  if (val = 0) then
+  begin
+
     btnSelectSWMMFile.Caption := 'Select SWMM Output File';
-  if (Value = 1) then
+  end;
+  if (val = 1) then
+  begin
     btnSelectSWMMFile.Caption := 'Select SWMM Input File';
+  end;
+  operatingMode := opModes[val];
 end;
 
 end.
