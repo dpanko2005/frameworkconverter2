@@ -2,7 +2,7 @@ object Form1: TForm1
   Left = 0
   Top = 0
   Caption = 'Framework SWMM Converter'
-  ClientHeight = 719
+  ClientHeight = 620
   ClientWidth = 493
   Color = clBtnFace
   Font.Charset = DEFAULT_CHARSET
@@ -16,7 +16,7 @@ object Form1: TForm1
   TextHeight = 13
   object txtSwmmFilePath: TLabel
     Left = 19
-    Top = 61
+    Top = 125
     Width = 286
     Height = 13
     Caption = 'File Name'
@@ -25,7 +25,7 @@ object Form1: TForm1
   end
   object Label2: TLabel
     Left = 8
-    Top = 463
+    Top = 511
     Width = 364
     Height = 26
     Caption = 
@@ -35,7 +35,7 @@ object Form1: TForm1
   end
   object Label3: TLabel
     Left = 40
-    Top = 36
+    Top = 100
     Width = 122
     Height = 19
     Caption = 'Select SWMM File'
@@ -50,7 +50,7 @@ object Form1: TForm1
   end
   object Label4: TLabel
     Left = 40
-    Top = 119
+    Top = 175
     Width = 135
     Height = 19
     Caption = 'Select SWMM Node'
@@ -65,7 +65,7 @@ object Form1: TForm1
   end
   object Label5: TLabel
     Left = 40
-    Top = 199
+    Top = 247
     Width = 269
     Height = 19
     Caption = 'Match Framework Constituents / Units'
@@ -80,7 +80,7 @@ object Form1: TForm1
   end
   object Label6: TLabel
     Left = 19
-    Top = 36
+    Top = 100
     Width = 15
     Height = 19
     Caption = '1:'
@@ -95,7 +95,7 @@ object Form1: TForm1
   end
   object Label7: TLabel
     Left = 19
-    Top = 119
+    Top = 175
     Width = 15
     Height = 19
     Caption = '2:'
@@ -110,7 +110,7 @@ object Form1: TForm1
   end
   object Label8: TLabel
     Left = 19
-    Top = 199
+    Top = 247
     Width = 15
     Height = 19
     Caption = '3:'
@@ -125,13 +125,13 @@ object Form1: TForm1
   end
   object Image1: TImage
     Left = 320
-    Top = 8
+    Top = 56
     Width = 169
     Height = 210
   end
   object btnSelectSWMMFile: TButton
     Left = 168
-    Top = 30
+    Top = 94
     Width = 146
     Height = 25
     Caption = 'Browse...'
@@ -140,7 +140,7 @@ object Form1: TForm1
   end
   object cbxSwmmNode: TComboBox
     Left = 16
-    Top = 144
+    Top = 200
     Width = 217
     Height = 21
     TabOrder = 1
@@ -148,7 +148,7 @@ object Form1: TForm1
   end
   object sgdUserInputGrid: TStringGrid
     Left = 8
-    Top = 224
+    Top = 272
     Width = 441
     Height = 233
     Color = clBtnFace
@@ -168,7 +168,7 @@ object Form1: TForm1
   end
   object cbxFlow: TComboBox
     Left = 147
-    Top = 250
+    Top = 298
     Width = 159
     Height = 21
     TabOrder = 3
@@ -177,7 +177,7 @@ object Form1: TForm1
   end
   object cbxDCu: TComboBox
     Left = 147
-    Top = 399
+    Top = 447
     Width = 159
     Height = 21
     TabOrder = 4
@@ -185,7 +185,7 @@ object Form1: TForm1
   end
   object cbxTZn: TComboBox
     Left = 148
-    Top = 374
+    Top = 422
     Width = 159
     Height = 21
     TabOrder = 5
@@ -193,7 +193,7 @@ object Form1: TForm1
   end
   object cbxDZn: TComboBox
     Left = 148
-    Top = 349
+    Top = 397
     Width = 159
     Height = 21
     TabOrder = 6
@@ -201,7 +201,7 @@ object Form1: TForm1
   end
   object cbxDP: TComboBox
     Left = 148
-    Top = 324
+    Top = 372
     Width = 159
     Height = 21
     TabOrder = 7
@@ -209,7 +209,7 @@ object Form1: TForm1
   end
   object cbxTP: TComboBox
     Left = 146
-    Top = 299
+    Top = 347
     Width = 159
     Height = 21
     TabOrder = 8
@@ -217,7 +217,7 @@ object Form1: TForm1
   end
   object cbxTSS: TComboBox
     Left = 147
-    Top = 274
+    Top = 322
     Width = 159
     Height = 21
     TabOrder = 9
@@ -225,7 +225,7 @@ object Form1: TForm1
   end
   object btnCancel: TButton
     Left = 182
-    Top = 536
+    Top = 584
     Width = 75
     Height = 25
     Caption = 'Cancel'
@@ -234,7 +234,7 @@ object Form1: TForm1
   end
   object btnHelp: TButton
     Left = 278
-    Top = 536
+    Top = 584
     Width = 75
     Height = 25
     Caption = 'Help'
@@ -242,7 +242,7 @@ object Form1: TForm1
   end
   object btnNext: TButton
     Left = 374
-    Top = 536
+    Top = 584
     Width = 75
     Height = 25
     Caption = 'Next'
@@ -251,15 +251,15 @@ object Form1: TForm1
   end
   object cbxTCu: TComboBox
     Left = 148
-    Top = 424
+    Top = 472
     Width = 159
     Height = 21
     TabOrder = 13
     Text = 'Select SWMM Pollutant'
   end
   object RadioGroup1: TRadioGroup
-    Left = 235
-    Top = 567
+    Left = 29
+    Top = 22
     Width = 133
     Height = 66
     Caption = 'Desired Operation'
@@ -267,11 +267,11 @@ object Form1: TForm1
     OnClick = RadioGroup1Click
   end
   object OpenTextFileDialog1: TOpenTextFileDialog
-    Left = 392
-    Top = 576
+    Left = 40
+    Top = 544
   end
   object SaveTextFileDialog1: TSaveTextFileDialog
-    Left = 400
-    Top = 632
+    Left = 128
+    Top = 552
   end
 end

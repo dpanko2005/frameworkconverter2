@@ -16,7 +16,7 @@ object OperationStatusDlg: TOperationStatusDlg
   object Label1: TLabel
     Left = 0
     Top = 0
-    Width = 553
+    Width = 298
     Height = 25
     Alignment = taCenter
     Caption = 'The Operation Was Successful!!'
@@ -37,8 +37,8 @@ object OperationStatusDlg: TOperationStatusDlg
   object lblTSFilesCreated: TLabel
     Left = 104
     Top = 64
-    Width = 82
-    Height = 13
+    Width = 273
+    Height = 58
     Caption = 'lblTSFilesCreated'
   end
   object Label3: TLabel

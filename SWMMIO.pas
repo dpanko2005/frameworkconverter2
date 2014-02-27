@@ -8,15 +8,19 @@ uses
   Dialogs, jpeg, ExtCtrls, ComCtrls, StdCtrls, Buttons;
 
 type
-  TConvertedFWTS = record // converted framework timeseries data structure
+  TMTARecord = record // converted framework timeseries data structure
     tsName: string;
     tsNodeName: string;
     tsType: string; // FLOW or CONCEN
-    tsUnitsFactor: string; // default 1.0
-    constituentName: string;
+    tsUnitsFactor: Double; // default 1.0
+    constituentSWMMName: string;
+    constituentFWName: string;
     convFactor: Double; // default 1.0
     convertedTS: TStringList;
     convertedTSFilePath: string;
+    ModelRunScenarioID: string;
+    SWMMFilePath: string;
+    scratchFilePath: string;
   end;
 
 const
@@ -39,19 +43,104 @@ const
 var
   SWMMFileStreamPosition: long;
   // stores file stream seek position after node and poll names are read
-
-function getSWMMNodeNames(swmmFilePath: string): TArray<TStringList>;
-function getSWMMNodeResults(swmmFilePath: string; nodeName: string;
-  nodeNameList: TStringList; targetSWMPollutants: TStringList;
-  selectedPollutantRecs: TArray<TConvertedFWTS>): TStringList;
-function output_readNodeResults(period: integer; nodeIndex: integer;
-  numNodeResults: integer; numSubCatchs: integer; numSubCatchRslts: integer;
-  outputStartPos: integer; bytesPerPeriod: integer; Reader: TBinaryReader)
-  : TArray<single>;
+function getSWMMNodeIDsFromTxtInput(SWMMFilePath: string): TArray<TStringList>;
+function getSWMMNodeIDsFromBinary(SWMMFilePath: string): TArray<TStringList>;
+procedure Split(const Delimiter: Char; Input: string; const Strings: TStrings);
+procedure saveTextFileToDisc(FileContentsList: TStringList; filePath: string);
 
 implementation
 
-function getSWMMNodeNames(swmmFilePath: string): TArray<TStringList>;
+function getSWMMNodeIDsFromTxtInput(SWMMFilePath: string): TArray<TStringList>;
+var
+  FileContentsList: TStringList;
+  TempListArr: TArray<TStringList>;
+  SwmmTokens: TStringList;
+  lineNumber: integer;
+  intTokenLoc: integer;
+  strLine: string;
+  strToken: string;
+  strObjectID: string;
+  tempInt: integer;
+  i: integer;
+  mtaFilePath: string; // TODO Delete
+  mtaData: TArray<TMTARecord>;
+  rsltLists: TArray<TStringList>;
+begin
+  SetLength(rsltLists, 4);
+  // 0-NodeIDs list, 1-Pollutants list, 2-Timeseries list, 3-Inflows list
+  SwmmTokens := TStringList.Create;
+
+  // Add supported SWMM Node types to the list of tokens to parse
+  SwmmTokens.Delimiter := ' '; // Each list item will be blank separated
+  SwmmTokens.QuoteChar := '|'; // And each item will be quoted with |'s
+  SwmmTokens.DelimitedText :=
+    '|[DIVIDERS]| |[JUNCTIONS]| |[OUTFALLS]| |[STORAGE]| |[POLLUTANTS]| |[TIMESERIES]| |[INFLOWS]|';
+
+  lineNumber := 0;
+  while lineNumber < FileContentsList.Count - 1 do
+  begin
+    strLine := LowerCase(FileContentsList[lineNumber]);
+    for i := 0 to SwmmTokens.Count - 1 do
+    begin
+      strToken := LowerCase(SwmmTokens[i]);
+      intTokenLoc := Pos(strToken, strLine);
+
+      // check inputfile line to see if token present
+      if intTokenLoc > 0 then
+        break;
+    end;
+
+    // if token found read in node names
+    if intTokenLoc > 0 then
+    begin
+      Repeat
+        inc(lineNumber);
+        strLine := FileContentsList[lineNumber];
+        intTokenLoc := Pos('[', strLine);
+        if intTokenLoc > 0 then
+        begin
+          dec(lineNumber);
+          break;
+        end;
+        // ignore comment lines
+        if (Pos(';;', strLine) < 1) and (Length(strLine) > 1) then
+        begin
+          // extract node name
+          tempInt := Pos(' ', strLine);
+          if tempInt > 0 then
+          begin
+            strObjectID := Copy(strLine, 1, tempInt - 1);
+            // 0-NodeIDs list, 1-Pollutants list, 2-Timeseries list, 3-Inflows list
+            if i = 4 then
+            // if we are in the [POLLUTANTS] block save names to pollutants list
+            begin
+              rsltLists[1].Add(strObjectID);
+            end
+            else if i = 5 then
+            // if we are in the [TIMESERIES] block save names to TIMESERIES list
+            begin
+              rsltLists[2].Add(strObjectID);
+            end
+            else if i = 6 then
+            // if we are in the [INFLOWS] block save names to INFLOWS list
+            begin
+              tempInt := Pos(' ', strLine, tempInt + 1); //
+              strObjectID := Copy(strLine, 1, tempInt - 1);
+              rsltLists[3].Add(strObjectID);
+            end
+            else
+              // everything else is a node so save names to nodes list
+              rsltLists[0].Add(strObjectID);
+          end;
+        end;
+      until intTokenLoc > 0;
+    end;
+    inc(lineNumber);
+  end;
+  result := rsltLists;
+end;
+
+function getSWMMNodeIDsFromBinary(SWMMFilePath: string): TArray<TStringList>;
 var
   Stream: TFileStream;
   Reader: TBinaryReader;
@@ -75,7 +164,7 @@ var
   nodeIDList: TStringList;
   pollutantIDList: TStringList;
 begin
-  Stream := TFileStream.Create(swmmFilePath, fmOpenRead or fmShareDenyWrite);
+  Stream := TFileStream.Create(SWMMFilePath, fmOpenRead or fmShareDenyWrite);
   nodeIDList := TStringList.Create();
   pollutantIDList := TStringList.Create();
   try
@@ -165,298 +254,45 @@ begin
   result[1] := pollutantIDList;
 end;
 
-function getSWMMNodeResults(swmmFilePath: string; nodeName: string;
-  nodeNameList: TStringList; targetSWMPollutants: TStringList;
-  selectedPollutantRecs: TArray<TConvertedFWTS>): TStringList;
-var
-  Stream: TFileStream;
-  Reader: TBinaryReader;
-  Value: integer;
-
-  numberOfPeriods: integer;
-  outputStartPos: integer;
-  // bytePos: integer;
-  magicNum: integer;
-  flowUnits: integer;
-  SWMMVersion: integer;
-  // byteOffset: integer;
-  numNodes: integer;
-  numSubCatchs: integer;
-  numLinks: integer;
-  numPolls: integer;
-  idx: long;
-  pollIdx: integer;
-  numCharsInID: integer;
-  tempID: string;
-  tempIDCharArr: TArray<Char>;
-  nodeIDList: TStringList;
-  pollutantIDList: TStringList;
-  pollUnits: TArray<integer>;
-  currentBytePos: long;
-  numLinkProperities: integer;
-  numNodeProperties: integer;
-  tempInt: integer;
-  tempDouble: Double;
-  tempReal8: Double;
-  tempReal4: single;
-  reportStartDate: Double;
-  reportTimeInterv: Double;
-  days: TDateTime;
-  totalNumOfMatchedFRWPollutants: integer;
-  formattedTSDate: string;
-  formattedTSTime: string;
-  nodeResultsForPeriod: TArray<single>;
-  numNodeResults: integer;
-  numSubcatchResults: integer;
-  numlinkResults: integer;
-  bytesPerPeriod: integer;
-  targetNodeIndex: integer;
-  k: integer;
-  j: integer;
-  targetPollutantSWMMOrder: TArray<integer>;
-  targetPollutantFRWOrder: TArray<integer>;
-
+procedure Split(const Delimiter: Char; Input: string; const Strings: TStrings);
 begin
-  Stream := TFileStream.Create(swmmFilePath, fmOpenRead or fmShareDenyWrite);
-  nodeIDList := TStringList.Create();
-  pollutantIDList := TStringList.Create();
-  SetLength(pollUnits, High(selectedPollutantRecs));
-  totalNumOfMatchedFRWPollutants := High(selectedPollutantRecs);
-  SetLength(targetPollutantSWMMOrder, targetSWMPollutants.Count);
-  SetLength(targetPollutantFRWOrder, targetSWMPollutants.Count);
-
-  try
-    Reader := TBinaryReader.Create(Stream);
-    try
-      // Value := Reader.ReadInteger;
-      // --- get number of objects reported on                                   //(5.0.014 - LR)
-      numSubCatchs := 0;
-      numNodes := 0;
-      numLinks := 0;
-      numPolls := 0;
-
-      // First get number of periods from the end of the file
-      Stream.Seek(-4 * sizeof(integer), soEnd);
-
-      // the byte position where the Computed Results section of the file begins (4-byte integer)
-      outputStartPos := Reader.ReadInteger;
-
-      // number of periods
-      numberOfPeriods := Reader.ReadInteger;;
-
-      Stream.Seek(0, soBeginning);
-
-      magicNum := Reader.ReadInteger; // Magic number
-      SWMMVersion := Reader.ReadInteger; // Version number
-      flowUnits := Reader.ReadInteger; // Flow units
-      numSubCatchs := Reader.ReadInteger; // # subcatchments
-      numNodes := Reader.ReadInteger; // # nodes
-      numLinks := Reader.ReadInteger; // # links
-      numPolls := Reader.ReadInteger; // # pollutants
-
-      numNodeResults := MAX_NODE_RESULTS - 1 + numPolls;
-      numSubcatchResults := MAX_SUBCATCH_RESULTS - 1 + numPolls;
-      numlinkResults := MAX_LINK_RESULTS - 1 + numPolls;
-
-      bytesPerPeriod := sizeof(Double) + numSubCatchs * numSubcatchResults *
-        sizeof(single) + numNodes * numNodeResults * sizeof(single) + numLinks *
-        numlinkResults * sizeof(single) + MAX_SYS_RESULTS * sizeof(single);
-
-      // Read all subcatchment IDs and discard, skipping this section is not straight forward since catchment
-      // name lengths vary
-      for idx := 0 to numSubCatchs - 1 do
-      begin
-        numCharsInID := Reader.ReadInteger;
-        tempIDCharArr := Reader.ReadChars(numCharsInID);
-        // if Length(tempIDCharArr) > 0 then
-        // SetString(tempID, PChar(@tempIDCharArr[0]), Length(tempIDCharArr));
-      end;
-
-      // Read all node IDs and save for use later
-      for idx := 0 to numNodes - 1 do
-      begin
-        numCharsInID := Reader.ReadInteger;
-        tempIDCharArr := Reader.ReadChars(numCharsInID);
-        if Length(tempIDCharArr) > 0 then
-        begin
-          SetString(tempID, PChar(@tempIDCharArr[0]), Length(tempIDCharArr));
-          nodeIDList.Add(tempID);
-        end
-      end;
-
-      // Read all link IDs and discard, skipping this section is not straight forward since catchment
-      // name lengths vary
-      for idx := 0 to numLinks - 1 do
-      begin
-        numCharsInID := Reader.ReadInteger;
-        tempIDCharArr := Reader.ReadChars(numCharsInID);
-      end;
-
-      // Read all pollutant IDs and save for use later
-      for idx := 0 to numPolls - 1 do
-      begin
-        numCharsInID := Reader.ReadInteger;
-        tempIDCharArr := Reader.ReadChars(numCharsInID);
-        if Length(tempIDCharArr) > 0 then
-        begin
-          SetString(tempID, PChar(@tempIDCharArr[0]), Length(tempIDCharArr));
-          pollutantIDList.Add(tempID);
-        end
-        else
-      end;
-
-      // Match swmm pollutants to framework pollutants and determine pollutant order - order by framework pollutants
-      k := 0;
-      for idx := 0 to targetSWMPollutants.Count - 1 do
-      begin
-        for j := 0 to numPolls do
-        begin
-          if (AnsiCompareText(targetSWMPollutants[idx], pollutantIDList[j]) = 0)
-          then
-          begin
-            targetPollutantSWMMOrder[idx] := j;
-            targetPollutantFRWOrder[k] := idx;
-            inc(k);
-            break;
-          end;
-        end;
-      end;
-      totalNumOfMatchedFRWPollutants := k;
-
-      // skip to section in file we reached when we read in node names
-      Stream.Seek(SWMMFileStreamPosition, soBeginning);
-      SWMMFileStreamPosition := Stream.Position;
-
-      // --- save codes of pollutant concentration units
-      for idx := 0 to numPolls do
-      begin
-        pollUnits[0] := Reader.ReadInteger;
-      end;
-
-      // --- skip subcatchment area and associated codes
-      tempInt := Reader.ReadInteger; // number of subcatchment properties
-      tempInt := Reader.ReadInteger; // code number for subcatchment area
-      if (numSubCatchs > 0) then
-      begin
-        currentBytePos := Stream.Position;
-        Stream.Seek((numSubCatchs) * sizeof(single), currentBytePos);
-      end;
-
-      // --- skip through node type, invert, & max. depth
-      numNodeProperties := Reader.ReadInteger; // 3 - number of node properties
-      numCharsInID := Reader.ReadInteger; // INPUT_TYPE_CODE
-      numCharsInID := Reader.ReadInteger; // INPUT_INVERT
-      numCharsInID := Reader.ReadInteger; // INPUT_MAX_DEPTH;
-      // Type code is int rest are real4 so read type code seperately
-      if (numNodes > 0) then
-      begin
-        currentBytePos := Stream.Position;
-        Stream.Seek((numNodes) * sizeof(integer) + (numNodes) *
-          (numNodeProperties - 1) * sizeof(single), currentBytePos);
-      end;
-
-      // --- skip link type, offsets, max. depth, & length
-      numLinkProperities := Reader.ReadInteger; // 3 - number of link properties
-      tempInt := Reader.ReadInteger; // INPUT_TYPE_CODE code number
-      tempInt := Reader.ReadInteger; // // INPUT_OFFSET
-      tempInt := Reader.ReadInteger; // // INPUT_OFFSET
-      tempInt := Reader.ReadInteger; // INPUT_MAX_DEPTH
-      tempInt := Reader.ReadInteger; // INPUT_LENGTH
-
-      // Type code is int rest are real4 so read type code seperately
-      if (numLinks > 0) then
-      begin
-        currentBytePos := Stream.Position;
-        Stream.Seek((numLinks) * sizeof(integer) + (numLinks) *
-          (numLinkProperities - 1) * sizeof(single), currentBytePos);
-      end;
-
-      Stream.Seek(outputStartPos - (sizeof(Double) + sizeof(integer)),
-        soBeginning);
-
-      // Get Start date and reporting timestep
-      reportStartDate := Reader.ReadDouble;
-
-      // StartDateTime  = getDateTime(reportStartDate)
-      reportTimeInterv := Reader.ReadInteger;
-
-      // get node results for all time periods
-      // ============================================
-      targetNodeIndex := nodeNameList.IndexOf(nodeName);
-      for idx := 1 to numberOfPeriods do
-      begin
-        days := reportStartDate + (reportTimeInterv * idx / 86400.0);
-        if (idx = 1) then
-        begin
-          // formattedTSDate
-          // formattedTSTime
-          { datetime_decodeDate(days, &yr, &mo, &dy);
-            metaDataFound.fyear=yr;
-            metaDataFound.fmonth=mo;
-            metaDataFound.fday=dy;
-            datetime_decodeTime(days, &hr, &min, &sec);
-            metaDataFound.fhour = hr*3600 + min*60 + sec; }
-        end;
-        { datetime_dateToStr2(days, theDate, dateTimeFormat);
-          datetime_timeToStr2(days, theTime);
-          memset(nodeResultsForPeriod,0,numNodeResults*sizeof(REAL4)); }
-        nodeResultsForPeriod := output_readNodeResults(idx, targetNodeIndex,
-          numNodeResults, numSubCatchs, numSubcatchResults, outputStartPos,
-          bytesPerPeriod, Reader);
-        if (idx <> 1) then
-        begin
-
-          result.Add('\n');
-        end;
-        // add formatted flow entry
-        result.Add(Format(' %11s,%8s,%9.3f', [formattedTSDate, formattedTSTime,
-          nodeResultsForPeriod[NODE_INFLOW] * selectedPollutantRecs[0]
-          .convFactor]));
-
-        for pollIdx := 0 to totalNumOfMatchedFRWPollutants - 1 do
-        begin
-          if (nodeResultsForPeriod[NODE_INFLOW] < MIN_WQ_FLOW) then
-          begin
-            result.Add(Format(',%9.3f', [0.0]));
-          end
-          else
-          begin
-            result.Add(Format(',%9.3f',
-              [nodeResultsForPeriod[NODE_QUAL + targetPollutantSWMMOrder[pollIdx]
-              ] * selectedPollutantRecs[pollIdx].convFactor]));
-          end;
-        end;
-      end;
-    finally
-      Reader.Free;
-    end;
-  finally
-    Stream.Free;
-  end;
+  Assert(Assigned(Strings));
+  Strings.Clear;
+  Strings.Delimiter := Delimiter;
+  Strings.DelimitedText := '"' + StringReplace(Input, Delimiter,
+    '"' + Delimiter + '"', [rfReplaceAll]) + '"';
 end;
 
-function output_readNodeResults(period: integer; nodeIndex: integer;
-  numNodeResults: integer; numSubCatchs: integer; numSubCatchRslts: integer;
-  outputStartPos: integer; bytesPerPeriod: integer; Reader: TBinaryReader)
-  : TArray<single>;
-// Purpose: reads computed results for a node at a specific time period.
-//
+procedure saveTextFileToDisc(FileContentsList: TStringList; filePath: string);
 var
-  bytePos: integer;
-  rslt: TArray<single>;
-  idx: integer;
+  savedfilePath: string;
+  dirName: string;
 begin
-  SetLength(rslt, numNodeResults);
-  bytePos := outputStartPos + (period - 1) * bytesPerPeriod;
-  bytePos := bytePos + sizeof(Double) + numSubCatchs * numSubCatchRslts *
-    sizeof(single); // (5.0.014 - LR)
-  bytePos := bytePos + nodeIndex * numNodeResults * sizeof(single);
-  Reader.BaseStream.Seek(bytePos, soBeginning);
-  for idx := 0 to numNodeResults do
+  // Save a new swmm file back to disc
+  if (FileContentsList <> nil) then
   begin
-    rslt[idx] := Reader.ReadSingle;
+    // check if directory exists
+    dirName := ExtractFilePath(filePath);
+    if (DirectoryExists(dirName) = false) then
+    begin
+      if CreateDir(dirName) then
+        // do nothing ShowMessage('New directory added OK')
+      else
+      begin
+        raise Exception.Create
+          ('Unable to create directory for saving timeseries - error : ' +
+          IntToStr(GetLastError));
+        Exit;
+      end;
+    end;
+
+    { First check if the file exists. }
+    if FileExists(filePath) then
+      { If it exists, raise an exception. }
+      raise Exception.Create('File already exists. Cannot overwrite.')
+    else
+      FileContentsList.SaveToFile(filePath);
   end;
-  result := rslt;
 end;
 
 end.
