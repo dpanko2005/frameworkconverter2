@@ -5,19 +5,19 @@
 
 ## NAME: ModelRunScenarioID: STRING
 ## DSCR: Used by the user to identify the run with a user friendly long name
-'SWMM Trial Run Under pre-BMP conditions'
+No description provided
 
 ## NAME: SWMMNodeID: STRING
 ## DSCR: This is the identifier of the SWMM node for which the timeseries will be retrieved
-'Outfall'
+GW
 
 ## NAME: SWMMOutputFilePath: STRING
 ## DSCR: Path to swmm output file from which timeseries will be extracted
-'C:\SWMMExtract04162012\SWMMModel\RockCreekDemo.out'
+C:\dpTestDelete\SWMMDriversTest\Test20140302164133.inp
 
 ## NAME: scratchFilePath : STRING
 ## DSCR: Scratch File Path
-'C:\SWMMExtract04162012\FrameworkTest\RockCreekDemo.sct'
+C:\Users\dpankani\Documents\RAD Studio\Projects\SWMMDrivers\testfiles\RockCreekDemo.sct
 
 ## NAME: FlowConv: FLOAT
 ## DSCR: Flow Unit Conversion Factor to potentially convert SWMM Flow Time Series to other units (e.g. metric, user-define, etc)
@@ -27,14 +27,12 @@
 
 ## NAME: NumPolls
 ## DSCR: Total number of Pollutants in SWMM Model
-3
+6
 
 ## NAME: FrameworkPollutants
 ## DSCR: SWMM Pollutant Matching - use na if pollutant not available in SWMM model / Concentration Unit Conversion Factor to mg/L
 ## FRMT: ['Framework Pollutant: STRING' = 'SWMM Pollutant : STRING' / 'Concentration conversion factor : FLOAT']
 'TSSf = TSS / 1.00'
-'TPf = TP / 1.00'
-'TCuf = TCu / 1.00'
 
 
 ################## BEGIN OPTIONAL PARAMETERS ##########################################################################

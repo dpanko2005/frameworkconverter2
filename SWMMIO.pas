@@ -33,6 +33,8 @@ const
   MAX_SUBCATCH_RESULTS = 7;
   MAX_LINK_RESULTS = 6;
   MAX_SYS_RESULTS = 14;
+  opModes: array [0 .. 1] of string = ('SWMM_TO_FW', 'SWMM_FROM_FW');
+  appTypes: array [0 .. 1] of string = ('SWMM_CONSOLE', 'SWMM_GUI');
 
   // NnodeResults,NODE_DEPTH,NODE_HEAD,NODE_VOLUME,NODE_LATFLOW,NODE_INFLO,NODE_OVERFLOW;
   NUMNODEVARS: integer = 7;
@@ -42,18 +44,25 @@ const
 
 var
   SWMMFileStreamPosition: long;
+  operatingMode: string; // SWMM_TO_FW or  SWMM_FROM_FW'
+  appType: string; // SWMM_CONSOLE or SWMM_GUI
+  // stores existing swmm TS and Inflow block names in swmm inputfile
+  TSList, InflowsList, ErrsList: TStringList;
+  PollList, NodeNameList: TStringList;
+
   // stores file stream seek position after node and poll names are read
 function getSWMMNodeIDsFromTxtInput(SWMMFilePath: string): TArray<TStringList>;
 function getSWMMNodeIDsFromBinary(SWMMFilePath: string): TArray<TStringList>;
 procedure Split(const Delimiter: Char; Input: string; const Strings: TStrings);
-procedure saveTextFileToDisc(FileContentsList: TStringList; filePath: string);
+procedure saveTextFileToDisc(FileContentsList: TStringList; filePath: string;
+  shdOverwrite: boolean = false);
 
 implementation
 
 function getSWMMNodeIDsFromTxtInput(SWMMFilePath: string): TArray<TStringList>;
 var
   FileContentsList: TStringList;
-  TempListArr: TArray<TStringList>;
+  // TempListArr: TArray<TStringList>;
   SwmmTokens: TStringList;
   lineNumber: integer;
   intTokenLoc: integer;
@@ -62,11 +71,15 @@ var
   strObjectID: string;
   tempInt: integer;
   i: integer;
-  mtaFilePath: string; // TODO Delete
-  mtaData: TArray<TMTARecord>;
+  // mtaFilePath: string; // TODO Delete
+  // mtaData: TArray<TMTARecord>;
   rsltLists: TArray<TStringList>;
 begin
+  FileContentsList := TStringList.Create;
   SetLength(rsltLists, 4);
+  for i := Low(rsltLists) to High(rsltLists) do
+    rsltLists[i] := TStringList.Create();
+
   // 0-NodeIDs list, 1-Pollutants list, 2-Timeseries list, 3-Inflows list
   SwmmTokens := TStringList.Create;
 
@@ -76,76 +89,80 @@ begin
   SwmmTokens.DelimitedText :=
     '|[DIVIDERS]| |[JUNCTIONS]| |[OUTFALLS]| |[STORAGE]| |[POLLUTANTS]| |[TIMESERIES]| |[INFLOWS]|';
 
-  lineNumber := 0;
-  while lineNumber < FileContentsList.Count - 1 do
+  if FileExists(SWMMFilePath) then
   begin
-    strLine := LowerCase(FileContentsList[lineNumber]);
-    for i := 0 to SwmmTokens.Count - 1 do
+    { If it exists, load the data into the stringlist. }
+    FileContentsList.LoadFromFile(SWMMFilePath);
+    lineNumber := 0;
+    while lineNumber < FileContentsList.Count - 1 do
     begin
-      strToken := LowerCase(SwmmTokens[i]);
-      intTokenLoc := Pos(strToken, strLine);
+      strLine := LowerCase(FileContentsList[lineNumber]);
+      for i := 0 to SwmmTokens.Count - 1 do
+      begin
+        strToken := LowerCase(SwmmTokens[i]);
+        intTokenLoc := Pos(strToken, strLine);
 
-      // check inputfile line to see if token present
-      if intTokenLoc > 0 then
-        break;
-    end;
-
-    // if token found read in node names
-    if intTokenLoc > 0 then
-    begin
-      Repeat
-        inc(lineNumber);
-        strLine := FileContentsList[lineNumber];
-        intTokenLoc := Pos('[', strLine);
+        // check inputfile line to see if token present
         if intTokenLoc > 0 then
-        begin
-          dec(lineNumber);
           break;
-        end;
-        // ignore comment lines
-        if (Pos(';;', strLine) < 1) and (Length(strLine) > 1) then
-        begin
-          // extract node name
-          tempInt := Pos(' ', strLine);
-          if tempInt > 0 then
+      end;
+
+      // if token found read in node names
+      if intTokenLoc > 0 then
+      begin
+        Repeat
+          inc(lineNumber);
+          strLine := FileContentsList[lineNumber];
+          intTokenLoc := Pos('[', strLine);
+          if intTokenLoc > 0 then
           begin
-            strObjectID := Copy(strLine, 1, tempInt - 1);
-            // 0-NodeIDs list, 1-Pollutants list, 2-Timeseries list, 3-Inflows list
-            if i = 4 then
-            // if we are in the [POLLUTANTS] block save names to pollutants list
-            begin
-              rsltLists[1].Add(strObjectID);
-            end
-            else if i = 5 then
-            // if we are in the [TIMESERIES] block save names to TIMESERIES list
-            begin
-              rsltLists[2].Add(strObjectID);
-            end
-            else if i = 6 then
-            // if we are in the [INFLOWS] block save names to INFLOWS list
-            begin
-              tempInt := Pos(' ', strLine, tempInt + 1); //
-              strObjectID := Copy(strLine, 1, tempInt - 1);
-              rsltLists[3].Add(strObjectID);
-            end
-            else
-              // everything else is a node so save names to nodes list
-              rsltLists[0].Add(strObjectID);
+            dec(lineNumber);
+            break;
           end;
-        end;
-      until intTokenLoc > 0;
+          // ignore comment lines
+          if (Pos(';;', strLine) < 1) and (Length(strLine) > 1) then
+          begin
+            // extract node name
+            tempInt := Pos(' ', strLine);
+            if tempInt > 0 then
+            begin
+              strObjectID := Copy(strLine, 1, tempInt - 1);
+              // 0-NodeIDs list, 1-Pollutants list, 2-Timeseries list, 3-Inflows list
+              if i = 4 then
+              // if we are in the [POLLUTANTS] block save names to pollutants list
+              begin
+                rsltLists[1].Add(strObjectID);
+              end
+              else if i = 5 then
+              // if we are in the [TIMESERIES] block save names to TIMESERIES list
+              begin
+                rsltLists[2].Add(strObjectID);
+              end
+              else if i = 6 then
+              // if we are in the [INFLOWS] block save names to INFLOWS list
+              begin
+                tempInt := Pos(' ', strLine, tempInt + 1); //
+                strObjectID := Copy(strLine, 1, tempInt - 1);
+                rsltLists[3].Add(strObjectID);
+              end
+              else
+                // everything else is a node so save names to nodes list
+                rsltLists[0].Add(strObjectID);
+            end;
+          end;
+        until intTokenLoc > 0;
+      end;
+      inc(lineNumber);
     end;
-    inc(lineNumber);
+    result := rsltLists;
   end;
-  result := rsltLists;
 end;
 
 function getSWMMNodeIDsFromBinary(SWMMFilePath: string): TArray<TStringList>;
 var
   Stream: TFileStream;
   Reader: TBinaryReader;
-  Value: integer;
-
+  // Value: integer;
   // numberOfPeriods: integer;
   // OutputStartPos: integer;
   // bytePos: integer;
@@ -176,14 +193,6 @@ begin
       numNodes := 0;
       numLinks := 0;
       numPolls := 0;
-
-      { // First get number of periods from the end of the file
-        Stream.Seek(-1, soEnd);
-        OutputStartPos := Reader.ReadInteger;
-        // the byte position where the Computed Results section of the file begins (4-byte integer)
-        numberOfPeriods := Reader.ReadInteger;; // number of periods
-        // metaDataFound.numread=numberOfPeriods;
-        Stream.Seek(-1, soBeginning); }
 
       magicNum := Reader.ReadInteger; // Magic number
       SWMMVersion := Reader.ReadInteger; // Version number
@@ -263,9 +272,9 @@ begin
     '"' + Delimiter + '"', [rfReplaceAll]) + '"';
 end;
 
-procedure saveTextFileToDisc(FileContentsList: TStringList; filePath: string);
+procedure saveTextFileToDisc(FileContentsList: TStringList; filePath: string;
+  shdOverwrite: boolean = false);
 var
-  savedfilePath: string;
   dirName: string;
 begin
   // Save a new swmm file back to disc
@@ -280,16 +289,17 @@ begin
       else
       begin
         raise Exception.Create
-          ('Unable to create directory for saving timeseries - error : ' +
-          IntToStr(GetLastError));
+          ('Fatal Error: Unable to create directory for saving timeseries - error : '
+          + IntToStr(GetLastError));
         Exit;
       end;
     end;
 
     { First check if the file exists. }
-    if FileExists(filePath) then
+    if (not shdOverwrite) and (FileExists(filePath)) then
       { If it exists, raise an exception. }
-      raise Exception.Create('File already exists. Cannot overwrite.')
+      raise Exception.Create
+        ('Fatal Error: File already exists. Attemp to overwrite failed.')
     else
       FileContentsList.SaveToFile(filePath);
   end;

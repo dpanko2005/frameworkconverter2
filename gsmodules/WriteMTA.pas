@@ -15,25 +15,15 @@ function Write(mtaFilePath: string; MTADataArr: TArray<TMTARecord>): Boolean;
 var
   FileContentsList: TStringList;
   TplContentsList: TStringList;
-  //TempTokens: TStringList;
-  //TempStrList: TStringList;
-  //lineNumber: integer;
   intTokenLoc: integer;
-  //strLine: string;
-  //strToken: string;
   i: integer;
-  //j: integer;
+  // j: integer;
   modelRunScenarioID: string;
   SWMMNodeID: string;
   swmmFilePath: string;
   scratchFilePath: string;
   flowConvFactor: double;
-  //pollConvFactor: double;
   numPolls: integer;
-  //swmmConstituentName: string;
-  //fwConstituentName: string;
-  //tmpStream: TResourceStream;
-  //ms: TMemoryStream;
   tplTokens: TArray<string>;
   tplTokenVals: TArray<string>;
   FWPollutantsStr: string;
@@ -43,24 +33,27 @@ begin
 
   FileContentsList := TStringList.Create;
   TplContentsList := TStringList.Create;
-  //TempStrList := TStringList.Create;
   FWPollutantsStr := '';
   tplTokens := TArray<string>.Create('$$ModelRunScenarioID$$', '$$SWMMNodeID$$',
     '$$SWMMOutputFilePath$$', '$$scratchFilePath$$', '$$FlowConv$$',
     '$$NumPolls$$', '$$FWPollutants$$');
 
   modelRunScenarioID := MTADataArr[0].modelRunScenarioID;
+  if modelRunScenarioID = '' then
+    modelRunScenarioID := 'No description provided';
+
   SWMMNodeID := MTADataArr[0].tsNodeName;
   swmmFilePath := MTADataArr[0].swmmFilePath;
   scratchFilePath := MTADataArr[0].scratchFilePath;
   flowConvFactor := MTADataArr[0].convFactor;
   numPolls := High(MTADataArr);
 
-  for i := 1 to numPolls do    //exclude flow which is first item in MTADataArr
+  for i := 1 to numPolls do // exclude flow which is first item in MTADataArr
   begin
-    FWPollutantsStr := FWPollutantsStr + Format('''%s = %s / %f''',
-      [MTADataArr[i].constituentFWName, MTADataArr[i].constituentSWMMName,
-      MTADataArr[i].convFactor]) + sLineBreak;
+    if (MTADataArr[i].constituentFWName <> '') then
+      FWPollutantsStr := FWPollutantsStr + Format('''%s = %s / %f''',
+        [MTADataArr[i].constituentFWName, MTADataArr[i].constituentSWMMName,
+        MTADataArr[i].convFactor]) + sLineBreak;
   end;
 
   tplTokenVals := TArray<string>.Create(modelRunScenarioID, SWMMNodeID,
@@ -94,7 +87,7 @@ var
   HResInfo: HRSRC;
   HGlobal: THandle;
   Buffer, GoodType: pchar;
-  //i: integer;
+  // i: integer;
   Ext: string;
 begin
   Ext := uppercase(extractfileext(aFile));

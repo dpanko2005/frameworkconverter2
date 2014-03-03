@@ -6,6 +6,9 @@ uses
   Windows, Messages, SysUtils, Variants, Classes, Graphics, Controls, Forms,
   StrUtils, Dialogs, jpeg, ExtCtrls, ComCtrls, StdCtrls, Buttons, SWMMIO;
 
+var
+  errorsList: TStringList;
+
 function Read(mtaFilePath: string): TArray<TMTARecord>;
 procedure PopulateMTARecord(var MTARec: TMTARecord; descr: string;
   constituentSWMMName: string; constituentFWName: string;
@@ -38,6 +41,7 @@ var
   swmmConstituentName: string;
   fwConstituentName: string;
 begin
+  errorsList := TStringList.Create;
   FileContentsList := TStringList.Create;
   TempStrList := TStringList.Create;
 
@@ -93,9 +97,15 @@ begin
           if i = 1 then // token is swmm node id
             SWMMNodeID := FileContentsList[lineNumber];
           if i = 2 then // token is swmm input or output file path
+          begin
             swmmFilePath := FileContentsList[lineNumber];
+            swmmFilePath := StringReplace(swmmFilePath, '''', '', [rfReplaceAll]);
+          end;
           if i = 3 then // token is framework scratch file path
+          begin
             scratchFilePath := FileContentsList[lineNumber];
+            scratchFilePath := StringReplace(scratchFilePath, '''', '', [rfReplaceAll]);
+          end;
           if i = 4 then // token is FlowConv
             flowConvFactor := StrToFloat(FileContentsList[lineNumber]);
           if i = 5 then // token is NumPolls
@@ -141,7 +151,8 @@ begin
     else
     begin
       { Otherwise, raise an exception. }
-      raise Exception.Create('File does not exist.');
+      raise Exception.Create
+        ('SWMM Converter Control File does not exist and hence cannot be read.');
       Exit
     end;
   finally

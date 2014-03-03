@@ -35,10 +35,10 @@ object OperationStatusDlg: TOperationStatusDlg
     Caption = 'Timeseries File(s) Created:'
   end
   object lblTSFilesCreated: TLabel
-    Left = 104
-    Top = 64
-    Width = 273
-    Height = 58
+    Left = 8
+    Top = 59
+    Width = 82
+    Height = 13
     Caption = 'lblTSFilesCreated'
   end
   object Label3: TLabel
@@ -49,8 +49,8 @@ object OperationStatusDlg: TOperationStatusDlg
     Caption = 'SWMM File Saved As:'
   end
   object lblSWMMFilePath: TLabel
-    Left = 104
-    Top = 152
+    Left = 8
+    Top = 147
     Width = 74
     Height = 13
     Caption = 'SWMM file path'

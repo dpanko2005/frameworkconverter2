@@ -3,18 +3,66 @@ unit SWMMInput;
 interface
 
 uses
-  Windows, Messages, SysUtils, Variants, Classes, StrUtils, SWMMIO;
+  Windows, Messages, SysUtils, Variants, Classes, StrUtils, SWMMIO, ReadMTA, ComCtrls;
 
+var
+  swmmIDsListArr: TArray<TStringList>;
+
+function consoleExportFromFWToSWMM(MTAFilePath: string): Integer;
 procedure finalizeExport(var Conv: array of TMTARecord; filePathDir: string;
   Sender: TObject);
 function checkForDuplicateTS(tsBlockInsertPosition: integer;
   TSList: TStringList; NewFileContentsList: TStringList;
   tsName: string): integer;
-function updateSWMMInputFile(var Conv: array of TMTARecord;
-  SWMMTSList: TStringList; filePathDir: string; swmmInputFilePath: string;
-  Sender: TObject): string;
+function updateSWMMInputFile(var Conv: array of TMTARecord; filePathDir: string; swmmInputFilePath: string): string;
 
 implementation
+
+function consoleExportFromFWToSWMM(MTAFilePath: string): Integer;
+var
+  mtaData: TArray<TMTARecord>;
+  tempStr, swmmFilePath: string;
+  i: integer;
+
+  workingDirPath: string;
+begin
+  mtaData := ReadMTA.Read(MTAFilePath);
+
+  if (ReadMTA.errorsList.Count > 0) then
+  begin
+    for tempStr in ReadMTA.errorsList do
+      Writeln(tempStr);
+
+    Writeln('Operation failed.');
+    result := 0;
+    Exit;
+  end
+  else
+  begin
+    Assert(Assigned(mtaData));
+    Writeln('SWMM output input file to insert timeseries into: ' + mtaData[0]
+      .swmmFilePath + sLineBreak);
+    Writeln('Target SWMM Node: ' + mtaData[0].tsNodeName);
+    Writeln('Source framework scratch file to import timeseries from: ' +
+      mtaData[0].scratchFilePath);
+    // flow is in position 0 so highest array index is count of pollutants
+    Writeln('Total number of pollutants:' + IntToStr(High(mtaData)));
+
+    for i := Low(mtaData) + 1 to High(mtaData) do
+    begin
+      Writeln(Format
+        ('Pollutant %d: framework name: %s SWMM name: %s conversion factor: %9.3f',
+        [i, mtaData[i].constituentFWName, mtaData[i].constituentSWMMName,
+        mtaData[i].convFactor]) + sLineBreak);
+    end;
+
+    Writeln('Now extracting SWMM timeseries. Please wait...');
+    workingDirPath := ExtractFileDir(swmmFilePath);
+    updateSWMMInputFile(mtaData, workingDirPath, mtaData[0].swmmFilePath);
+    Writeln('Operation completed successfully.');
+  end;
+  result := 1;
+end;
 
 procedure finalizeExport(var Conv: array of TMTARecord; filePathDir: string;
   Sender: TObject);
@@ -70,8 +118,8 @@ begin
 end;
 
 function updateSWMMInputFile(var Conv: array of TMTARecord;
-  SWMMTSList: TStringList; filePathDir: string; swmmInputFilePath: string;
-  Sender: TObject): string;
+  filePathDir: string;
+  swmmInputFilePath: string): string;
 var
   NewFileContentsList: TStringList;
   // lineNumber: integer;
@@ -86,6 +134,14 @@ begin
   pathSuffix := FormatDateTime('yyyymmddhhnnss', Now) + '.inp';
   newSWMMInputFilePath := filePathDir + '\' +
     ChangeFileExt(ExtractFileName(swmmInputFilePath), '') + pathSuffix;
+
+  // take an inventory of the contents of the swmm file to avoid duplicates later
+  // 0-NodeIDs list, 1-Pollutants list, 2-Timeseries list, 3-Inflows list
+  swmmIDsListArr := SWMMIO.getSWMMNodeIDsFromTxtInput(swmmInputFilePath);
+  SWMMIO.TSList := swmmIDsListArr[2];
+  SWMMIO.InflowsList := swmmIDsListArr[3];
+  SWMMIO.NodeNameList := swmmIDsListArr[0];
+  SWMMIO.PollList := swmmIDsListArr[1];
   try
 
     { First check if the swmm file we will be updating exists - note that update version save to new path. }
@@ -109,7 +165,7 @@ begin
 
       // 1. Write TimeSeries Block
       // check TS list that was passed in to see if input file already contains TS to avoid duplicates
-      if (SWMMTSList.Count > 0) then
+      if (SWMMIO.TSList.Count > 0) then
       begin
         // timeseries section already exists in swmm input file so simply add to it - check for duplicate names
         tsBlockInsertPosition := NewFileContentsList.IndexOf('[TIMESERIES]');
@@ -136,7 +192,7 @@ begin
         begin
           // duplicateLineNumber := 0;
           duplicateLineNumber := checkForDuplicateTS(tsBlockInsertPosition,
-            SWMMTSList, NewFileContentsList, tempRec.tsName);
+            SWMMIO.TSList, NewFileContentsList, tempRec.tsName);
           if (duplicateLineNumber <> 0) then
             NewFileContentsList.Delete(duplicateLineNumber);
 
@@ -150,7 +206,7 @@ begin
 
       // 2. Write Inflow Block
       // check TS list that was passed in to see if input file already contains TS
-      if ((SWMMTSList.Count > 0) and (NewFileContentsList.IndexOf('[INFLOWS]')
+      if ((SWMMIO.TSList.Count > 0) and (NewFileContentsList.IndexOf('[INFLOWS]')
         > -1)) then
       begin
         // Inflow section already exists in swmm input file so simply add to it - check for duplicate names
