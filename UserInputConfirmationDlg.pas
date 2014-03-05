@@ -23,9 +23,6 @@ type
     Label2: TLabel;
     btnRun: TButton;
     btnCancel: TButton;
-    prgExectionProgress: TProgressBar;
-    Label3: TLabel;
-    imgBusy: TImage;
     procedure btnRunClick(Sender: TObject);
     procedure btnCancelClick(Sender: TObject);
 
@@ -70,7 +67,7 @@ begin
     Screen.FocusedForm := LProgressForm;
     SendMessage(LProgressForm.Handle, CM_ACTIVATE, 0, 0);
     LProgressForm.Show;
-    InCallback(LProgressForm.prgExectionProgress);
+    //InCallback(LProgressForm.prgExectionProgress);
     EnableTaskWindows(LWindowList);
     RestoreFocusState(LSaveFocusState);
   finally

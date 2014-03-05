@@ -5,7 +5,7 @@
         <FrameworkType>VCL</FrameworkType>
         <MainSource>FrameWorkSwmmDrivers.dpr</MainSource>
         <Base>True</Base>
-        <Config Condition="'$(Config)'==''">GUISWMMIputDebug</Config>
+        <Config Condition="'$(Config)'==''">SWMMInputDebug</Config>
         <Platform Condition="'$(Platform)'==''">Win32</Platform>
         <TargetedPlatforms>1</TargetedPlatforms>
         <AppType>Application</AppType>
@@ -173,13 +173,13 @@
         <DCC_RemoteDebug>false</DCC_RemoteDebug>
     </PropertyGroup>
     <PropertyGroup Condition="'$(Cfg_5_Win32)'!=''">
-        <Debugger_RunParams>&quot;C:\Users\dpankani\Documents\RAD Studio\Projects\SWMMDrivers\testfiles\RockCreekDemoOutput.mta&quot;</Debugger_RunParams>
+        <Debugger_RunParams>&quot;C:\Users\dpankani\Documents\RAD Studio\Projects\SWMMDrivers\testfiles\RockCreekDemoOutput.mta&quot; &quot;C:\Users\dpankani\Documents\RAD Studio\Projects\SWMMDrivers\testfiles\swmmconvertstring.txt&quot;</Debugger_RunParams>
         <VerInfo_Locale>1033</VerInfo_Locale>
         <VerInfo_IncludeVerInfo>true</VerInfo_IncludeVerInfo>
         <DCC_Define>SWMM_TO_FW;SWMM_CONSOLE;$(DCC_Define)</DCC_Define>
     </PropertyGroup>
     <PropertyGroup Condition="'$(Cfg_4_Win32)'!=''">
-        <Debugger_RunParams>&quot;C:\Users\dpankani\Documents\RAD Studio\Projects\SWMMDrivers\testfiles\RockCreekDemoInput.mta&quot;</Debugger_RunParams>
+        <Debugger_RunParams>&quot;C:\Users\dpankani\Documents\RAD Studio\Projects\SWMMDrivers\testfiles\RockCreekDemoInput.mta&quot; &quot;C:\Users\dpankani\Documents\RAD Studio\Projects\SWMMDrivers\testfiles\swmmconvertstring.txt&quot;</Debugger_RunParams>
         <VerInfo_IncludeVerInfo>true</VerInfo_IncludeVerInfo>
         <VerInfo_Locale>1033</VerInfo_Locale>
         <DCC_Define>SWMM_FROM_FW;SWMM_CONSOLE;$(DCC_Define)</DCC_Define>
@@ -238,6 +238,7 @@ $(PostBuildEvent)]]></PostBuildEvent>
         <DCCReference Include="gsmodules\WriteMTA.pas"/>
         <DCCReference Include="gsmodules\SWMMInput.pas"/>
         <DCCReference Include="gsmodules\SWMMOutput.pas"/>
+        <DCCReference Include="gsmodules\FWControlScratchFile.pas"/>
         <RcItem Include="mtaTemplate.txt">
             <ContainerId>ResourceItem</ContainerId>
             <ResourceType>RCDATA</ResourceType>

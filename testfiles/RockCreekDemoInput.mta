@@ -13,11 +13,11 @@
 
 ## NAME: SWMMOutputFilePath: STRING
 ## DSCR: Path to swmm output file from which timeseries will be extracted
-'C:\SWMMExtract04162012\SWMMModel\RockCreekDemo.out'
+'C:\Users\dpankani\Documents\RAD Studio\Projects\SWMMDrivers\testfiles\Test.inp'
 
 ## NAME: scratchFilePath : STRING
 ## DSCR: Scratch File Path 
-'C:\SWMMExtract04162012\FrameworkTest\RockCreekDemo.sct'
+'C:\Users\dpankani\Documents\RAD Studio\Projects\SWMMDrivers\testfiles\RockCreekDemo.sct'
 
 ## NAME: FlowConv: FLOAT
 ## DSCR: Flow Unit Conversion Factor to potentially convert SWMM Flow Time Series to other units (e.g. metric, user-define, etc)

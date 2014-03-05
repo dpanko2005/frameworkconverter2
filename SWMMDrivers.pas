@@ -7,7 +7,7 @@ uses
   System.Classes, Vcl.Graphics, Generics.Defaults, Generics.Collections,
   Vcl.Controls, Vcl.Forms, Vcl.Dialogs, Vcl.StdCtrls, Vcl.ExtDlgs, Vcl.Grids,
   Vcl.ExtCtrls, UserInputConfirmationDlg, OperationStatusDlgFrm, SWMMIO,
-  SWMMInput, SWMMOutput, ReadMTA, WriteMTA, ComCtrls, GIFImg;
+  SWMMInput, SWMMOutput, ReadMTA, WriteMTA, ComCtrls, BusyDialogFrm, GIFImg, FWControlScratchFile;
 
 const
   constituentNames: array [0 .. 7] of string = ('FLOW', 'TSS', 'TP', 'DP',
@@ -66,6 +66,10 @@ type
 
   private
     workingDirPath: string;
+    procedure AssignMTARecFields(SWMMNodeName: string; var Conv: TMTARecord;
+      constituentName: string; convFactor: Double; tsType: string;
+      ScenarioDescription: string; swmmFilePath: string;
+      fwScratchFilePath: string);
     { Private declarations }
 
   var
@@ -73,13 +77,7 @@ type
 
   public
     { Public declarations }
-    function readInFrameworkTSFile(filePath: string; convGrid: TStringGrid;
-      var Conv: TArray<TMTARecord>; Sender: TObject): TArray<TMTARecord>;
 
-    procedure AssignMTARecFields(SWMMNodeName: string; var Conv: TMTARecord;
-      constituentName: string; convFactor: Double; tsType: string;
-      ScenarioDescription: string; swmmFilePath: string;
-      fwScratchFilePath: string);
   end;
 
 var
@@ -97,7 +95,7 @@ end;
 procedure TForm1.ProgressCallback(InProgressOverall: TProgressBar);
 var
   Index: Integer;
-  kIndex: Integer;
+  // kIndex: Integer;
 begin
   MessageDlg('Press OK to start a long task...', mtInformation, [mbOK], 0);
   // 1000 steps
@@ -117,26 +115,18 @@ var
   ConvertedFWTSArr: TArray<TMTARecord>;
   constituentCbxs: TArray<TComboBox>;
   tempStr: string;
-  frameworkTSFileInPath, frameworkTSFileOutPath: string;
   j: Integer;
   tempModalResult: Integer;
   numSelectedConstituents: Integer;
   newSWMMInputFilePath: string;
   selectedNodeName: string;
-  swmmNodeResults: TStringList;
   scenarioDescr: string;
-  mtaFilePath: string;
+  FWCtrlRecord:FWCtrlScratchRecord;
 begin
 
   // Launch project form and force user to provide the project information
   SWMMUserInputVerificationFrm := TUserInputVerificationFrm.Create(Application);
   // TODO delete - hardcoded filepaths
-  frameworkTSFileInPath :=
-    'C:\Users\dpankani\Documents\RAD Studio\Projects\SWMMDrivers\testfiles\RockCreekDemo.sct';
-  frameworkTSFileOutPath :=
-    'C:\Users\dpankani\Documents\RAD Studio\Projects\SWMMDrivers\testfiles\RockCreekDemoOut.sct';
-  mtaFilePath :=
-    'C:\Users\dpankani\Documents\RAD Studio\Projects\SWMMDrivers\testfiles\RockCreekDemo.mta';
 
   SetLength(ConvertedFWTSArr, High(constituentNames));
   scenarioDescr := txtScenarioDescr.Text;
@@ -181,7 +171,7 @@ begin
         StringGrid1.Cells[1, 1] := 'FLOW'; // flow is always selected
         AssignMTARecFields(selectedNodeName, ConvertedFWTSArr[0], 'FLOW',
           StrToFloat(Self.sgdUserInputGrid.Cells[2, 1]), 'FLOW', scenarioDescr,
-          swmmFilePath, frameworkTSFileInPath);
+          swmmFilePath, SWMMIO.frameCtrlFilePath);
 
         // save conversion factors and selected constituents into record array for use later
         numSelectedConstituents := 1;
@@ -193,7 +183,8 @@ begin
               [constituentCbxs[j].ItemIndex];
             AssignMTARecFields(selectedNodeName, ConvertedFWTSArr[j],
               constituentNames[j], StrToFloat(Self.sgdUserInputGrid.Cells[2, 1]
-              ), 'CONCEN', scenarioDescr, swmmFilePath, frameworkTSFileInPath);
+              ), 'CONCEN', scenarioDescr, swmmFilePath,
+              SWMMIO.frameCtrlFilePath);
             inc(numSelectedConstituents);
           end;
         end;
@@ -204,21 +195,36 @@ begin
       tempModalResult := SWMMUserInputVerificationFrm.ShowModal;
       if (tempModalResult = mrOk) then
       begin
-        imgBusy.Visible := true;
-        (imgBusy.Picture.Graphic as TGIFImage).Animate := True;
-        tempModalResult := SWMMUserInputVerificationFrm.ShowModal;
-        // ShowProgress(ProgressCallback);
-        // show form again and make progressbar visible
+        Application.CreateForm(TBusyFrm, BusyFrm);
+        Self.Hide;
+
+        Screen.FocusedForm := BusyFrm;
+        SendMessage(BusyFrm.Handle, CM_ACTIVATE, 0, 0);
+        (BusyFrm.Image1.Picture.Graphic as TGIFImage).AnimateLoop := glEnabled;
+        (BusyFrm.Image1.Picture.Graphic as TGIFImage).Animate := true;
+        BusyFrm.Show;
+        (BusyFrm.Image1.Picture.Graphic as TGIFImage).AnimateLoop := glEnabled;
+        (BusyFrm.Image1.Picture.Graphic as TGIFImage).Animate := true;
+
         if (operatingMode = opModes[0]) then // importing from swmm Binary
         begin
-          SWMMOutput.importFromSWMMToFW(swmmFilePath, frameworkTSFileOutPath,
+          FWCtrlRecord := SWMMOutput.importFromSWMMToFW(swmmFilePath, SWMMIO.frameCtrlFilePath,
             selectedNodeName, ConvertedFWTSArr);
+          BusyFrm.Close;
+          // populate operation status confirmation dialog
+          OperationStatusDlg.lblHeader.Caption :=
+            'Import Operation was successful!';
+          OperationStatusDlg.lblSWMMFilePath.Visible := false;
+          OperationStatusDlg.lblSWMMFileLabel.Visible := false;
+          OperationStatusDlg.lblTSFilesCreated.Caption :=
+            FWCtrlRecord.scratchFilePath;
+          OperationStatusDlg.ShowModal;
         end
         else // exporting to swmm input file
         begin
-          ConvertedFWTSArr := readInFrameworkTSFile(frameworkTSFileInPath,
-            StringGrid1, ConvertedFWTSArr, Sender);
-          SWMMInput.finalizeExport(ConvertedFWTSArr, workingDirPath, Sender);
+          ConvertedFWTSArr := SWMMIO.readInFrameworkTSFile
+            (SWMMIO.frameCtrlFilePath, ConvertedFWTSArr);
+          SWMMInput.finalizeExport(ConvertedFWTSArr, workingDirPath);
           // write exported TS to the confirmation dialog
           for j := Low(ConvertedFWTSArr) to High(ConvertedFWTSArr) do
           begin
@@ -226,7 +232,10 @@ begin
               tempStr := tempStr + #13#10 + ConvertedFWTSArr[j]
                 .convertedTSFilePath;
           end;
+          BusyFrm.Close;
           // populate operation status confirmation dialog
+          OperationStatusDlg.lblHeader.Caption :=
+            'Export Operation was successful!';
           OperationStatusDlg.lblSWMMFilePath.Caption := newSWMMInputFilePath;
           OperationStatusDlg.lblTSFilesCreated.Caption := tempStr;
           OperationStatusDlg.ShowModal;
@@ -238,77 +247,13 @@ begin
         // save user settings to MTA file to allow subsequent commandline executions without user intervention
         WriteMTA.Write(mtaFilePath + '2', ConvertedFWTSArr);
       end;
-
-      { tempModalResult := SWMMUserInputVerificationFrm.ShowModal;
-        if (tempModalResult = mrOk) then
-        begin
-        ConvertedFWTSArr := readInFrameworkTSFile(frameworkTSFileInPath,
-        StringGrid1, ConvertedFWTSArr, Sender);
-        SWMMInput.finalizeExport(ConvertedFWTSArr, workingDirPath, Sender);
-
-        // write exported TS to the confirmation dialog
-        for j := Low(ConvertedFWTSArr) to High(ConvertedFWTSArr) do
-        begin
-        if (ConvertedFWTSArr[j].convertedTSFilePath <> '') then
-        tempStr := tempStr + #13#10 + ConvertedFWTSArr[j]
-        .convertedTSFilePath;
-        end;
-        // populate operation status confirmation dialog
-        OperationStatusDlg.lblSWMMFilePath.Caption := newSWMMInputFilePath;
-        OperationStatusDlg.lblTSFilesCreated.Caption := tempStr;
-        OperationStatusDlg.ShowModal;
-
-        if (operatingMode = opModes[0]) then // importing from swmm Binary
-        begin
-        SWMMOutput.importFromSWMMToFW(swmmFilePath, frameworkTSFileOutPath,
-        selectedNodeName, ConvertedFWTSArr);
-        end
-        else // exporting to swmm input file
-        begin
-        // write TS to swmm input file and save as new file
-        SWMMInput.updateSWMMInputFile(ConvertedFWTSArr, workingDirPath,
-        Self.txtSwmmFilePath.Caption);
-        end;
-        // save user settings to MTA file to allow subsequent commandline executions without user intervention
-        WriteMTA.Write(mtaFilePath + '2', ConvertedFWTSArr);
-        end; }
     finally
+      BusyFrm.Close;
       // ConvertedFWTSArr.Free;
     end;
   end;
   Self.Close;
 end;
-
-{ procedure TForm1.executeImportExport(ConvertedFWTSArr: TArray<TMTARecord>; TASender:TObject);
-  begin
-  if (SWMMIO.operatingMode = SWMMIO.opModes[0]) then // importing from swmm Binary
-  begin
-  SWMMOutput.importFromSWMMToFW(swmmFilePath, frameworkTSFileOutPath,
-  selectedNodeName, ConvertedFWTSArr);
-  end
-  else // exporting to swmm input file
-  begin
-  ConvertedFWTSArr := readInFrameworkTSFile(frameworkTSFileInPath,
-  StringGrid1, ConvertedFWTSArr, Sender);
-  SWMMInput.finalizeExport(ConvertedFWTSArr, workingDirPath, Sender);
-  // write exported TS to the confirmation dialog
-  for j := Low(ConvertedFWTSArr) to High(ConvertedFWTSArr) do
-  begin
-  if (ConvertedFWTSArr[j].convertedTSFilePath <> '') then
-  tempStr := tempStr + #13#10 + ConvertedFWTSArr[j].convertedTSFilePath;
-  end;
-  // populate operation status confirmation dialog
-  OperationStatusDlg.lblSWMMFilePath.Caption := newSWMMInputFilePath;
-  OperationStatusDlg.lblTSFilesCreated.Caption := tempStr;
-  OperationStatusDlg.ShowModal;
-
-  // write TS and Inflow blocks to swmm input file and save as new file
-  SWMMInput.updateSWMMInputFile(ConvertedFWTSArr, workingDirPath,
-  Self.txtSwmmFilePath.Caption);
-  end;
-  // save user settings to MTA file to allow subsequent commandline executions without user intervention
-  WriteMTA.Write(mtaFilePath + '2', ConvertedFWTSArr);
-  end; }
 
 procedure TForm1.AssignMTARecFields(SWMMNodeName: string; var Conv: TMTARecord;
   constituentName: string; convFactor: Double; tsType: string;
@@ -326,64 +271,13 @@ begin
   Conv.scratchFilePath := fwScratchFilePath;
 end;
 
-function TForm1.readInFrameworkTSFile(filePath: string; convGrid: TStringGrid;
-  var Conv: TArray<TMTARecord>; Sender: TObject): TArray<TMTARecord>;
-var
-  FileContentsList: TStringList;
-  strLine: string;
-  lineNumber: Integer;
-  tempStrList: TStrings;
-  tempDateTimeStr: string;
-  tempValueStr: string;
-  i: Integer;
-  j: Integer;
-begin
-  FileContentsList := TStringList.Create;
-  tempStrList := TStringList.Create;
-  try
-    for i := Low(Conv) to High(Conv) do
-    begin
-      Conv[i].convertedTS := TStringList.Create;
-    end;
-
-    FileContentsList.LoadFromFile(filePath);
-    lineNumber := 0;
-    while lineNumber < FileContentsList.Count - 1 do
-    begin
-      strLine := FileContentsList[lineNumber];
-      // ignore comment lines
-      if (Pos('#', strLine) < 1) and (Length(strLine) > 1) then
-      begin
-        tempStrList.Clear();
-        ExtractStrings([','], [], PChar(strLine), tempStrList);
-        tempDateTimeStr := tempStrList[0] + '/' + tempStrList[1] + '/' +
-          tempStrList[2] + ' ' + tempStrList[3];
-        for i := Low(Conv) to High(Conv) do
-        begin
-          j := i + 4;
-          if (j < tempStrList.Count - 1) then
-          begin
-            tempValueStr := tempStrList[j];
-            Conv[i].convertedTS.Add(tempDateTimeStr + '	' + tempValueStr);
-          end;
-        end;
-      end;
-      inc(lineNumber);
-    end;
-  finally
-    FileContentsList.Free;
-    tempStrList.Free;
-  end;
-  result := Conv;
-end;
-
 procedure TForm1.btnSelectSWMMFileClick(Sender: TObject);
 var
   TempListArr: TArray<TStringList>;
-  intTokenLoc: Integer;
+  // intTokenLoc: Integer;
   swmmIDsListArr: TArray<TStringList>;
 begin
-  intTokenLoc := 0;
+  // intTokenLoc := 0;
   try
     if OpenTextFileDialog1.Execute then
       { First check if the file exists. }
@@ -442,17 +336,41 @@ begin
   ErrsList := TStringList.Create();
   Form1.color := clwhite;
 
+ //need framwork metadata scratchfile file for export
+ //control file tells us what the name of the framework node is that we will be exporting from
+   // so if framwork metadata scratchfile was not passed in via commandline so ask for it
+  if (SWMMIO.frameCtrlFilePath = '') and (SWMMIO.operatingMode = SWMMIO.opModes[1]) then
+
+  begin
+    MessageDlg
+      ('A Valid Framework Control File was not located. Press okay to browse and select one',
+      mtInformation, [mbOK], 0);
+    OpenTextFileDialog1.Filter := 'Framework Control File (*.txt)|*.TXT';
+
+    if OpenTextFileDialog1.Execute then
+      { First check if the file exists. }
+      if FileExists(OpenTextFileDialog1.FileName) then
+      begin
+        SWMMIO.frameCtrlFilePath := OpenTextFileDialog1.FileName;
+      end
+      else // we are exporting to swmm so using SWMM input file
+      begin
+        MessageDlg('A Valid Framework Control File was not Found',
+          mtInformation, [mbOK], 0);
+      end;
+  end;
+
   if (SWMMIO.operatingMode = SWMMIO.opModes[0]) then
   // SWMM_TO_FW importing from swmm binary file
   begin
-    lblOperatingMode.Caption := 'Exporting from SWMM to WERF Framework';
+    lblOperatingMode.Caption := 'Importing from SWMM to WERF Framework';
     btnSelectSWMMFile.Caption := 'Select SWMM Results Output File';
     OpenTextFileDialog1.Filter := 'SWMM Results (*.out)|*.OUT';
     SaveTextFileDialog1.Filter := 'SWMM Input (*.inp)|*.INP';
   end
   else // SWMM_FROM_FW we are exporting to swmm so using SWMM input file
   begin
-    lblOperatingMode.Caption := 'Importing from SWMM to WERF Framework';
+    lblOperatingMode.Caption := 'Exporting from WERF Framework to SWMM';
     btnSelectSWMMFile.Caption := 'Select SWMM Input File';
     OpenTextFileDialog1.Filter := 'SWMM Input (*.inp)|*.INP';
     SaveTextFileDialog1.Filter := 'SWMM Input (*.inp)|*.INP';
@@ -485,11 +403,6 @@ begin
   sgdUserInputGrid.Cells[2, 6] := '1.00';
   sgdUserInputGrid.Cells[2, 7] := '1.00';
   sgdUserInputGrid.Cells[2, 8] := '1.00';
-
-  { // mode of operation radio buttons
-    RadioGroup1.Items.AddObject('Import from SWMM', TObject(0));
-    RadioGroup1.Items.AddObject('Export to SWMM', TObject(1));
-    RadioGroup1.ItemIndex := 0; }
 end;
 
 procedure TForm1.RadioGroup1Click(Sender: TObject);

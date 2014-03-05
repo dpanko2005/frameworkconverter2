@@ -3,18 +3,20 @@ unit SWMMInput;
 interface
 
 uses
-  Windows, Messages, SysUtils, Variants, Classes, StrUtils, SWMMIO, ReadMTA, ComCtrls;
+  Windows, Messages, SysUtils, Variants, Classes, StrUtils, SWMMIO, ReadMTA,
+  FWControlScratchFile,
+  ComCtrls;
 
 var
   swmmIDsListArr: TArray<TStringList>;
 
 function consoleExportFromFWToSWMM(MTAFilePath: string): Integer;
-procedure finalizeExport(var Conv: array of TMTARecord; filePathDir: string;
-  Sender: TObject);
-function checkForDuplicateTS(tsBlockInsertPosition: integer;
+procedure finalizeExport(var Conv: array of TMTARecord; filePathDir: string);
+function checkForDuplicateTS(tsBlockInsertPosition: Integer;
   TSList: TStringList; NewFileContentsList: TStringList;
-  tsName: string): integer;
-function updateSWMMInputFile(var Conv: array of TMTARecord; filePathDir: string; swmmInputFilePath: string): string;
+  tsName: string): Integer;
+function updateSWMMInputFile(var Conv: array of TMTARecord; filePathDir: string;
+  swmmInputFilePath: string): string;
 
 implementation
 
@@ -22,7 +24,7 @@ function consoleExportFromFWToSWMM(MTAFilePath: string): Integer;
 var
   mtaData: TArray<TMTARecord>;
   tempStr, swmmFilePath: string;
-  i: integer;
+  i: Integer;
 
   workingDirPath: string;
 begin
@@ -58,19 +60,20 @@ begin
 
     Writeln('Now extracting SWMM timeseries. Please wait...');
     workingDirPath := ExtractFileDir(swmmFilePath);
+    mtaData := SWMMIO.readInFrameworkTSFile(mtaData[0].scratchFilePath, mtaData);
+    SWMMInput.finalizeExport(mtaData, workingDirPath);
     updateSWMMInputFile(mtaData, workingDirPath, mtaData[0].swmmFilePath);
     Writeln('Operation completed successfully.');
   end;
   result := 1;
 end;
 
-procedure finalizeExport(var Conv: array of TMTARecord; filePathDir: string;
-  Sender: TObject);
+procedure finalizeExport(var Conv: array of TMTARecord; filePathDir: string);
 var
   filePath: string;
   pathPrefix: string;
   pathSuffix: string;
-  i: integer;
+  i: Integer;
 begin
   pathPrefix := filePathDir + '\TS\FrameworkTS_';
   pathSuffix := FormatDateTime('yyyymmddhhnnss', Now) + '.dat';
@@ -86,9 +89,9 @@ begin
   end;
 end;
 
-function checkForDuplicateTS(tsBlockInsertPosition: integer;
+function checkForDuplicateTS(tsBlockInsertPosition: Integer;
   TSList: TStringList; NewFileContentsList: TStringList;
-  tsName: string): integer;
+  tsName: string): Integer;
 begin
   // check our cached list of TS names for a hit
   if (TSList.IndexOf(tsName) > 0) then
@@ -117,18 +120,17 @@ begin
   result := 0;
 end;
 
-function updateSWMMInputFile(var Conv: array of TMTARecord;
-  filePathDir: string;
+function updateSWMMInputFile(var Conv: array of TMTARecord; filePathDir: string;
   swmmInputFilePath: string): string;
 var
   NewFileContentsList: TStringList;
   // lineNumber: integer;
-  tempInt: integer;
-  tsBlockInsertPosition: integer;
+  tempInt: Integer;
+  tsBlockInsertPosition: Integer;
   tempRec: TMTARecord;
   pathSuffix: string;
   newSWMMInputFilePath: string;
-  duplicateLineNumber: integer;
+  duplicateLineNumber: Integer;
 begin
   NewFileContentsList := TStringList.Create;
   pathSuffix := FormatDateTime('yyyymmddhhnnss', Now) + '.inp';
@@ -206,8 +208,8 @@ begin
 
       // 2. Write Inflow Block
       // check TS list that was passed in to see if input file already contains TS
-      if ((SWMMIO.TSList.Count > 0) and (NewFileContentsList.IndexOf('[INFLOWS]')
-        > -1)) then
+      if ((SWMMIO.TSList.Count > 0) and
+        (NewFileContentsList.IndexOf('[INFLOWS]') > -1)) then
       begin
         // Inflow section already exists in swmm input file so simply add to it - check for duplicate names
         tsBlockInsertPosition := NewFileContentsList.IndexOf('[INFLOWS]') + 1;

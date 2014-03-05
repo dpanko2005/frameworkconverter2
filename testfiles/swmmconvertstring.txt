@@ -1,0 +1,14 @@
+C:\Users\dpankani\Documents\RAD Studio\Projects\SWMMDrivers\testfiles\OutfallFWTS
+Outfall
+1
+6
+Converted from SWMM 5
+1993
+10
+10
+6
+1993
+10
+4
+6
+76344

@@ -4,7 +4,8 @@ interface
 
 uses
   Windows, Messages, SysUtils, Variants, Classes, Graphics, Controls, Forms,
-  StrUtils, Dialogs, jpeg, ExtCtrls, ComCtrls, StdCtrls, Buttons, SWMMIO;
+  StrUtils, Dialogs, jpeg, ExtCtrls, ComCtrls, StdCtrls, Buttons, SWMMIO,
+  MTATemplateString;
 
 function Write(mtaFilePath: string; MTADataArr: TArray<TMTARecord>): Boolean;
 procedure LoadResourceFile(aFile: string; ms: TMemoryStream);
@@ -28,6 +29,7 @@ var
   tplTokenVals: TArray<string>;
   FWPollutantsStr: string;
   tplFilePath: string;
+  tempStr: string;
 begin
   Assert(Assigned(MTADataArr));
 
@@ -59,22 +61,26 @@ begin
   tplTokenVals := TArray<string>.Create(modelRunScenarioID, SWMMNodeID,
     swmmFilePath, scratchFilePath, FloatToStr(flowConvFactor),
     IntToStr(numPolls), FWPollutantsStr);
-  tplFilePath :=
-    'C:\Users\dpankani\Documents\RAD Studio\Projects\SWMMDrivers\mtaTemplate.txt';
+  // tplFilePath :=
+  // 'C:\Users\dpankani\Documents\RAD Studio\Projects\SWMMDrivers\mtaTemplate.txt';
   try
     { First check if the file exists. }
-    if (FileExists(tplFilePath)) then
+    // if (FileExists(tplFilePath)) then
+    // begin
+    // replace tokens in template with values
+    TplContentsList.LoadFromFile(tplFilePath);
+    tempStr := MTATemplateString.mtaTemplateStr;
+    for i := 0 to High(tplTokens) do
     begin
-      // replace tokens in template with values
-      TplContentsList.LoadFromFile(tplFilePath);
-      for i := 0 to High(tplTokens) do
-      begin
-        intTokenLoc := TplContentsList.IndexOf(tplTokens[i]);
-        if (intTokenLoc > 0) then
-          TplContentsList[intTokenLoc] := tplTokenVals[i];
-      end;
-      TplContentsList.SaveToFile(mtaFilePath);
+      tempStr := StringReplace(tempStr, tplTokens[i], tplTokenVals[i],
+        [rfReplaceAll, rfIgnoreCase]);
+      // intTokenLoc := TplContentsList.IndexOf(tplTokens[i]);
+      // if (intTokenLoc > 0) then
+      // TplContentsList[intTokenLoc] := tplTokenVals[i];
     end;
+    TplContentsList.Add(tempStr);
+    TplContentsList.SaveToFile(mtaFilePath);
+    // end;
   finally
     FileContentsList.Free;
     TplContentsList.Free;

@@ -9,11 +9,11 @@ No description provided
 
 ## NAME: SWMMNodeID: STRING
 ## DSCR: This is the identifier of the SWMM node for which the timeseries will be retrieved
-GW
+Outfall
 
 ## NAME: SWMMOutputFilePath: STRING
 ## DSCR: Path to swmm output file from which timeseries will be extracted
-C:\dpTestDelete\SWMMDriversTest\Test20140302164133.inp
+C:\dpTestDelete\SWMMDriversTest\RockCreekDemo.out
 
 ## NAME: scratchFilePath : STRING
 ## DSCR: Scratch File Path

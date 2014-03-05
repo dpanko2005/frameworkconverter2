@@ -4,8 +4,7 @@ interface
 
 uses
   Windows, Messages, SysUtils, Variants, Classes, Graphics, Controls, Forms,
-  StrUtils,
-  Dialogs, jpeg, ExtCtrls, ComCtrls, StdCtrls, Buttons;
+  StrUtils, Dialogs, jpeg, ExtCtrls, ComCtrls, StdCtrls, Buttons;
 
 type
   TMTARecord = record // converted framework timeseries data structure
@@ -49,8 +48,10 @@ var
   // stores existing swmm TS and Inflow block names in swmm inputfile
   TSList, InflowsList, ErrsList: TStringList;
   PollList, NodeNameList: TStringList;
+  frameCtrlFilePath, mtaFilePath: string;
 
   // stores file stream seek position after node and poll names are read
+function readInFrameworkTSFile(filePath: string; var Conv: TArray<TMTARecord>): TArray<TMTARecord>;
 function getSWMMNodeIDsFromTxtInput(SWMMFilePath: string): TArray<TStringList>;
 function getSWMMNodeIDsFromBinary(SWMMFilePath: string): TArray<TStringList>;
 procedure Split(const Delimiter: Char; Input: string; const Strings: TStrings);
@@ -58,6 +59,57 @@ procedure saveTextFileToDisc(FileContentsList: TStringList; filePath: string;
   shdOverwrite: boolean = false);
 
 implementation
+
+function readInFrameworkTSFile(filePath: string; var Conv: TArray<TMTARecord>)
+  : TArray<TMTARecord>;
+var
+  FileContentsList: TStringList;
+  strLine: string;
+  lineNumber: integer;
+  tempStrList: TStrings;
+  tempDateTimeStr: string;
+  tempValueStr: string;
+  i: integer;
+  j: integer;
+begin
+  FileContentsList := TStringList.Create;
+  tempStrList := TStringList.Create;
+  try
+    for i := Low(Conv) to High(Conv) do
+    begin
+      Conv[i].convertedTS := TStringList.Create;
+    end;
+
+    FileContentsList.LoadFromFile(filePath);
+    lineNumber := 0;
+    while lineNumber < FileContentsList.Count - 1 do
+    begin
+      strLine := FileContentsList[lineNumber];
+      // ignore comment lines
+      if (Pos('#', strLine) < 1) and (Length(strLine) > 1) then
+      begin
+        tempStrList.Clear();
+        ExtractStrings([','], [], PChar(strLine), tempStrList);
+        tempDateTimeStr := tempStrList[0] + '/' + tempStrList[1] + '/' +
+          tempStrList[2] + ' ' + tempStrList[3];
+        for i := Low(Conv) to High(Conv) do
+        begin
+          j := i + 4;
+          if (j < tempStrList.Count - 1) then
+          begin
+            tempValueStr := tempStrList[j];
+            Conv[i].convertedTS.Add(tempDateTimeStr + '	' + tempValueStr);
+          end;
+        end;
+      end;
+      inc(lineNumber);
+    end;
+  finally
+    FileContentsList.Free;
+    tempStrList.Free;
+  end;
+  result := Conv;
+end;
 
 function getSWMMNodeIDsFromTxtInput(SWMMFilePath: string): TArray<TStringList>;
 var
@@ -289,7 +341,7 @@ begin
       else
       begin
         raise Exception.Create
-          ('Fatal Error: Unable to create directory for saving timeseries - error : '
+          ('Fatal Error: Unable to create directory for saving file - error : '
           + IntToStr(GetLastError));
         Exit;
       end;

@@ -8,12 +8,16 @@ program FrameWorkSwmmDrivers;
 
 uses
   System.SysUtils,
-  Vcl.Forms, SWMMDrivers in 'SWMMDrivers.pas' {Form1} ,
+  Vcl.Forms,
+  SWMMDrivers in 'SWMMDrivers.pas' {Form1} ,
   UserInputConfirmationDlg in 'UserInputConfirmationDlg.pas' {Form2} ,
   OperationStatusDlgFrm in 'OperationStatusDlgFrm.pas' {OperationStatusDlg} ,
-  SWMMIO in 'SWMMIO.pas', ReadMTA in 'gsmodules\ReadMTA.pas',
-  WriteMTA in 'gsmodules\WriteMTA.pas', SWMMInput in 'gsmodules\SWMMInput.pas',
-  SWMMOutput in 'gsmodules\SWMMOutput.pas';
+  SWMMIO in 'SWMMIO.pas',
+  ReadMTA in 'gsmodules\ReadMTA.pas',
+  WriteMTA in 'gsmodules\WriteMTA.pas',
+  SWMMInput in 'gsmodules\SWMMInput.pas',
+  SWMMOutput in 'gsmodules\SWMMOutput.pas',
+  FWControlScratchFile in 'gsmodules\FWControlScratchFile.pas';
 
 {$R *.res}
 
@@ -25,27 +29,32 @@ begin
 {$ELSE}
   SWMMIO.operatingMode := SWMMIO.opModes[1]; // SWMM_FROM_FW
 {$ENDIF}
+  if (ParamCount > 2) then
+    SWMMIO.frameCtrlFilePath := ParamStr(2);
+  if (ParamCount > 1) then
+    SWMMIO.mtaFilePath := ParamStr(1);
+
 {$IFDEF SWMM_CONSOLE}
   SWMMIO.appType := appTypes[0]; // set the application type to SWMM_CONSOLE
   try
-    if (ParamCount < 1) then
+    if (ParamCount < 2) then
     begin
       Writeln('Error: Please pass in control file');
-      Writeln('Usage: swmmConverterExe path_to_mta_file');
+      Writeln('Usage: swmmConverterExe path_to_mta_file.mta path_to_frameWorkMetaData_file.txt');
       exit;
     end;
     Writeln('SWMM Converter Version 1.0.20140228');
-    Writeln('Opening control file:' + ParamStr(1));
-    //process import or export request
+    Writeln('Framework metadata scratch file:' + ParamStr(2));
+    Writeln('Opening SWMM control file:' + ParamStr(1));
+    // process import or export request
     if (SWMMIO.operatingMode = SWMMIO.opModes[0]) then
-      SWMMOutput.consoleImportFromSWMMToFW(ParamStr(1))
+      SWMMOutput.consoleImportFromSWMMToFW(SWMMIO.mtaFilePath)
     else
-       SWMMInput.consoleExportFromFWToSWMM(ParamStr(1))
-
-    except
-      on E: Exception do
-        Writeln(E.ClassName, ': ', E.Message);
-    end;
+      SWMMInput.consoleExportFromFWToSWMM(SWMMIO.mtaFilePath)
+  except
+    on E: Exception do
+      Writeln(E.ClassName, ': ', E.Message);
+  end;
 
 {$ELSE}
   SWMMIO.appType := appTypes[1]; // set the application type to SWMM_GUI

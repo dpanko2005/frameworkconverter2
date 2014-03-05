@@ -15,7 +15,7 @@ interface
 
 uses
   Windows, Messages, SysUtils, DateUtils, Variants, Classes, StrUtils, SWMMIO,
-  ReadMTA, ComCtrls;
+  ReadMTA, FWControlScratchFile, ComCtrls;
 
 var
   errorsList: TStringList;
@@ -26,9 +26,10 @@ function output_readNodeResults(period: Integer; nodeIndex: Integer;
   outputStartPos: Integer; bytesPerPeriod: Integer; Reader: TBinaryReader)
   : TArray<single>;
 function getSWMMNodeResults(SWMMFilePath: string; nodeName: string;
-  selectedConstituentRecs: TArray<TMTARecord>): TStringList;
+  selectedConstituentRecs: TArray<TMTARecord>): FWCtrlScratchRecord;
 function importFromSWMMToFW(SWMMFilePath: string; fwTSFileToCreatePath: string;
-  nodeName: string; selectedConstituentRecs: TArray<TMTARecord>): TStringList;
+  nodeName: string; selectedConstituentRecs: TArray<TMTARecord>)
+  : FWCtrlScratchRecord;
 
 implementation
 
@@ -77,19 +78,25 @@ begin
 end;
 
 function importFromSWMMToFW(SWMMFilePath: string; fwTSFileToCreatePath: string;
-  nodeName: string; selectedConstituentRecs: TArray<TMTARecord>): TStringList;
+  nodeName: string; selectedConstituentRecs: TArray<TMTARecord>)
+  : FWCtrlScratchRecord;
 var
-  swmmNodeResults: TStringList;
+  swmmNodeResults: FWCtrlScratchRecord;
 begin
+  if (fwTSFileToCreatePath = '') then
+    fwTSFileToCreatePath := ExtractFilePath(SWMMFilePath) + nodeName + 'FWTS';
+
   swmmNodeResults := getSWMMNodeResults(SWMMFilePath, nodeName,
     selectedConstituentRecs);
-  SWMMIO.saveTextFileToDisc(swmmNodeResults, fwTSFileToCreatePath, true);
+  swmmNodeResults.scratchFilePath := fwTSFileToCreatePath;
+  FWControlScratchFile.Write(swmmNodeResults);
   result := swmmNodeResults;
 end;
 
 function getSWMMNodeResults(SWMMFilePath: string; nodeName: string;
-  selectedConstituentRecs: TArray<TMTARecord>): TStringList;
+  selectedConstituentRecs: TArray<TMTARecord>): FWCtrlScratchRecord;
 var
+  rslt: FWCtrlScratchRecord;
   Stream: TFileStream;
   Reader: TBinaryReader;
   Value: Integer;
@@ -98,9 +105,9 @@ var
   numNodes, numSubCatchs, numLinks, numPolls: Integer;
   idx, currentBytePos: long;
   pollIdx, numCharsInID: Integer;
-  tsResultEntryStr, tempID: string;
+  tsResultEntryStr, tempID, tempPollHeader: string;
   tempIDCharArr: TArray<Char>;
-  rslt, nodeIDList, pollutantIDList, targetSWMPollutants: TStringList;
+  fwTS, nodeIDList, pollutantIDList, targetSWMPollutants: TStringList;
   pollUnits: TArray<Integer>;
   numLinkProperities, numNodeProperties, tempInt: Integer;
   tempDouble, reportStartDate, reportTimeInterv, tempReal8: Double;
@@ -120,15 +127,15 @@ begin
   Stream := TFileStream.Create(SWMMFilePath, fmOpenRead or fmShareDenyWrite);
   nodeIDList := TStringList.Create();
   pollutantIDList := TStringList.Create();
-  rslt := TStringList.Create();
+  fwTS := TStringList.Create();
   targetSWMPollutants := TStringList.Create();
   SetLength(pollUnits, High(selectedConstituentRecs));
 
   // save headers for output FW TS file#SWMM Trial Run Under pre-BMP conditions
-  rslt.add(Format('#NodeID:%s', [nodeName]));
-  rslt.add('#');
-  rslt.add('#');
-  rslt.add('# Year,MM,DD,   hours,     FLOW,     TSSf,      TPf,     TCuf');
+  fwTS.add(Format('#NodeID:%s', [nodeName]));
+  fwTS.add('#');
+  fwTS.add('#');
+  tempPollHeader := '# Yr,MM,DD, hours,     FLOW,';
 
   for j := 1 to High(selectedConstituentRecs) do
   begin
@@ -216,16 +223,20 @@ begin
       begin
         for j := 0 to numPolls do
         begin
-          if (AnsiCompareText(targetSWMPollutants[idx], pollutantIDList[j]) = 0) then
+          if (AnsiCompareText(targetSWMPollutants[idx], pollutantIDList[j]) = 0)
+          then
           begin
             targetPollutantSWMMOrder[idx] := j;
             targetPollutantFRWOrder[k] := idx;
+            tempPollHeader := tempPollHeader +
+              Format('%9s,', [targetSWMPollutants[idx]]);
             inc(k);
             break;
           end;
         end;
       end;
       totalNumOfMatchedFRWPollutants := k;
+      fwTS.add('#' + tempPollHeader);
 
       // skip to section in file we reached when we read in node names
       Stream.Seek(SWMMFileStreamPosition, soBeginning);
@@ -323,8 +334,34 @@ begin
               [pollIdx].convFactor]);
           end;
         end;
-        rslt.add(tsResultEntryStr);
+        fwTS.add(tsResultEntryStr);
       end;
+
+      rslt.scratchFilePath := selectedConstituentRecs[0].scratchFilePath;
+      rslt.tsNodeName := selectedConstituentRecs[0].tsNodeName;
+      rslt.convFactor := selectedConstituentRecs[0].convFactor;
+      rslt.numPolls := High(selectedConstituentRecs);
+      rslt.description := selectedConstituentRecs[0].ModelRunScenarioID;
+
+      days := reportStartDate + (reportTimeInterv * idx / 86400.0);
+      // timeseries start date
+      DecodeDateTime(days, myYear, myMonth, myDay, myHour, myMin,
+        mySec, myMilli);
+      rslt.startYear := myYear;
+      rslt.startMonth := myMonth;
+      rslt.startDay := myMonth;
+      rslt.startHourFrac := myHour;
+
+      days := reportStartDate + (reportTimeInterv * numberOfPeriods / 86400.0);
+      // timeseries start date
+      DecodeDateTime(days, myYear, myMonth, myDay, myHour, myMin,
+        mySec, myMilli);
+      rslt.endYear := myYear;
+      rslt.endMonth := myMonth;
+      rslt.endDay := myDay;
+      rslt.endHourFrac := myHour;
+      rslt.numberOfTimesteps := numberOfPeriods;
+      rslt.fwTimeSeries := fwTS;
     finally
       Reader.Free;
     end;

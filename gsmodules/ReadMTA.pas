@@ -51,6 +51,7 @@ begin
   scratchFilePath := '';
   flowConvFactor := 1.0;
   intTokenLoc := 0;
+  numPolls:= 0;
   try
 
     { First check if the file exists. }
