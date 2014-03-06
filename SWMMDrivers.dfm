@@ -25,8 +25,8 @@ object Form1: TForm1
   object Label2: TLabel
     Left = 8
     Top = 463
-    Width = 460
-    Height = 26
+    Width = 445
+    Height = 13
     Caption = 
       '*TSS - Total Susp. Solids, TP - Total Phosphorus, DP - Dissolved' +
       ' Phosphorus, TZn - Total Zinc'
@@ -155,7 +155,7 @@ object Form1: TForm1
   object lblOperatingMode: TLabel
     Left = 8
     Top = 8
-    Width = 460
+    Width = 123
     Height = 19
     Alignment = taCenter
     Caption = 'operatingMode'
@@ -168,7 +168,7 @@ object Form1: TForm1
   end
   object btnSelectSWMMFile: TButton
     Left = 168
-    Top = 46
+    Top = 49
     Width = 204
     Height = 25
     Caption = 'Browse...'
@@ -182,6 +182,7 @@ object Form1: TForm1
     Height = 21
     TabOrder = 1
     Text = 'Select SWMM Node'
+    OnChange = cbxSwmmNodeChange
   end
   object sgdUserInputGrid: TStringGrid
     Left = 8

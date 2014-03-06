@@ -15,7 +15,7 @@ interface
 
 uses
   Windows, Messages, SysUtils, DateUtils, Variants, Classes, StrUtils, SWMMIO,
-  ReadMTA, FWControlScratchFile, ComCtrls;
+  ReadMTA, FWControlScratchFile, ComCtrls,Vcl.Forms;
 
 var
   errorsList: TStringList;
@@ -39,6 +39,7 @@ var
   tempStr: string;
   i: Integer;
 begin
+
   mtaData := ReadMTA.Read(MTAFilePath);
 
   if (ReadMTA.errorsList.Count > 0) then
@@ -74,6 +75,7 @@ begin
       mtaData[0].tsNodeName, mtaData);
     Writeln('Operation completed successfully.');
   end;
+  errorsList.Free;
   result := 1;
 end;
 
@@ -83,8 +85,8 @@ function importFromSWMMToFW(SWMMFilePath: string; fwTSFileToCreatePath: string;
 var
   swmmNodeResults: FWCtrlScratchRecord;
 begin
-  if (fwTSFileToCreatePath = '') then
-    fwTSFileToCreatePath := ExtractFilePath(SWMMFilePath) + nodeName + 'FWTS';
+errorsList := TStringList.Create();
+  
 
   swmmNodeResults := getSWMMNodeResults(SWMMFilePath, nodeName,
     selectedConstituentRecs);
@@ -124,6 +126,11 @@ var
   targetPollutantSWMMOrder, targetPollutantFRWOrder: TArray<Integer>;
 begin
   Assert(Assigned(selectedConstituentRecs));
+  if Not(FileExists(SWMMFilePath)) then
+  begin
+    errorsList.Add('SWMM results file not found at: ' +  SWMMFilePath);
+    exit;
+  end;
   Stream := TFileStream.Create(SWMMFilePath, fmOpenRead or fmShareDenyWrite);
   nodeIDList := TStringList.Create();
   pollutantIDList := TStringList.Create();
@@ -221,7 +228,7 @@ begin
       k := 0;
       for idx := 0 to targetSWMPollutants.Count - 1 do
       begin
-        for j := 0 to numPolls do
+        for j := 0 to numPolls-1 do
         begin
           if (AnsiCompareText(targetSWMPollutants[idx], pollutantIDList[j]) = 0)
           then
@@ -243,7 +250,7 @@ begin
       SWMMFileStreamPosition := Stream.Position;
 
       // --- save codes of pollutant concentration units
-      for idx := 0 to numPolls do
+      for idx := 0 to numPolls-1 do
       begin
         pollUnits[0] := Reader.ReadInteger;
       end;
@@ -299,6 +306,7 @@ begin
       targetNodeIndex := nodeIDList.IndexOf(nodeName);
       for idx := 1 to numberOfPeriods do
       begin
+        application.processmessages;
         days := reportStartDate + (reportTimeInterv * idx / 86400.0);
 
         DecodeDateTime(days, myYear, myMonth, myDay, myHour, myMin,

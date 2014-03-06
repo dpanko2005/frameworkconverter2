@@ -7,7 +7,8 @@ uses
   System.Classes, Vcl.Graphics, Generics.Defaults, Generics.Collections,
   Vcl.Controls, Vcl.Forms, Vcl.Dialogs, Vcl.StdCtrls, Vcl.ExtDlgs, Vcl.Grids,
   Vcl.ExtCtrls, UserInputConfirmationDlg, OperationStatusDlgFrm, SWMMIO,
-  SWMMInput, SWMMOutput, ReadMTA, WriteMTA, ComCtrls, BusyDialogFrm, GIFImg, FWControlScratchFile;
+  SWMMInput, SWMMOutput, ReadMTA, WriteMTA, ComCtrls, BusyDialogFrm, GIFImg,
+  FWControlScratchFile;
 
 const
   constituentNames: array [0 .. 7] of string = ('FLOW', 'TSS', 'TP', 'DP',
@@ -63,13 +64,14 @@ type
     // procedure executeImportExport(Sender: TObject);
     procedure RadioGroup1Click(Sender: TObject);
     procedure btnCancelClick(Sender: TObject);
+    procedure cbxSwmmNodeChange(Sender: TObject);
 
   private
     workingDirPath: string;
     procedure AssignMTARecFields(SWMMNodeName: string; var Conv: TMTARecord;
       constituentName: string; convFactor: Double; tsType: string;
       ScenarioDescription: string; swmmFilePath: string;
-      fwScratchFilePath: string);
+      fwScratchFilePath: string; mtaFilePath: string);
     { Private declarations }
 
   var
@@ -121,14 +123,16 @@ var
   newSWMMInputFilePath: string;
   selectedNodeName: string;
   scenarioDescr: string;
-  FWCtrlRecord:FWCtrlScratchRecord;
+  FWCtrlRecord: FWCtrlScratchRecord;
+  fwTSFileToCreatePath: string;
+  // mtaFileToCreatePath: string;
 begin
 
   // Launch project form and force user to provide the project information
   SWMMUserInputVerificationFrm := TUserInputVerificationFrm.Create(Application);
   // TODO delete - hardcoded filepaths
 
-  SetLength(ConvertedFWTSArr, High(constituentNames));
+  SetLength(ConvertedFWTSArr, High(constituentNames)+1);
   scenarioDescr := txtScenarioDescr.Text;
   if (operatingMode = opModes[0]) then // importing from swmm Binary
     // do nothing swmmFilePath set globally by swmm file selection button,
@@ -153,6 +157,13 @@ begin
           txtSWMMNodeID.Caption := cbxSwmmNode.Items[cbxSwmmNode.ItemIndex];
         selectedNodeName := txtSWMMNodeID.Caption;
 
+        // make up file path for the Framework scratch timeseries data file
+        fwTSFileToCreatePath := ExtractFilePath(swmmFilePath) + selectedNodeName
+          + 'FWTS.sct';
+        // make up file path for the Converter Control file
+        SWMMIO.mtaFilePath := ExtractFilePath(swmmFilePath) + selectedNodeName +
+          'SWMM5.mta';
+
         // column headers
         StringGrid1.Cells[0, 0] := '* Framework Constituent';
         StringGrid1.Cells[1, 0] := 'SWMM Equivalent';
@@ -171,7 +182,7 @@ begin
         StringGrid1.Cells[1, 1] := 'FLOW'; // flow is always selected
         AssignMTARecFields(selectedNodeName, ConvertedFWTSArr[0], 'FLOW',
           StrToFloat(Self.sgdUserInputGrid.Cells[2, 1]), 'FLOW', scenarioDescr,
-          swmmFilePath, SWMMIO.frameCtrlFilePath);
+          swmmFilePath, fwTSFileToCreatePath, mtaFilePath);
 
         // save conversion factors and selected constituents into record array for use later
         numSelectedConstituents := 1;
@@ -182,9 +193,9 @@ begin
             StringGrid1.Cells[1, j + 1] := constituentCbxs[j].Items
               [constituentCbxs[j].ItemIndex];
             AssignMTARecFields(selectedNodeName, ConvertedFWTSArr[j],
-              constituentNames[j], StrToFloat(Self.sgdUserInputGrid.Cells[2, 1]
-              ), 'CONCEN', scenarioDescr, swmmFilePath,
-              SWMMIO.frameCtrlFilePath);
+              constituentNames[j], StrToFloat(Self.sgdUserInputGrid.Cells[2, j+1]
+              ), 'CONCEN', scenarioDescr, swmmFilePath, fwTSFileToCreatePath,
+              mtaFilePath);
             inc(numSelectedConstituents);
           end;
         end;
@@ -203,13 +214,15 @@ begin
         (BusyFrm.Image1.Picture.Graphic as TGIFImage).AnimateLoop := glEnabled;
         (BusyFrm.Image1.Picture.Graphic as TGIFImage).Animate := true;
         BusyFrm.Show;
-        (BusyFrm.Image1.Picture.Graphic as TGIFImage).AnimateLoop := glEnabled;
-        (BusyFrm.Image1.Picture.Graphic as TGIFImage).Animate := true;
+         application.processmessages;
 
         if (operatingMode = opModes[0]) then // importing from swmm Binary
         begin
-          FWCtrlRecord := SWMMOutput.importFromSWMMToFW(swmmFilePath, SWMMIO.frameCtrlFilePath,
-            selectedNodeName, ConvertedFWTSArr);
+        BusyFrm.Caption := 'Importing from SWMM';
+          FWCtrlRecord := SWMMOutput.importFromSWMMToFW(swmmFilePath,
+            fwTSFileToCreatePath, selectedNodeName, ConvertedFWTSArr);
+          // save user settings to MTA file to allow subsequent commandline executions without user intervention
+          WriteMTA.Write(mtaFilePath, ConvertedFWTSArr);
           BusyFrm.Close;
           // populate operation status confirmation dialog
           OperationStatusDlg.lblHeader.Caption :=
@@ -222,6 +235,7 @@ begin
         end
         else // exporting to swmm input file
         begin
+        BusyFrm.Caption := 'Exporting to SWMM';
           ConvertedFWTSArr := SWMMIO.readInFrameworkTSFile
             (SWMMIO.frameCtrlFilePath, ConvertedFWTSArr);
           SWMMInput.finalizeExport(ConvertedFWTSArr, workingDirPath);
@@ -232,6 +246,9 @@ begin
               tempStr := tempStr + #13#10 + ConvertedFWTSArr[j]
                 .convertedTSFilePath;
           end;
+          // write TS and Inflow blocks to swmm input file and save as new file
+          SWMMInput.updateSWMMInputFile(ConvertedFWTSArr, workingDirPath,
+            Self.txtSwmmFilePath.Caption);
           BusyFrm.Close;
           // populate operation status confirmation dialog
           OperationStatusDlg.lblHeader.Caption :=
@@ -239,25 +256,20 @@ begin
           OperationStatusDlg.lblSWMMFilePath.Caption := newSWMMInputFilePath;
           OperationStatusDlg.lblTSFilesCreated.Caption := tempStr;
           OperationStatusDlg.ShowModal;
-
-          // write TS and Inflow blocks to swmm input file and save as new file
-          SWMMInput.updateSWMMInputFile(ConvertedFWTSArr, workingDirPath,
-            Self.txtSwmmFilePath.Caption);
         end;
-        // save user settings to MTA file to allow subsequent commandline executions without user intervention
-        WriteMTA.Write(mtaFilePath + '2', ConvertedFWTSArr);
+        Self.Close;
       end;
     finally
       BusyFrm.Close;
       // ConvertedFWTSArr.Free;
     end;
   end;
-  Self.Close;
 end;
 
 procedure TForm1.AssignMTARecFields(SWMMNodeName: string; var Conv: TMTARecord;
   constituentName: string; convFactor: Double; tsType: string;
-  ScenarioDescription: string; swmmFilePath: string; fwScratchFilePath: string);
+  ScenarioDescription: string; swmmFilePath: string; fwScratchFilePath: string;
+  mtaFilePath: string);
 begin
   Conv.tsUnitsFactor := 1.0;
   Conv.constituentSWMMName := constituentName;
@@ -269,6 +281,7 @@ begin
   Conv.modelRunScenarioID := ScenarioDescription;
   Conv.swmmFilePath := swmmFilePath;
   Conv.scratchFilePath := fwScratchFilePath;
+  Conv.mtaFilePath := mtaFilePath;
 end;
 
 procedure TForm1.btnSelectSWMMFileClick(Sender: TObject);
@@ -329,18 +342,25 @@ begin
     cbxTSS.Items := SWMMIO.PollList;
   finally
   end;
+  Height := 234;
+end;
+
+procedure TForm1.cbxSwmmNodeChange(Sender: TObject);
+begin
+  Height := 620;
 end;
 
 procedure TForm1.FormShow(Sender: TObject);
 begin
+  Height := 130;
   ErrsList := TStringList.Create();
   Form1.color := clwhite;
 
- //need framwork metadata scratchfile file for export
- //control file tells us what the name of the framework node is that we will be exporting from
-   // so if framwork metadata scratchfile was not passed in via commandline so ask for it
-  if (SWMMIO.frameCtrlFilePath = '') and (SWMMIO.operatingMode = SWMMIO.opModes[1]) then
-
+  // need framwork metadata scratchfile file for export
+  // control file tells us what the name of the framework node is that we will be exporting from
+  // so if framwork metadata scratchfile was not passed in via commandline so ask for it
+  if (SWMMIO.frameCtrlFilePath = '') and
+    (SWMMIO.operatingMode = SWMMIO.opModes[1]) then
   begin
     MessageDlg
       ('A Valid Framework Control File was not located. Press okay to browse and select one',

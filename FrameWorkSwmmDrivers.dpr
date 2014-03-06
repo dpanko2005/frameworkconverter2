@@ -17,7 +17,9 @@ uses
   WriteMTA in 'gsmodules\WriteMTA.pas',
   SWMMInput in 'gsmodules\SWMMInput.pas',
   SWMMOutput in 'gsmodules\SWMMOutput.pas',
-  FWControlScratchFile in 'gsmodules\FWControlScratchFile.pas';
+  FWControlScratchFile in 'gsmodules\FWControlScratchFile.pas',
+  BusyDialogFrm in 'BusyDialogFrm.pas' {BusyFrm} ,
+  MTATemplateString in 'gsmodules\MTATemplateString.pas';
 
 {$R *.res}
 
@@ -37,20 +39,34 @@ begin
 {$IFDEF SWMM_CONSOLE}
   SWMMIO.appType := appTypes[0]; // set the application type to SWMM_CONSOLE
   try
-    if (ParamCount < 2) then
-    begin
-      Writeln('Error: Please pass in control file');
-      Writeln('Usage: swmmConverterExe path_to_mta_file.mta path_to_frameWorkMetaData_file.txt');
-      exit;
-    end;
-    Writeln('SWMM Converter Version 1.0.20140228');
-    Writeln('Framework metadata scratch file:' + ParamStr(2));
-    Writeln('Opening SWMM control file:' + ParamStr(1));
+
     // process import or export request
     if (SWMMIO.operatingMode = SWMMIO.opModes[0]) then
-      SWMMOutput.consoleImportFromSWMMToFW(SWMMIO.mtaFilePath)
+    begin
+      if (ParamCount < 1) then
+      begin
+        Writeln('Error: Please pass in SWMM Converter Metadata Control file (*.mta)');
+        Writeln('Usage: pathToConverter\SWMMOutput.exe path_to_mta_file.mta');
+        exit;
+      end;
+      SWMMIO.mtaFilePath :=  ParamStr(1);
+      Writeln('SWMM Converter Version 1.0.20140228');
+      Writeln('Opening SWMM Converter Control File:' + SWMMIO.mtaFilePath);
+      SWMMOutput.consoleImportFromSWMMToFW(SWMMIO.mtaFilePath) // importing
+    end
     else
-      SWMMInput.consoleExportFromFWToSWMM(SWMMIO.mtaFilePath)
+    begin
+      if (ParamCount < 1) then
+      begin
+        Writeln('Error: Please pass in SWMM Converter Metadata Control file (*.mta)');
+        Writeln('Usage: pathToConverter\SWMMInput.exe path_to_mta_file.mta');
+        exit;
+      end;
+      SWMMIO.mtaFilePath :=  ParamStr(1);
+      Writeln('SWMM Converter Version 1.0.20140228');
+      Writeln('Opening SWMM Converter Control File:' + SWMMIO.mtaFilePath);
+      SWMMInput.consoleExportFromFWToSWMM(SWMMIO.mtaFilePath) // exporting
+    end;
   except
     on E: Exception do
       Writeln(E.ClassName, ': ', E.Message);
@@ -62,6 +78,7 @@ begin
   Application.MainFormOnTaskbar := True;
   Application.CreateForm(TForm1, Form1);
   Application.CreateForm(TOperationStatusDlg, OperationStatusDlg);
+  Application.CreateForm(TBusyFrm, BusyFrm);
   // Application.CreateForm(TUserInputVerificationFrm,SWMMUserInputVerificationFrm );
   Application.Run;
 

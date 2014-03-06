@@ -67,7 +67,7 @@ begin
       TempTokens.Delimiter := ' '; // Each list item will be blank separated
       TempTokens.QuoteChar := '|'; // And each item will be quoted with |'s
       TempTokens.DelimitedText :=
-        '|ModelRunScenarioID| |SWMMNodeID| |SWMMOutputFilePath| |scratchFilePath| |FlowConv| |NumPolls| |FrameworkPollutants|';
+        '|ModelRunScenarioID| |SWMMNodeID| |SWMMFilePath| |scratchFilePath| |FlowConv| |NumPolls| |FrameworkPollutants|';
 
       lineNumber := 0;
       while lineNumber < FileContentsList.Count - 1 do

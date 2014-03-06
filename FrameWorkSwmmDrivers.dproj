@@ -5,7 +5,7 @@
         <FrameworkType>VCL</FrameworkType>
         <MainSource>FrameWorkSwmmDrivers.dpr</MainSource>
         <Base>True</Base>
-        <Config Condition="'$(Config)'==''">SWMMInputDebug</Config>
+        <Config Condition="'$(Config)'==''">SWMMOutputDebug</Config>
         <Platform Condition="'$(Platform)'==''">Win32</Platform>
         <TargetedPlatforms>1</TargetedPlatforms>
         <AppType>Application</AppType>
@@ -173,7 +173,7 @@
         <DCC_RemoteDebug>false</DCC_RemoteDebug>
     </PropertyGroup>
     <PropertyGroup Condition="'$(Cfg_5_Win32)'!=''">
-        <Debugger_RunParams>&quot;C:\Users\dpankani\Documents\RAD Studio\Projects\SWMMDrivers\testfiles\RockCreekDemoOutput.mta&quot; &quot;C:\Users\dpankani\Documents\RAD Studio\Projects\SWMMDrivers\testfiles\swmmconvertstring.txt&quot;</Debugger_RunParams>
+        <Debugger_RunParams>&quot;C:\Users\dpankani\Documents\RAD Studio\Projects\SWMMDrivers\testfiles\RockCreekDemoOutput.mta&quot;</Debugger_RunParams>
         <VerInfo_Locale>1033</VerInfo_Locale>
         <VerInfo_IncludeVerInfo>true</VerInfo_IncludeVerInfo>
         <DCC_Define>SWMM_TO_FW;SWMM_CONSOLE;$(DCC_Define)</DCC_Define>
@@ -239,6 +239,11 @@ $(PostBuildEvent)]]></PostBuildEvent>
         <DCCReference Include="gsmodules\SWMMInput.pas"/>
         <DCCReference Include="gsmodules\SWMMOutput.pas"/>
         <DCCReference Include="gsmodules\FWControlScratchFile.pas"/>
+        <DCCReference Include="BusyDialogFrm.pas">
+            <Form>BusyFrm</Form>
+            <FormType>dfm</FormType>
+        </DCCReference>
+        <DCCReference Include="gsmodules\MTATemplateString.pas"/>
         <RcItem Include="mtaTemplate.txt">
             <ContainerId>ResourceItem</ContainerId>
             <ResourceType>RCDATA</ResourceType>

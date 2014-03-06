@@ -8,7 +8,6 @@ uses
   MTATemplateString;
 
 function Write(mtaFilePath: string; MTADataArr: TArray<TMTARecord>): Boolean;
-procedure LoadResourceFile(aFile: string; ms: TMemoryStream);
 
 implementation
 
@@ -48,14 +47,17 @@ begin
   swmmFilePath := MTADataArr[0].swmmFilePath;
   scratchFilePath := MTADataArr[0].scratchFilePath;
   flowConvFactor := MTADataArr[0].convFactor;
-  numPolls := High(MTADataArr);
+  numPolls := 0;
 
-  for i := 1 to numPolls do // exclude flow which is first item in MTADataArr
+  for i := 1 to High(MTADataArr) do // exclude flow which is first item in MTADataArr
   begin
     if (MTADataArr[i].constituentFWName <> '') then
+    begin
       FWPollutantsStr := FWPollutantsStr + Format('''%s = %s / %f''',
         [MTADataArr[i].constituentFWName, MTADataArr[i].constituentSWMMName,
         MTADataArr[i].convFactor]) + sLineBreak;
+        inc(numPolls);
+    end;
   end;
 
   tplTokenVals := TArray<string>.Create(modelRunScenarioID, SWMMNodeID,
@@ -68,7 +70,7 @@ begin
     // if (FileExists(tplFilePath)) then
     // begin
     // replace tokens in template with values
-    TplContentsList.LoadFromFile(tplFilePath);
+    //TplContentsList.LoadFromFile(tplFilePath);
     tempStr := MTATemplateString.mtaTemplateStr;
     for i := 0 to High(tplTokens) do
     begin
@@ -86,32 +88,6 @@ begin
     TplContentsList.Free;
   end;
   result := true;
-end;
-
-procedure LoadResourceFile(aFile: string; ms: TMemoryStream);
-var
-  HResInfo: HRSRC;
-  HGlobal: THandle;
-  Buffer, GoodType: pchar;
-  // i: integer;
-  Ext: string;
-begin
-  Ext := uppercase(extractfileext(aFile));
-  Ext := copy(Ext, 2, length(Ext));
-  if Ext = 'HTM' then
-    Ext := 'HTML';
-  GoodType := pchar(Ext);
-  aFile := changefileext(aFile, '');
-  HResInfo := FindResource(HInstance, pchar(aFile), GoodType);
-  HGlobal := LoadResource(HInstance, HResInfo);
-  if HGlobal = 0 then
-    raise EResNotFound.Create('Can''t load resource: ' + aFile);
-  Buffer := LockResource(HGlobal);
-  ms.clear;
-  ms.WriteBuffer(Buffer[0], SizeOfResource(HInstance, HResInfo));
-  ms.Seek(0, 0);
-  UnlockResource(HGlobal);
-  FreeResource(HGlobal);
 end;
 
 end.

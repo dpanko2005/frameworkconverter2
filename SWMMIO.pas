@@ -20,6 +20,7 @@ type
     ModelRunScenarioID: string;
     SWMMFilePath: string;
     scratchFilePath: string;
+    mtaFilePath:string;
   end;
 
 const

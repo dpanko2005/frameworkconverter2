@@ -1,8 +1,8 @@
-C:\Users\dpankani\Documents\RAD Studio\Projects\SWMMDrivers\testfiles\OutfallFWTS
-Outfall
+C:\Users\dpankani\Documents\RAD Studio\Projects\SWMMDrivers\testfiles\RockCreekDemoExport.sct
+'Outfall'
 1
-6
-Converted from SWMM 5
+3
+'SWMM Trial Run Under pre-BMP conditions'
 1993
 10
 10
