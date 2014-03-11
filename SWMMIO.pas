@@ -20,7 +20,7 @@ type
     ModelRunScenarioID: string;
     SWMMFilePath: string;
     scratchFilePath: string;
-    mtaFilePath:string;
+    mtaFilePath: string;
   end;
 
 const
@@ -47,12 +47,14 @@ var
   operatingMode: string; // SWMM_TO_FW or  SWMM_FROM_FW'
   appType: string; // SWMM_CONSOLE or SWMM_GUI
   // stores existing swmm TS and Inflow block names in swmm inputfile
-  TSList, InflowsList, ErrsList: TStringList;
+  TSList, InflowsList: TStringList;
   PollList, NodeNameList: TStringList;
   frameCtrlFilePath, mtaFilePath: string;
+  errorsList: TStringList;
 
   // stores file stream seek position after node and poll names are read
-function readInFrameworkTSFile(filePath: string; var Conv: TArray<TMTARecord>): TArray<TMTARecord>;
+function readInFrameworkTSFile(filePath: string; var Conv: TArray<TMTARecord>)
+  : TArray<TMTARecord>;
 function getSWMMNodeIDsFromTxtInput(SWMMFilePath: string): TArray<TStringList>;
 function getSWMMNodeIDsFromBinary(SWMMFilePath: string): TArray<TStringList>;
 procedure Split(const Delimiter: Char; Input: string; const Strings: TStrings);
@@ -68,13 +70,22 @@ var
   strLine: string;
   lineNumber: integer;
   tempStrList: TStrings;
-  tempDateTimeStr: string;
+  tempTimeVal:Double;
+  tempDateTimeStr, tempTimeStr: string;
   tempValueStr: string;
   i: integer;
   j: integer;
 begin
   FileContentsList := TStringList.Create;
   tempStrList := TStringList.Create;
+  errorsList := TStringList.Create;
+
+  { First check if the file exists. }
+  if Not(FileExists(filePath)) then
+  begin
+    errorsList.Add('Framework time series data file not found at:' + filePath);
+    exit;
+  end;
   try
     for i := Low(Conv) to High(Conv) do
     begin
@@ -91,8 +102,10 @@ begin
       begin
         tempStrList.Clear();
         ExtractStrings([','], [], PChar(strLine), tempStrList);
-        tempDateTimeStr := tempStrList[0] + '/' + tempStrList[1] + '/' +
-          tempStrList[2] + ' ' + tempStrList[3];
+        tempTimeVal := strToFloat(tempStrList[3]);
+        tempTimeStr :=  floatToStr(int(tempTimeVal)) + ':' + FormatFloat('00',frac(tempTimeVal) * 60);
+        tempDateTimeStr := Format('%.2d/%.2d/%s	%5s', [strToInt(tempStrList[1]),strToInt(tempStrList[2]),trim(tempStrList[0]),tempTimeStr]);
+
         for i := Low(Conv) to High(Conv) do
         begin
           j := i + 4;
@@ -194,9 +207,10 @@ begin
               else if i = 6 then
               // if we are in the [INFLOWS] block save names to INFLOWS list
               begin
-                tempInt := Pos(' ', strLine, tempInt + 1); //
-                strObjectID := Copy(strLine, 1, tempInt - 1);
-                rsltLists[3].Add(strObjectID);
+                //tempInt := Pos(' ', strLine, tempInt + 1); //
+                //strObjectID := Copy(strLine, 1, tempInt - 1);
+                //rsltLists[3].Add(strObjectID);
+                rsltLists[3].Add(strLine);
               end
               else
                 // everything else is a node so save names to nodes list
@@ -208,6 +222,11 @@ begin
       inc(lineNumber);
     end;
     result := rsltLists;
+  end
+  else
+  begin
+    errorsList.Add('SWMM input file not found at:' + SWMMFilePath);
+    exit;
   end;
 end;
 
@@ -344,7 +363,7 @@ begin
         raise Exception.Create
           ('Fatal Error: Unable to create directory for saving file - error : '
           + IntToStr(GetLastError));
-        Exit;
+        exit;
       end;
     end;
 

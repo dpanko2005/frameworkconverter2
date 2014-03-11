@@ -15,8 +15,8 @@ procedure finalizeExport(var Conv: array of TMTARecord; filePathDir: string);
 function checkForDuplicateTS(tsBlockInsertPosition: Integer;
   TSList: TStringList; NewFileContentsList: TStringList;
   tsName: string): Integer;
-function updateSWMMInputFile(var Conv: array of TMTARecord; filePathDir: string;
-  swmmInputFilePath: string): string;
+function updateSWMMInputFile(var Conv: array of TMTARecord;
+  origSWMMInputFilePath: string; newSWMMInputFilePath: string): string;
 
 implementation
 
@@ -42,8 +42,9 @@ begin
   else
   begin
     Assert(Assigned(mtaData));
-    Writeln('SWMM output input file to insert timeseries into: ' + mtaData[0]
-      .swmmFilePath + sLineBreak);
+    swmmFilePath := mtaData[0].swmmFilePath;
+    Writeln('SWMM output input file to insert timeseries into: ' + swmmFilePath
+      + sLineBreak);
     Writeln('Target SWMM Node: ' + mtaData[0].tsNodeName);
     Writeln('Source framework scratch file to import timeseries from: ' +
       mtaData[0].scratchFilePath);
@@ -60,9 +61,18 @@ begin
 
     Writeln('Now extracting SWMM timeseries. Please wait...');
     workingDirPath := ExtractFileDir(swmmFilePath);
-    mtaData := SWMMIO.readInFrameworkTSFile(mtaData[0].scratchFilePath, mtaData);
+    mtaData := SWMMIO.readInFrameworkTSFile(mtaData[0].scratchFilePath,
+      mtaData);
     SWMMInput.finalizeExport(mtaData, workingDirPath);
-    updateSWMMInputFile(mtaData, workingDirPath, mtaData[0].swmmFilePath);
+    updateSWMMInputFile(mtaData, swmmFilePath, swmmFilePath);
+    if (SWMMIO.errorsList.Count > 0) then
+    begin
+      for i := 0 + 1 to SWMMIO.errorsList.Count - 1 do
+      begin
+        Writeln(SWMMIO.errorsList[i]);
+      end;
+      Exit;
+    end;
     Writeln('Operation completed successfully.');
   end;
   result := 1;
@@ -92,54 +102,61 @@ end;
 function checkForDuplicateTS(tsBlockInsertPosition: Integer;
   TSList: TStringList; NewFileContentsList: TStringList;
   tsName: string): Integer;
+var
+  i: Integer;
 begin
   // check our cached list of TS names for a hit
-  if (TSList.IndexOf(tsName) > 0) then
+  for i := 0 to TSList.Count - 1 do
   begin
-    // duplicate TS exists in the swmmfile so return its line number so we can overwrite with replacement
-    while ((Pos(';;', NewFileContentsList[tsBlockInsertPosition]) > 0) and
-      (tsBlockInsertPosition < NewFileContentsList.Count)) do
-    begin
-      inc(tsBlockInsertPosition);
-    end;
 
-    while ((Pos(tsName, NewFileContentsList[tsBlockInsertPosition]) = 0) and
-      (tsBlockInsertPosition < NewFileContentsList.Count)) do
+    //if (TSList.IndexOf(tsName) > -1) then
+    if (Pos(tsName,TSList[i]) > 0) then
     begin
-      inc(tsBlockInsertPosition);
-    end;
+      // duplicate TS exists in the swmmfile so return its line number so we can overwrite with replacement
+      while ((Pos(';;', NewFileContentsList[tsBlockInsertPosition]) > 0) and
+        (tsBlockInsertPosition < NewFileContentsList.Count)) do
+      begin
+        inc(tsBlockInsertPosition);
+      end;
 
-    if (Pos(tsName, NewFileContentsList[tsBlockInsertPosition]) > 0) then
-    begin
-      result := tsBlockInsertPosition;
-      Exit;
-    end
-    else
-      result := 0;
+      while ((Pos(tsName, NewFileContentsList[tsBlockInsertPosition]) = 0) and
+        (tsBlockInsertPosition < NewFileContentsList.Count)) do
+      begin
+        inc(tsBlockInsertPosition);
+      end;
+
+      if (Pos(tsName, NewFileContentsList[tsBlockInsertPosition]) > 0) then
+      begin
+        result := tsBlockInsertPosition;
+        Exit;
+      end
+      else
+        result := 0;
+    end;
   end;
   result := 0;
 end;
 
-function updateSWMMInputFile(var Conv: array of TMTARecord; filePathDir: string;
-  swmmInputFilePath: string): string;
+function updateSWMMInputFile(var Conv: array of TMTARecord;
+  origSWMMInputFilePath: string; newSWMMInputFilePath: string): string;
 var
   NewFileContentsList: TStringList;
-  // lineNumber: integer;
   tempInt: Integer;
   tsBlockInsertPosition: Integer;
   tempRec: TMTARecord;
   pathSuffix: string;
-  newSWMMInputFilePath: string;
+  tsName: string;
   duplicateLineNumber: Integer;
 begin
   NewFileContentsList := TStringList.Create;
-  pathSuffix := FormatDateTime('yyyymmddhhnnss', Now) + '.inp';
-  newSWMMInputFilePath := filePathDir + '\' +
-    ChangeFileExt(ExtractFileName(swmmInputFilePath), '') + pathSuffix;
 
   // take an inventory of the contents of the swmm file to avoid duplicates later
   // 0-NodeIDs list, 1-Pollutants list, 2-Timeseries list, 3-Inflows list
-  swmmIDsListArr := SWMMIO.getSWMMNodeIDsFromTxtInput(swmmInputFilePath);
+  swmmIDsListArr := SWMMIO.getSWMMNodeIDsFromTxtInput(origSWMMInputFilePath);
+  if (SWMMIO.errorsList.Count > 0) then
+  begin
+    Exit;
+  end;
   SWMMIO.TSList := swmmIDsListArr[2];
   SWMMIO.InflowsList := swmmIDsListArr[3];
   SWMMIO.NodeNameList := swmmIDsListArr[0];
@@ -147,18 +164,20 @@ begin
   try
 
     { First check if the swmm file we will be updating exists - note that update version save to new path. }
-    if FileExists(swmmInputFilePath) then
+    if FileExists(origSWMMInputFilePath) then
     begin
       { If it exists, load the data into the stringlist. }
-      NewFileContentsList.LoadFromFile(swmmInputFilePath);
+      NewFileContentsList.LoadFromFile(origSWMMInputFilePath);
 
       // Look for insertion points for TIMESERIES and INFLOW blocks
-      tsBlockInsertPosition := NewFileContentsList.IndexOf('[REPORTS]');
+      tsBlockInsertPosition := NewFileContentsList.IndexOf('[REPORT]');
       if (tsBlockInsertPosition < 0) then
-        tsBlockInsertPosition := NewFileContentsList.IndexOf('[CURVES]');
-      if (tsBlockInsertPosition < 0) then
-        tsBlockInsertPosition := NewFileContentsList.IndexOf('[TAGS]');
-      if (tsBlockInsertPosition < 0) then
+        tsBlockInsertPosition := NewFileContentsList.IndexOf('[CURVES]')
+      else if (tsBlockInsertPosition < 0) then
+        tsBlockInsertPosition := NewFileContentsList.IndexOf('[WASHOFF]')
+      else if (tsBlockInsertPosition < 0) then
+        tsBlockInsertPosition := NewFileContentsList.IndexOf('[TAGS]')
+      else if (tsBlockInsertPosition < 0) then
       begin
         raise Exception.Create
           ('Check SWMM input file format. Unable to write timeseries to SWMM input file');
@@ -179,32 +198,38 @@ begin
       end
       else
       begin
+        tsBlockInsertPosition := tsBlockInsertPosition - 1;
         // timeseries section does not already exist in swmm input file so write times series block and add to TS to it
-        NewFileContentsList.Insert(tsBlockInsertPosition, '[TIMESERIES]');
+        NewFileContentsList.Insert(tsBlockInsertPosition, ' ');
+        NewFileContentsList.Insert(tsBlockInsertPosition + 1, '[TIMESERIES]');
         NewFileContentsList.Insert(tsBlockInsertPosition + 2,
           ';;Name          	Type      	Path');
         NewFileContentsList.Insert(tsBlockInsertPosition + 3,
           ';;-------------- ---------- ---------- ----------');
+        tsBlockInsertPosition := tsBlockInsertPosition + 4;
       end;
 
-      tempInt := 3;
+      tempInt := 0;
       for tempRec in Conv do
       begin
+        tsName := tempRec.constituentSWMMName + 'TS';
+
         if (tempRec.convertedTSFilePath <> '') then
         begin
-          // duplicateLineNumber := 0;
           duplicateLineNumber := checkForDuplicateTS(tsBlockInsertPosition,
-            SWMMIO.TSList, NewFileContentsList, tempRec.tsName);
+            SWMMIO.TSList, NewFileContentsList, tsName);
           if (duplicateLineNumber <> 0) then
-            NewFileContentsList.Delete(duplicateLineNumber);
-
-          NewFileContentsList.Insert(tsBlockInsertPosition + tempInt,
-            tempRec.tsName + '      FILE      "' +
-            tempRec.convertedTSFilePath + '"');
+          begin
+            NewFileContentsList[duplicateLineNumber] := tsName +
+              '      FILE      "' + tempRec.convertedTSFilePath + '"';
+          end
+          else
+            NewFileContentsList.Insert(tsBlockInsertPosition + tempInt,
+              tsName + '      FILE      "' + tempRec.convertedTSFilePath + '"');
         end;
         inc(tempInt);
       end;
-      tsBlockInsertPosition := tsBlockInsertPosition + tempInt - 2;
+      tsBlockInsertPosition := tsBlockInsertPosition + tempInt;
 
       // 2. Write Inflow Block
       // check TS list that was passed in to see if input file already contains TS
@@ -236,17 +261,41 @@ begin
       tempInt := 0;
       for tempRec in Conv do
       begin
+
+        { if (tempRec.convertedTSFilePath <> '') then
+          begin
+          NewFileContentsList.Insert(tsBlockInsertPosition + tempInt,
+          tempRec.tsNodeName + '        ' + tempRec.constituentSWMMName +
+          '        ' + tsName + '        ' + tempRec.tsType + '        ' +
+          FloatToStr(tempRec.tsUnitsFactor) + '        ' +
+          FloatToStr(tempRec.convFactor));
+          end;
+          inc(tempInt); }
+
         if (tempRec.convertedTSFilePath <> '') then
         begin
-          NewFileContentsList.Insert(tsBlockInsertPosition + tempInt,
-            tempRec.tsNodeName + '        ' + tempRec.constituentSWMMName +
-            '        ' + tempRec.tsName + '        ' + tempRec.tsType +
-            '        ' + FloatToStr(tempRec.tsUnitsFactor) + '        ' +
-            FloatToStr(tempRec.convFactor));
+          duplicateLineNumber := checkForDuplicateTS(tsBlockInsertPosition,
+            SWMMIO.InflowsList, NewFileContentsList,
+            tempRec.tsNodeName + '        ' + tempRec.constituentSWMMName);
+          if (duplicateLineNumber <> 0) then
+          begin
+            NewFileContentsList[duplicateLineNumber] := tempRec.tsNodeName +
+              '        ' + tempRec.constituentSWMMName + '        ' + tsName +
+              '        ' + tempRec.tsType + '        ' +
+              FloatToStr(tempRec.tsUnitsFactor) + '        ' +
+              FloatToStr(tempRec.convFactor);
+          end
+          else
+            NewFileContentsList.Insert(tsBlockInsertPosition + tempInt,
+              tempRec.tsNodeName + '        ' + tempRec.constituentSWMMName +
+              '        ' + tsName + '        ' + tempRec.tsType + '        ' +
+              FloatToStr(tempRec.tsUnitsFactor) + '        ' +
+              FloatToStr(tempRec.convFactor));
         end;
         inc(tempInt);
       end;
-      SWMMIO.saveTextFileToDisc(NewFileContentsList, newSWMMInputFilePath);
+      SWMMIO.saveTextFileToDisc(NewFileContentsList,
+        newSWMMInputFilePath, true);
     end
     else
       { Otherwise, raise an exception. }

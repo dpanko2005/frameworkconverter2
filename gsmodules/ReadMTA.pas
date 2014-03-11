@@ -94,24 +94,24 @@ begin
 
           // Now read values until next token or end of file
           if i = 0 then // token is description
-            modelRunScenarioID := FileContentsList[lineNumber];
+            modelRunScenarioID := trim(FileContentsList[lineNumber]);
           if i = 1 then // token is swmm node id
-            SWMMNodeID := FileContentsList[lineNumber];
+            SWMMNodeID := trim(FileContentsList[lineNumber]);
           if i = 2 then // token is swmm input or output file path
           begin
-            swmmFilePath := FileContentsList[lineNumber];
+            swmmFilePath := trim(FileContentsList[lineNumber]);
             swmmFilePath := StringReplace(swmmFilePath, '''', '', [rfReplaceAll]);
           end;
           if i = 3 then // token is framework scratch file path
           begin
-            scratchFilePath := FileContentsList[lineNumber];
+            scratchFilePath := trim(FileContentsList[lineNumber]);
             scratchFilePath := StringReplace(scratchFilePath, '''', '', [rfReplaceAll]);
           end;
           if i = 4 then // token is FlowConv
-            flowConvFactor := StrToFloat(FileContentsList[lineNumber]);
+            flowConvFactor := StrToFloat(trim(FileContentsList[lineNumber]));
           if i = 5 then // token is NumPolls
           begin
-            numPolls := StrToInt(FileContentsList[lineNumber]);
+            numPolls := StrToInt(trim(FileContentsList[lineNumber]));
             SetLength(MTADataArr, numPolls + 1);
             PopulateMTARecord(MTADataArr[0], modelRunScenarioID, 'Flow', 'FLOW',
               'Flow', 1.0, SWMMNodeID, swmmFilePath, scratchFilePath,
@@ -122,10 +122,10 @@ begin
             j := 1;
             for i := 0 to numPolls - 1 do
             begin
-              strLine := FileContentsList[lineNumber];
+              strLine := trim(FileContentsList[lineNumber]);
               strLine := StringReplace(strLine, '''', '', [rfReplaceAll]);
               SWMMIO.Split('/', strLine, TempStrList);
-              pollConvFactor := StrToFloat(TempStrList[1]);
+              pollConvFactor := StrToFloat(trim(TempStrList[1]));
 
               SWMMIO.Split('=', TempStrList[0], TempStrList);
               fwConstituentName := Trim(TempStrList[0]);

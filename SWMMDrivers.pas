@@ -8,7 +8,7 @@ uses
   Vcl.Controls, Vcl.Forms, Vcl.Dialogs, Vcl.StdCtrls, Vcl.ExtDlgs, Vcl.Grids,
   Vcl.ExtCtrls, UserInputConfirmationDlg, OperationStatusDlgFrm, SWMMIO,
   SWMMInput, SWMMOutput, ReadMTA, WriteMTA, ComCtrls, BusyDialogFrm, GIFImg,
-  FWControlScratchFile;
+  FWControlScratchFile, StrUtils;
 
 const
   constituentNames: array [0 .. 7] of string = ('FLOW', 'TSS', 'TP', 'DP',
@@ -125,23 +125,23 @@ var
   scenarioDescr: string;
   FWCtrlRecord: FWCtrlScratchRecord;
   fwTSFileToCreatePath: string;
-  // mtaFileToCreatePath: string;
+  tempStrList: TStringList;
 begin
 
   // Launch project form and force user to provide the project information
   SWMMUserInputVerificationFrm := TUserInputVerificationFrm.Create(Application);
   // TODO delete - hardcoded filepaths
 
-  SetLength(ConvertedFWTSArr, High(constituentNames)+1);
+  SetLength(ConvertedFWTSArr, High(constituentNames) + 1);
   scenarioDescr := txtScenarioDescr.Text;
   if (operatingMode = opModes[0]) then // importing from swmm Binary
     // do nothing swmmFilePath set globally by swmm file selection button,
   else // exporting to swmm input file
   begin
     newSWMMInputFilePath := workingDirPath + '\' +
-      ChangeFileExt(ExtractFileName(Self.txtSwmmFilePath.Caption), '') +
-      FormatDateTime('yyyymmddhhnnss', Now) + '.inp';
-    swmmFilePath := newSWMMInputFilePath;
+      AnsiLeftStr(ChangeFileExt(ExtractFileName(Self.txtSwmmFilePath.Caption),
+      ''), 10) + '_' + FormatDateTime('yyyymmddhhnnss', Now) + '.inp';
+    //swmmFilePath := newSWMMInputFilePath;
   end;
 
   with SWMMUserInputVerificationFrm do
@@ -162,7 +162,7 @@ begin
           + 'FWTS.sct';
         // make up file path for the Converter Control file
         SWMMIO.mtaFilePath := ExtractFilePath(swmmFilePath) + selectedNodeName +
-          'SWMM5.mta';
+          SWMMIO.operatingMode + '.mta';
 
         // column headers
         StringGrid1.Cells[0, 0] := '* Framework Constituent';
@@ -193,9 +193,9 @@ begin
             StringGrid1.Cells[1, j + 1] := constituentCbxs[j].Items
               [constituentCbxs[j].ItemIndex];
             AssignMTARecFields(selectedNodeName, ConvertedFWTSArr[j],
-              constituentNames[j], StrToFloat(Self.sgdUserInputGrid.Cells[2, j+1]
-              ), 'CONCEN', scenarioDescr, swmmFilePath, fwTSFileToCreatePath,
-              mtaFilePath);
+              constituentNames[j], StrToFloat(Self.sgdUserInputGrid.Cells[2,
+              j + 1]), 'CONCEN', scenarioDescr, swmmFilePath,
+              fwTSFileToCreatePath, mtaFilePath);
             inc(numSelectedConstituents);
           end;
         end;
@@ -214,17 +214,18 @@ begin
         (BusyFrm.Image1.Picture.Graphic as TGIFImage).AnimateLoop := glEnabled;
         (BusyFrm.Image1.Picture.Graphic as TGIFImage).Animate := true;
         BusyFrm.Show;
-         application.processmessages;
+        Application.ProcessMessages;
 
         if (operatingMode = opModes[0]) then // importing from swmm Binary
         begin
-        BusyFrm.Caption := 'Importing from SWMM';
+          BusyFrm.Caption := 'Importing from SWMM';
           FWCtrlRecord := SWMMOutput.importFromSWMMToFW(swmmFilePath,
             fwTSFileToCreatePath, selectedNodeName, ConvertedFWTSArr);
           // save user settings to MTA file to allow subsequent commandline executions without user intervention
           WriteMTA.Write(mtaFilePath, ConvertedFWTSArr);
           BusyFrm.Close;
           // populate operation status confirmation dialog
+          OperationStatusDlg.Caption := 'Import Operation Status';
           OperationStatusDlg.lblHeader.Caption :=
             'Import Operation was successful!';
           OperationStatusDlg.lblSWMMFilePath.Visible := false;
@@ -235,9 +236,13 @@ begin
         end
         else // exporting to swmm input file
         begin
-        BusyFrm.Caption := 'Exporting to SWMM';
-          ConvertedFWTSArr := SWMMIO.readInFrameworkTSFile
-            (SWMMIO.frameCtrlFilePath, ConvertedFWTSArr);
+          BusyFrm.Caption := 'Exporting to SWMM';
+          // open control file and read in path to scratchfile
+          tempStrList := TStringList.Create();
+          tempStrList.LoadFromFile(SWMMIO.frameCtrlFilePath);
+          // first line in the file should be the path to the timeseries input file
+          ConvertedFWTSArr := SWMMIO.readInFrameworkTSFile(tempStrList[0],
+            ConvertedFWTSArr);
           SWMMInput.finalizeExport(ConvertedFWTSArr, workingDirPath);
           // write exported TS to the confirmation dialog
           for j := Low(ConvertedFWTSArr) to High(ConvertedFWTSArr) do
@@ -247,15 +252,19 @@ begin
                 .convertedTSFilePath;
           end;
           // write TS and Inflow blocks to swmm input file and save as new file
-          SWMMInput.updateSWMMInputFile(ConvertedFWTSArr, workingDirPath,
-            Self.txtSwmmFilePath.Caption);
+          SWMMInput.updateSWMMInputFile(ConvertedFWTSArr, swmmFilePath,
+            newSWMMInputFilePath);
+          // save user settings to MTA file to allow subsequent commandline executions without user intervention
+          WriteMTA.Write(mtaFilePath, ConvertedFWTSArr);
           BusyFrm.Close;
           // populate operation status confirmation dialog
+          OperationStatusDlg.Caption := 'Export Operation Status';
           OperationStatusDlg.lblHeader.Caption :=
             'Export Operation was successful!';
           OperationStatusDlg.lblSWMMFilePath.Caption := newSWMMInputFilePath;
           OperationStatusDlg.lblTSFilesCreated.Caption := tempStr;
           OperationStatusDlg.ShowModal;
+          Self.Close;
         end;
         Self.Close;
       end;
@@ -293,6 +302,7 @@ begin
   // intTokenLoc := 0;
   try
     if OpenTextFileDialog1.Execute then
+    begin
       { First check if the file exists. }
       if FileExists(OpenTextFileDialog1.FileName) then
       begin
@@ -306,9 +316,10 @@ begin
         begin
           TempListArr := SWMMIO.getSWMMNodeIDsFromBinary(swmmFilePath);
           if (TempListArr[0].Count < 1) then
-            ErrsList.Add(Errs[0]); // Unable to read nodes in SWMM input file
+            SWMMIO.errorsList.Add(Errs[0]);
+          // Unable to read nodes in SWMM input file
           if (TempListArr[1].Count < 1) then
-            ErrsList.Add(Errs[0]);
+            SWMMIO.errorsList.Add(Errs[0]);
           // Unable to read pollutant names in SWMM input file
 
           NodeNameList := TempListArr[0];
@@ -331,15 +342,16 @@ begin
         raise Exception.Create('File does not exist.');
         Exit
       end;
-    cbxSwmmNode.Items := SWMMIO.NodeNameList;
-    cbxFlow.Items := SWMMIO.PollList;
-    cbxDCu.Items := SWMMIO.PollList;
-    cbxTCu.Items := SWMMIO.PollList;
-    cbxTZn.Items := SWMMIO.PollList;
-    cbxDZn.Items := SWMMIO.PollList;
-    cbxDP.Items := SWMMIO.PollList;
-    cbxTP.Items := SWMMIO.PollList;
-    cbxTSS.Items := SWMMIO.PollList;
+      cbxSwmmNode.Items := SWMMIO.NodeNameList;
+      cbxFlow.Items := SWMMIO.PollList;
+      cbxDCu.Items := SWMMIO.PollList;
+      cbxTCu.Items := SWMMIO.PollList;
+      cbxTZn.Items := SWMMIO.PollList;
+      cbxDZn.Items := SWMMIO.PollList;
+      cbxDP.Items := SWMMIO.PollList;
+      cbxTP.Items := SWMMIO.PollList;
+      cbxTSS.Items := SWMMIO.PollList;
+    end;
   finally
   end;
   Height := 234;
@@ -353,7 +365,7 @@ end;
 procedure TForm1.FormShow(Sender: TObject);
 begin
   Height := 130;
-  ErrsList := TStringList.Create();
+  SWMMIO.errorsList := TStringList.Create();
   Form1.color := clwhite;
 
   // need framwork metadata scratchfile file for export

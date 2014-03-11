@@ -10,8 +10,8 @@ uses
 
 type
   TBusyFrm = class(TForm)
-    Image1: TImage;
     Label1: TLabel;
+    Image1: TImage;
     procedure FormShow(Sender: TObject);
 
   private
