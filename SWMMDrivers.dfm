@@ -166,6 +166,20 @@ object Form1: TForm1
     Font.Style = [fsBold, fsUnderline]
     ParentFont = False
   end
+  object lblHelp: TLabel
+    Left = 447
+    Top = 8
+    Width = 21
+    Height = 13
+    Caption = 'Help'
+    Font.Charset = DEFAULT_CHARSET
+    Font.Color = clHotLight
+    Font.Height = -11
+    Font.Name = 'Tahoma'
+    Font.Style = [fsUnderline]
+    ParentFont = False
+    OnClick = lblHelpClick
+  end
   object btnSelectSWMMFile: TButton
     Left = 168
     Top = 49
@@ -277,6 +291,7 @@ object Form1: TForm1
     Height = 25
     Caption = 'Help'
     TabOrder = 11
+    OnClick = btnHelpClick
   end
   object btnNext: TButton
     Left = 374

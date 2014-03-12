@@ -5,7 +5,7 @@
         <FrameworkType>VCL</FrameworkType>
         <MainSource>FrameWorkSwmmDrivers.dpr</MainSource>
         <Base>True</Base>
-        <Config Condition="'$(Config)'==''">SWMMInputDebug</Config>
+        <Config Condition="'$(Config)'==''">GUISWMMIputDebug</Config>
         <Platform Condition="'$(Platform)'==''">Win32</Platform>
         <TargetedPlatforms>1</TargetedPlatforms>
         <AppType>Application</AppType>
@@ -244,6 +244,14 @@ $(PostBuildEvent)]]></PostBuildEvent>
             <FormType>dfm</FormType>
         </DCCReference>
         <DCCReference Include="gsmodules\MTATemplateString.pas"/>
+        <DCCReference Include="ImportHelpDialogFrm.pas">
+            <Form>ImportHelpDialog</Form>
+            <FormType>dfm</FormType>
+        </DCCReference>
+        <DCCReference Include="ExportHelpDlgFrm.pas">
+            <Form>ExportHelpDialogFrm</Form>
+            <FormType>dfm</FormType>
+        </DCCReference>
         <RcItem Include="mtaTemplate.txt">
             <ContainerId>ResourceItem</ContainerId>
             <ResourceType>RCDATA</ResourceType>

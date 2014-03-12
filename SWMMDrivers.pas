@@ -6,13 +6,13 @@ uses
   Winapi.Windows, Winapi.Messages, System.SysUtils, System.Variants,
   System.Classes, Vcl.Graphics, Generics.Defaults, Generics.Collections,
   Vcl.Controls, Vcl.Forms, Vcl.Dialogs, Vcl.StdCtrls, Vcl.ExtDlgs, Vcl.Grids,
-  Vcl.ExtCtrls, UserInputConfirmationDlg, OperationStatusDlgFrm, SWMMIO,
+  Vcl.ExtCtrls, UserInputConfirmationDlg, OperationStatusDlgFrm,
+  ImportHelpDialogFrm, ExportHelpDlgFrm, SWMMIO,
   SWMMInput, SWMMOutput, ReadMTA, WriteMTA, ComCtrls, BusyDialogFrm, GIFImg,
   FWControlScratchFile, StrUtils;
 
 const
-  constituentNames: array [0 .. 7] of string = ('FLOW', 'TSS', 'TP', 'DP',
-    'DZn', 'TZN', 'DCU', 'TCU');
+
   Errs: array [0 .. 1] of string =
     ('An unknown error occured when reading the SWMM file',
     'An unknown error occured when saving the new SWMM file');
@@ -48,6 +48,7 @@ type
     Label1: TLabel;
     Label9: TLabel;
     lblOperatingMode: TLabel;
+    lblHelp: TLabel;
     procedure btnSelectSWMMFileClick(Sender: TObject);
     procedure FormShow(Sender: TObject);
 
@@ -65,6 +66,8 @@ type
     procedure RadioGroup1Click(Sender: TObject);
     procedure btnCancelClick(Sender: TObject);
     procedure cbxSwmmNodeChange(Sender: TObject);
+    procedure btnHelpClick(Sender: TObject);
+    procedure lblHelpClick(Sender: TObject);
 
   private
     workingDirPath: string;
@@ -92,6 +95,19 @@ implementation
 procedure TForm1.btnCancelClick(Sender: TObject);
 begin
   Self.Close;
+end;
+
+procedure TForm1.btnHelpClick(Sender: TObject);
+begin
+  if (SWMMIO.operatingMode = SWMMIO.opModes[0]) then // importing from SWMM
+    ImportHelpDialog.ShowModal()
+  else
+    ExportHelpDialogFrm.ShowModal();
+end;
+
+procedure TForm1.lblHelpClick(Sender: TObject);
+begin
+  btnHelpClick(Sender);
 end;
 
 procedure TForm1.ProgressCallback(InProgressOverall: TProgressBar);
@@ -141,7 +157,7 @@ begin
     newSWMMInputFilePath := workingDirPath + '\' +
       AnsiLeftStr(ChangeFileExt(ExtractFileName(Self.txtSwmmFilePath.Caption),
       ''), 10) + '_' + FormatDateTime('yyyymmddhhnnss', Now) + '.inp';
-    //swmmFilePath := newSWMMInputFilePath;
+    // swmmFilePath := newSWMMInputFilePath;
   end;
 
   with SWMMUserInputVerificationFrm do
@@ -182,19 +198,19 @@ begin
         StringGrid1.Cells[1, 1] := 'FLOW'; // flow is always selected
         AssignMTARecFields(selectedNodeName, ConvertedFWTSArr[0], 'FLOW',
           StrToFloat(Self.sgdUserInputGrid.Cells[2, 1]), 'FLOW', scenarioDescr,
-          swmmFilePath, fwTSFileToCreatePath, mtaFilePath);
+          newSWMMInputFilePath, fwTSFileToCreatePath, mtaFilePath);
 
         // save conversion factors and selected constituents into record array for use later
         numSelectedConstituents := 1;
         for j := Low(constituentNames) + 1 to High(constituentNames) do
         begin
-          if constituentCbxs[j].ItemIndex <> -1 then
+          if constituentCbxs[j].ItemIndex > 0 then
           begin
             StringGrid1.Cells[1, j + 1] := constituentCbxs[j].Items
               [constituentCbxs[j].ItemIndex];
             AssignMTARecFields(selectedNodeName, ConvertedFWTSArr[j],
               constituentNames[j], StrToFloat(Self.sgdUserInputGrid.Cells[2,
-              j + 1]), 'CONCEN', scenarioDescr, swmmFilePath,
+              j + 1]), 'CONCEN', scenarioDescr, newSWMMInputFilePath,
               fwTSFileToCreatePath, mtaFilePath);
             inc(numSelectedConstituents);
           end;
@@ -343,6 +359,8 @@ begin
         Exit
       end;
       cbxSwmmNode.Items := SWMMIO.NodeNameList;
+
+      SWMMIO.PollList.Insert(0,'Exclude');
       cbxFlow.Items := SWMMIO.PollList;
       cbxDCu.Items := SWMMIO.PollList;
       cbxTCu.Items := SWMMIO.PollList;
@@ -374,22 +392,28 @@ begin
   if (SWMMIO.frameCtrlFilePath = '') and
     (SWMMIO.operatingMode = SWMMIO.opModes[1]) then
   begin
-    MessageDlg
-      ('A Valid Framework Control File was not located. Press okay to browse and select one',
-      mtInformation, [mbOK], 0);
-    OpenTextFileDialog1.Filter := 'Framework Control File (*.txt)|*.TXT';
+    SWMMIO.frameCtrlFilePath := SWMMIO.workingDir + 'swmmconvertstring.txt';
+    if (Not(FileExists(SWMMIO.frameCtrlFilePath))) then
+    begin
+      MessageDlg
+        ('A Valid Framework Control File was not located. Press okay to browse and select one',
+        mtInformation, [mbOK], 0);
+      OpenTextFileDialog1.Filter := 'Framework Control File (*.txt)|*.TXT';
 
-    if OpenTextFileDialog1.Execute then
-      { First check if the file exists. }
-      if FileExists(OpenTextFileDialog1.FileName) then
+      if OpenTextFileDialog1.Execute then
       begin
-        SWMMIO.frameCtrlFilePath := OpenTextFileDialog1.FileName;
-      end
-      else // we are exporting to swmm so using SWMM input file
-      begin
-        MessageDlg('A Valid Framework Control File was not Found',
-          mtInformation, [mbOK], 0);
+        { First check if the file exists. }
+        if FileExists(OpenTextFileDialog1.FileName) then
+        begin
+          SWMMIO.frameCtrlFilePath := OpenTextFileDialog1.FileName;
+        end
+        else // we are exporting to swmm so using SWMM input file
+        begin
+          MessageDlg('A Valid Framework Control File was not Found',
+            mtInformation, [mbOK], 0);
+        end;
       end;
+    end;
   end;
 
   if (SWMMIO.operatingMode = SWMMIO.opModes[0]) then

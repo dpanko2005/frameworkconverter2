@@ -19,12 +19,15 @@ uses
   SWMMOutput in 'gsmodules\SWMMOutput.pas',
   FWControlScratchFile in 'gsmodules\FWControlScratchFile.pas',
   BusyDialogFrm in 'BusyDialogFrm.pas' {BusyFrm} ,
-  MTATemplateString in 'gsmodules\MTATemplateString.pas';
+  MTATemplateString in 'gsmodules\MTATemplateString.pas',
+  ImportHelpDialogFrm in 'ImportHelpDialogFrm.pas' {ImportHelpDialog} ,
+  ExportHelpDlgFrm in 'ExportHelpDlgFrm.pas' {ExportHelpDialogFrm};
 
 {$R *.res}
 
 begin
 
+  SWMMIO.workingDir := ExtractFilePath(Application.ExeName);
   // decide whether going from SWMM to FW or FW to SWMM
 {$IFDEF SWMM_TO_FW}
   SWMMIO.operatingMode := SWMMIO.opModes[0]; // SWMM_TO_FW
@@ -49,7 +52,7 @@ begin
         Writeln('Usage: pathToConverter\SWMMOutput.exe path_to_mta_file.mta');
         exit;
       end;
-      SWMMIO.mtaFilePath :=  ParamStr(1);
+      SWMMIO.mtaFilePath := ParamStr(1);
       Writeln('SWMM Converter Version 1.0.20140228');
       Writeln('Opening SWMM Converter Control File:' + SWMMIO.mtaFilePath);
       SWMMOutput.consoleImportFromSWMMToFW(SWMMIO.mtaFilePath) // importing
@@ -62,7 +65,7 @@ begin
         Writeln('Usage: pathToConverter\SWMMInput.exe path_to_mta_file.mta');
         exit;
       end;
-      SWMMIO.mtaFilePath :=  ParamStr(1);
+      SWMMIO.mtaFilePath := ParamStr(1);
       Writeln('SWMM Converter Version 1.0.20140228');
       Writeln('Opening SWMM Converter Control File:' + SWMMIO.mtaFilePath);
       SWMMInput.consoleExportFromFWToSWMM(SWMMIO.mtaFilePath) // exporting
@@ -79,6 +82,8 @@ begin
   Application.CreateForm(TForm1, Form1);
   Application.CreateForm(TOperationStatusDlg, OperationStatusDlg);
   Application.CreateForm(TBusyFrm, BusyFrm);
+  Application.CreateForm(TImportHelpDialog, ImportHelpDialog);
+  Application.CreateForm(TExportHelpDialogFrm, ExportHelpDialogFrm);
   // Application.CreateForm(TUserInputVerificationFrm,SWMMUserInputVerificationFrm );
   Application.Run;
 

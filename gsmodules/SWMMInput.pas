@@ -109,8 +109,8 @@ begin
   for i := 0 to TSList.Count - 1 do
   begin
 
-    //if (TSList.IndexOf(tsName) > -1) then
-    if (Pos(tsName,TSList[i]) > 0) then
+    // if (TSList.IndexOf(tsName) > -1) then
+    if (Pos(AnsiUpperCase(tsName), AnsiUpperCase(TSList[i])) > 0) then
     begin
       // duplicate TS exists in the swmmfile so return its line number so we can overwrite with replacement
       while ((Pos(';;', NewFileContentsList[tsBlockInsertPosition]) > 0) and
@@ -119,13 +119,13 @@ begin
         inc(tsBlockInsertPosition);
       end;
 
-      while ((Pos(tsName, NewFileContentsList[tsBlockInsertPosition]) = 0) and
+      while ((Pos(AnsiUpperCase(tsName), UpperCase(NewFileContentsList[tsBlockInsertPosition])) = 0) and
         (tsBlockInsertPosition < NewFileContentsList.Count)) do
       begin
         inc(tsBlockInsertPosition);
       end;
 
-      if (Pos(tsName, NewFileContentsList[tsBlockInsertPosition]) > 0) then
+      if (Pos(AnsiUpperCase(tsName), AnsiUpperCase(NewFileContentsList[tsBlockInsertPosition])) > 0) then
       begin
         result := tsBlockInsertPosition;
         Exit;
@@ -226,8 +226,9 @@ begin
           else
             NewFileContentsList.Insert(tsBlockInsertPosition + tempInt,
               tsName + '      FILE      "' + tempRec.convertedTSFilePath + '"');
+          inc(tempInt);
         end;
-        inc(tempInt);
+
       end;
       tsBlockInsertPosition := tsBlockInsertPosition + tempInt;
 
@@ -280,19 +281,20 @@ begin
           if (duplicateLineNumber <> 0) then
           begin
             NewFileContentsList[duplicateLineNumber] := tempRec.tsNodeName +
-              '        ' + tempRec.constituentSWMMName + '        ' + tsName +
-              '        ' + tempRec.tsType + '        ' +
-              FloatToStr(tempRec.tsUnitsFactor) + '        ' +
+              '        ' + tempRec.constituentSWMMName + '        ' +
+              tempRec.constituentSWMMName + 'TS' + '        ' + tempRec.tsType +
+              '        ' + FloatToStr(tempRec.tsUnitsFactor) + '        ' +
               FloatToStr(tempRec.convFactor);
           end
           else
             NewFileContentsList.Insert(tsBlockInsertPosition + tempInt,
               tempRec.tsNodeName + '        ' + tempRec.constituentSWMMName +
-              '        ' + tsName + '        ' + tempRec.tsType + '        ' +
-              FloatToStr(tempRec.tsUnitsFactor) + '        ' +
-              FloatToStr(tempRec.convFactor));
+              '        ' + tempRec.constituentSWMMName + 'TS' + '        ' +
+              tempRec.tsType + '        ' + FloatToStr(tempRec.tsUnitsFactor) +
+              '        ' + FloatToStr(tempRec.convFactor));
+          inc(tempInt);
         end;
-        inc(tempInt);
+
       end;
       SWMMIO.saveTextFileToDisc(NewFileContentsList,
         newSWMMInputFilePath, true);

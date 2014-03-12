@@ -1,3 +1,15 @@
+{ ------------------------------------------------------------------- }
+{ Unit:    SWMMIO.pas }
+{ Project: WERF Framework - SWMM Converter }
+{ Version: 2.0 }
+{ Date:    2/28/2014 }
+{ Author:  Gesoyntec (D. Pankani) }
+{ }
+{ Delphi Pascal unit containing various utility functions, global variables }
+{ and constants, primarily used for interacting with SWMM5 input / output }
+{ files                                                                   }
+{ ------------------------------------------------------------------- }
+
 unit SWMMIO;
 
 interface
@@ -35,7 +47,8 @@ const
   MAX_SYS_RESULTS = 14;
   opModes: array [0 .. 1] of string = ('SWMM_TO_FW', 'SWMM_FROM_FW');
   appTypes: array [0 .. 1] of string = ('SWMM_CONSOLE', 'SWMM_GUI');
-
+  constituentNames: array [0 .. 7] of string = ('FLOW', 'TSS', 'TP', 'DP',
+    'DZn', 'TZN', 'DCU', 'TCU');
   // NnodeResults,NODE_DEPTH,NODE_HEAD,NODE_VOLUME,NODE_LATFLOW,NODE_INFLO,NODE_OVERFLOW;
   NUMNODEVARS: integer = 7;
 
@@ -43,6 +56,7 @@ const
   NUMLINKVARS: integer = 6;
 
 var
+  workingDir: string; // exe folder
   SWMMFileStreamPosition: long;
   operatingMode: string; // SWMM_TO_FW or  SWMM_FROM_FW'
   appType: string; // SWMM_CONSOLE or SWMM_GUI
@@ -70,7 +84,7 @@ var
   strLine: string;
   lineNumber: integer;
   tempStrList: TStrings;
-  tempTimeVal:Double;
+  tempTimeVal: Double;
   tempDateTimeStr, tempTimeStr: string;
   tempValueStr: string;
   i: integer;
@@ -103,13 +117,16 @@ begin
         tempStrList.Clear();
         ExtractStrings([','], [], PChar(strLine), tempStrList);
         tempTimeVal := strToFloat(tempStrList[3]);
-        tempTimeStr :=  floatToStr(int(tempTimeVal)) + ':' + FormatFloat('00',frac(tempTimeVal) * 60);
-        tempDateTimeStr := Format('%.2d/%.2d/%s	%5s', [strToInt(tempStrList[1]),strToInt(tempStrList[2]),trim(tempStrList[0]),tempTimeStr]);
+        tempTimeStr := floatToStr(int(tempTimeVal)) + ':' +
+          FormatFloat('00', frac(tempTimeVal) * 60);
+        tempDateTimeStr := Format('%.2d/%.2d/%s	%5s',
+          [strToInt(tempStrList[1]), strToInt(tempStrList[2]),
+          trim(tempStrList[0]), tempTimeStr]);
 
         for i := Low(Conv) to High(Conv) do
         begin
           j := i + 4;
-          if (j < tempStrList.Count - 1) then
+          if (j < tempStrList.Count) then
           begin
             tempValueStr := tempStrList[j];
             Conv[i].convertedTS.Add(tempDateTimeStr + '	' + tempValueStr);
@@ -207,9 +224,9 @@ begin
               else if i = 6 then
               // if we are in the [INFLOWS] block save names to INFLOWS list
               begin
-                //tempInt := Pos(' ', strLine, tempInt + 1); //
-                //strObjectID := Copy(strLine, 1, tempInt - 1);
-                //rsltLists[3].Add(strObjectID);
+                // tempInt := Pos(' ', strLine, tempInt + 1); //
+                // strObjectID := Copy(strLine, 1, tempInt - 1);
+                // rsltLists[3].Add(strObjectID);
                 rsltLists[3].Add(strLine);
               end
               else

@@ -1,3 +1,14 @@
+{ ------------------------------------------------------------------- }
+{ Unit:    ReadMTA.pas }
+{ Project: WERF Framework - SWMM Converter }
+{ Version: 2.0 }
+{ Date:    2/28/2014 }
+{ Author:  Gesoyntec (D. Pankani) }
+{ }
+{ Delphi Pascal unit for writting the Converter  }
+{ metadata control file (.mta)
+{ ------------------------------------------------------------------- }
+
 unit WriteMTA;
 
 interface
