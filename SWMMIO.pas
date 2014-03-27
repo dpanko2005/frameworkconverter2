@@ -7,7 +7,7 @@
 { }
 { Delphi Pascal unit containing various utility functions, global variables }
 { and constants, primarily used for interacting with SWMM5 input / output }
-{ files                                                                   }
+{ files }
 { ------------------------------------------------------------------- }
 
 unit SWMMIO;
@@ -145,19 +145,12 @@ end;
 function getSWMMNodeIDsFromTxtInput(SWMMFilePath: string): TArray<TStringList>;
 var
   FileContentsList: TStringList;
-  // TempListArr: TArray<TStringList>;
-  SwmmTokens: TStringList;
-  lineNumber: integer;
-  intTokenLoc: integer;
-  strLine: string;
-  strToken: string;
-  strObjectID: string;
-  tempInt: integer;
-  i: integer;
-  // mtaFilePath: string; // TODO Delete
-  // mtaData: TArray<TMTARecord>;
   rsltLists: TArray<TStringList>;
+  SwmmTokens: TStringList;
+  lineNumber, intTokenLoc, tempInt, i: integer;
+  strLine, strToken, strObjectID: string;
 begin
+  intTokenLoc := 0;
   FileContentsList := TStringList.Create;
   SetLength(rsltLists, 4);
   for i := Low(rsltLists) to High(rsltLists) do
@@ -224,9 +217,6 @@ begin
               else if i = 6 then
               // if we are in the [INFLOWS] block save names to INFLOWS list
               begin
-                // tempInt := Pos(' ', strLine, tempInt + 1); //
-                // strObjectID := Copy(strLine, 1, tempInt - 1);
-                // rsltLists[3].Add(strObjectID);
                 rsltLists[3].Add(strLine);
               end
               else
@@ -251,24 +241,13 @@ function getSWMMNodeIDsFromBinary(SWMMFilePath: string): TArray<TStringList>;
 var
   Stream: TFileStream;
   Reader: TBinaryReader;
-  // Value: integer;
-  // numberOfPeriods: integer;
-  // OutputStartPos: integer;
-  // bytePos: integer;
-  magicNum: integer;
-  flowUnits: integer;
-  SWMMVersion: integer;
-  // byteOffset: integer;
-  numNodes: integer;
-  numSubCatchs: integer;
-  numLinks: integer;
-  numPolls: integer;
+  // magicNum, flowUnits, SWMMVersion: integer;
+  numSubCatchs, numLinks, numPolls,numNodes: integer;
   idx: long;
   numCharsInID: integer;
   tempID: string;
   tempIDCharArr: TArray<Char>;
-  nodeIDList: TStringList;
-  pollutantIDList: TStringList;
+  nodeIDList, pollutantIDList: TStringList;
 begin
   Stream := TFileStream.Create(SWMMFilePath, fmOpenRead or fmShareDenyWrite);
   nodeIDList := TStringList.Create();
@@ -276,20 +255,19 @@ begin
   try
     Reader := TBinaryReader.Create(Stream);
     try
-      // Value := Reader.ReadInteger;
       // --- get number of objects reported on
-      numSubCatchs := 0;
-      numNodes := 0;
-      numLinks := 0;
+      // numSubCatchs := 0;
+      //numNodes := 0;
+      // numLinks := 0;
       numPolls := 0;
 
-      magicNum := Reader.ReadInteger; // Magic number
-      SWMMVersion := Reader.ReadInteger; // Version number
-      flowUnits := Reader.ReadInteger; // Flow units
+      Reader.ReadInteger; // Magic number
+      Reader.ReadInteger; // SWMM Version number
+      Reader.ReadInteger; // Flow units
       numSubCatchs := Reader.ReadInteger; // # subcatchments
       numNodes := Reader.ReadInteger; // # nodes
       numLinks := Reader.ReadInteger; // # links
-      numPolls := Reader.ReadInteger; // # pollutants
+      Reader.ReadInteger; // # pollutants
 
       // Read all subcatchment IDs and discard, skipping this section is not straight forward since catchment
       // name lengths vary
@@ -297,8 +275,6 @@ begin
       begin
         numCharsInID := Reader.ReadInteger;
         tempIDCharArr := Reader.ReadChars(numCharsInID);
-        // if Length(tempIDCharArr) > 0 then
-        // SetString(tempID, PChar(@tempIDCharArr[0]), Length(tempIDCharArr));
       end;
 
       // Read all node IDs and save for use later
@@ -319,11 +295,6 @@ begin
       begin
         numCharsInID := Reader.ReadInteger;
         tempIDCharArr := Reader.ReadChars(numCharsInID);
-        { if Length(tempIDCharArr) > 0 then
-          begin
-          SetString(tempID, PChar(@tempIDCharArr[0]), Length(tempIDCharArr))
-          end
-          else }
       end;
 
       // Read all pollutant IDs and save for use later

@@ -1,3 +1,15 @@
+{ ------------------------------------------------------------------- }
+{ Unit:    MTATemplateString.pas }
+{ Project: WERF Framework - SWMM Converter }
+{ Version: 2.0 }
+{ Date:    2/28/2014 }
+{ Author:  Gesoyntec (D. Pankani) }
+{ }
+{ Delphi Pascal unit that holds a template string with tokens that are  }
+{ replaced at runtime with valid values and saved as the Converter  }
+{ metadata control file (.mta)
+{ ------------------------------------------------------------------- }
+
 unit MTATemplateString;
 
 interface

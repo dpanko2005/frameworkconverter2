@@ -1,5 +1,5 @@
 { ------------------------------------------------------------------- }
-{ Unit:    ReadMTA.pas }
+{ Unit:    WriteMTA.pas }
 { Project: WERF Framework - SWMM Converter }
 { Version: 2.0 }
 { Date:    2/28/2014 }
@@ -26,7 +26,7 @@ function Write(mtaFilePath: string; MTADataArr: TArray<TMTARecord>): Boolean;
 var
   FileContentsList: TStringList;
   TplContentsList: TStringList;
-  intTokenLoc: integer;
+  //intTokenLoc: integer;
   i: integer;
   // j: integer;
   modelRunScenarioID: string;
@@ -38,7 +38,7 @@ var
   tplTokens: TArray<string>;
   tplTokenVals: TArray<string>;
   FWPollutantsStr: string;
-  tplFilePath: string;
+  //tplFilePath: string;
   tempStr: string;
 begin
   Assert(Assigned(MTADataArr));

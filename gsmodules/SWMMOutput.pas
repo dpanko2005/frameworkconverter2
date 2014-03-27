@@ -391,7 +391,8 @@ begin
       rslt.numPolls := High(selectedConstituentRecs);
       rslt.description := selectedConstituentRecs[0].ModelRunScenarioID;
 
-      days := reportStartDate + (reportTimeInterv * idx / 86400.0);
+      days := reportStartDate;
+      //days := reportStartDate + (reportTimeInterv * idx / 86400.0);
       // timeseries start date
       DecodeDateTime(days, myYear, myMonth, myDay, myHour, myMin,
         mySec, myMilli);

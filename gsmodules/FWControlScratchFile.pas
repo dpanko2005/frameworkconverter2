@@ -1,3 +1,14 @@
+{ ------------------------------------------------------------------- }
+{ Unit:    FWControlScratchFile.pas }
+{ Project: WERF Framework - SWMM Converter }
+{ Version: 2.0 }
+{ Date:    2/28/2014 }
+{ Author:  Gesoyntec (D. Pankani) }
+{ }
+{ Delphi Pascal unit that mangages the reading and writting of the }
+{ Framework Control Scratch File (.txt) }
+{ ------------------------------------------------------------------- }
+
 unit FWControlScratchFile;
 
 interface
@@ -8,18 +19,10 @@ uses
 
 type
   FWCtrlScratchRecord = record // converted framework timeseries data structure
-    scratchFilePath: string;
-    tsNodeName: string;
-    convFactor: double;
-    numPolls: integer;
-    description: string;
-    startYear: integer;
-    startMonth: integer;
-    startDay: integer;
-    startHourFrac: double;
-    endYear: integer;
-    endMonth: integer;
-    endDay: integer;
+    scratchFilePath, tsNodeName, description: string;
+    convFactor, startHourFrac: double;
+    numPolls, startYear, startMonth, startDay: integer;
+    endYear, endMonth, endDay: integer;
     endHourFrac: double;
     numberOfTimesteps: long;
     fwTimeSeries: TStringList;
@@ -82,15 +85,15 @@ end;
 function Write(FWCtrlRecord: FWCtrlScratchRecord): Boolean;
 var
   FileContentsList: TStringList;
-  descr: string;
+  //descr: string;
   fwControlFilePath: string;
 begin
+  FileContentsList := TStringList.Create;
   try
     begin
       if (FWCtrlRecord.description = '') then
         FWCtrlRecord.description := 'Converted from SWMM 5';
 
-      FileContentsList := TStringList.Create;
       FileContentsList.Add(FWCtrlRecord.scratchFilePath);
       FileContentsList.Add(FWCtrlRecord.tsNodeName);
       FileContentsList.Add(FloatToStr(FWCtrlRecord.convFactor));
