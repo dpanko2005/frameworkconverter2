@@ -1,12 +1,12 @@
 { ------------------------------------------------------------------- }
-{ Unit:    ReadMTA.pas }
-{ Project: WERF Framework - SWMM Converter }
-{ Version: 2.0 }
-{ Date:    2/28/2014 }
-{ Author:  Gesoyntec (D. Pankani) }
-{ }
-{ Delphi Pascal unit for reading the Converter  }
-{ metadata control file (.mta)
+{ Unit:    ReadMTA.pas                                                }
+{ Project: WERF Framework - SWMM Converter                            }
+{ Version: 2.0                                                        }
+{ Date:    2/28/2014                                                  }
+{ Author:  Gesoyntec (D. Pankani)                                     }
+{                                                                     }
+{ Delphi Pascal unit for reading the Converter                        }
+{ metadata control file (.mta)                                        }
 { ------------------------------------------------------------------- }
 
 unit ReadMTA;
@@ -20,7 +20,54 @@ uses
 var
   errorsList: TStringList;
 
+///	<summary>
+///	  Function for reading SWMM 5 converter control file and outputing a
+///	  structured record of the contents of the converter control file
+///	</summary>
+///	<param name="mtaFilePath">
+///	  full file path of the SWMM 5 converter control file to be read in
+///	</param>
+///	<returns>
+///	  Structured record created to hold the contents of the SWMM 5 converter
+///	  control file read in
+///	</returns>
 function Read(mtaFilePath: string): TArray<TMTARecord>;
+
+///	<summary>
+///	  Helper function for populating the structured data structure (TMTARecord)
+///	  that is used to store the contents of a SWMM 5 converter control file
+///	</summary>
+///	<param name="MTARec">
+///	  TMTARecord to be populated with the rest of the inputs to this function
+///	</param>
+///	<param name="descr">
+///	  Description of the SWMM 5 converter control file
+///	</param>
+///	<param name="constituentSWMMName">
+///	  SWMM name of the consitituent for which record is being created
+///	</param>
+///	<param name="constituentFWName">
+///	  Framework name of the consitituent for which record is being created
+///	</param>
+///	<param name="constituentType">
+///	  Type of constituent (either FLOW or CONCEN)
+///	</param>
+///	<param name="unitsFactor">
+///	  Units factor for the constituent in SWMM
+///	</param>
+///	<param name="nodeID">
+///	  ID of SWMM node associated with the record being created
+///	</param>
+///	<param name="swmmFilePath">
+///	  Filepath to the SWMM file assosciated with the record being created
+///	</param>
+///	<param name="scratchFilePath">
+///	  Filepath to the framework contrl scratch file path associated with the
+///	  record being created
+///	</param>
+///	<param name="convFactor">
+///	  Conversion factor for the constituent being created
+///	</param>
 procedure PopulateMTARecord(var MTARec: TMTARecord; descr: string;
   constituentSWMMName: string; constituentFWName: string;
   constituentType: string; unitsFactor: double; nodeID: string;
@@ -38,8 +85,6 @@ var
   intTokenLoc: integer;
   strLine: string;
   strToken: string;
-  // strNodeName: string;
-  // tempInt: integer;
   i: integer;
   j: integer;
   modelRunScenarioID: string;
@@ -81,6 +126,7 @@ begin
         '|ModelRunScenarioID| |SWMMNodeID| |SWMMFilePath| |scratchFilePath| |FlowConv| |NumPolls| |FrameworkPollutants|';
 
       lineNumber := 0;
+      // loop through all the lines in the file and check for the tokens above
       while lineNumber < FileContentsList.Count - 1 do
       begin
         strLine := LowerCase(FileContentsList[lineNumber]);
@@ -178,6 +224,7 @@ procedure PopulateMTARecord(var MTARec: TMTARecord; descr: string;
   constituentType: string; unitsFactor: double; nodeID: string;
   swmmFilePath: string; scratchFilePath: string; convFactor: double);
 begin
+  //populate the SWMM converter control record with the appropriate values
   MTARec.tsUnitsFactor := unitsFactor;
   MTARec.constituentSWMMName := constituentSWMMName;
   MTARec.constituentFWName := constituentFWName;

@@ -1,3 +1,13 @@
+{ ------------------------------------------------------------------- }
+{ Unit:    BusyDialogFrm.pas                                          }
+{ Project: WERF Framework - SWMM Converter                            }
+{ Version: 2.0                                                        }
+{ Date:    2/28/2014                                                  }
+{ Author:  Gesoyntec (D. Pankani)                                     }
+{                                                                     }
+{ Delphi Pascal unit that for the busy dialog                         }
+{ ------------------------------------------------------------------- }
+
 unit BusyDialogFrm;
 
 interface
@@ -12,6 +22,13 @@ type
   TBusyFrm = class(TForm)
     Label1: TLabel;
     Image1: TImage;
+
+    ///	<summary>
+    ///	  Show handler for busy dialog. Used to simply change dialog color
+    ///	</summary>
+    ///	<param name="Sender">
+    ///	  Owner (this dialog)
+    ///	</param>
     procedure FormShow(Sender: TObject);
 
   private

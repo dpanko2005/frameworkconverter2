@@ -1,3 +1,12 @@
+{ ------------------------------------------------------------------- }
+{ Unit:    ImportHelpDialogFrm.pas                                    }
+{ Project: WERF Framework - SWMM Converter                            }
+{ Version: 2.0                                                        }
+{ Date:    2/28/2014                                                  }
+{ Author:  Gesoyntec (D. Pankani)                                     }
+{                                                                     }
+{ Delphi Pascal unit that the ImportHelpDialogFrm dialog              }
+{ ------------------------------------------------------------------- }
 unit ImportHelpDialogFrm;
 
 interface
@@ -15,6 +24,13 @@ type
     Label3: TLabel;
     Label4: TLabel;
     Label5: TLabel;
+
+    ///	<summary>
+    ///	  Handler for button that dismisses this dialog
+    ///	</summary>
+    ///	<param name="Sender">
+    ///	  Owner
+    ///	</param>
     procedure Button1Click(Sender: TObject);
   private
     { Private declarations }

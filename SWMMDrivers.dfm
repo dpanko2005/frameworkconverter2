@@ -318,7 +318,6 @@ object Form1: TForm1
     Caption = 'Desired Operation'
     TabOrder = 14
     Visible = False
-    OnClick = RadioGroup1Click
   end
   object txtScenarioDescr: TEdit
     Left = 16

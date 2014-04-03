@@ -1,3 +1,12 @@
+{ ------------------------------------------------------------------- }
+{ Unit:    SWMMDrivers.pas                                            }
+{ Project: WERF Framework - SWMM Converter                            }
+{ Version: 2.0                                                        }
+{ Date:    2/28/2014                                                  }
+{ Author:  Gesoyntec (D. Pankani)                                     }
+{                                                                     }
+{ Delphi Pascal unit that for the main interface GUI that             }
+{ ------------------------------------------------------------------- }
 unit SWMMDrivers;
 
 interface
@@ -49,7 +58,22 @@ type
     Label9: TLabel;
     lblOperatingMode: TLabel;
     lblHelp: TLabel;
+
+    ///	<summary>
+    ///	  Handler for button used to browse to SWMM file
+    ///	</summary>
+    ///	<param name="Sender">
+    ///	  Owner of the button (this form)
+    ///	</param>
     procedure btnSelectSWMMFileClick(Sender: TObject);
+
+    ///	<summary>
+    ///	  Handler for form show event. Most of the setup of the form occurs in
+    ///	  this method
+    ///	</summary>
+    ///	<param name="Sender">
+    ///	  Owner (this form)
+    ///	</param>
     procedure FormShow(Sender: TObject);
 
     /// <summary>
@@ -61,16 +85,77 @@ type
     /// Parent form - currently not used
     /// </param>
     procedure btnNextClick(Sender: TObject);
-    procedure ProgressCallback(InProgressOverall: TProgressBar);
-    // procedure executeImportExport(Sender: TObject);
-    procedure RadioGroup1Click(Sender: TObject);
+    //procedure ProgressCallback(InProgressOverall: TProgressBar);
+    //procedure RadioGroup1Click(Sender: TObject);
+
+    ///	<summary>
+    ///	  Handler for cancel button
+    ///	</summary>
+    ///	<param name="Sender">
+    ///	  Owner of the button (this form)
+    ///	</param>
     procedure btnCancelClick(Sender: TObject);
+
+    ///	<summary>
+    ///	  Change handler for SWMM node selection combo box
+    ///	</summary>
+    ///	<param name="Sender">
+    ///	  Owner of the combo box (this form)
+    ///	</param>
     procedure cbxSwmmNodeChange(Sender: TObject);
+
+    ///	<summary>
+    ///	  Handler for help button. Displays a dialog with help on how to use
+    ///	  this tool
+    ///	</summary>
+    ///	<param name="Sender">
+    ///	  Owner of the button (this form)
+    ///	</param>
     procedure btnHelpClick(Sender: TObject);
+
+    ///	<summary>
+    ///	  Handler for help link. Displays a dialog with help on how to use this
+    ///	  tool
+    ///	</summary>
+    ///	<param name="Sender">
+    ///	  Owner of the button (this form)
+    ///	</param>
     procedure lblHelpClick(Sender: TObject);
 
   private
     workingDirPath: string;
+
+    ///	<summary>
+    ///	  method for populating a TMTARecFields data structure which holds user input
+    ///	  collected on this form
+    ///	</summary>
+    ///	<param name="SWMMNodeName">
+    ///	  Name of SWMM node being acted on
+    ///	</param>
+    /// <param name="Conv">
+    ///	  Name of SWMM node being acted on
+    ///	</param>
+    /// <param name="constituentName">
+    ///	  Name of constituent
+    ///	</param>
+    /// <param name="convFactor">
+    ///	  Conversion factor
+    ///	</param>
+    /// <param name="tsType">
+    ///	  Type of constituent (either CONCEN or FLOW)
+    ///	</param>
+    /// <param name="ScenarioDescription">
+    ///	  Description of scenario
+    ///	</param>
+    /// <param name="swmmFilePath">
+    ///	  SWMM input or output filepath
+    ///	</param>
+    /// <param name="fwScratchFilePath">
+    ///	  Framework control scratch file path
+    ///	</param>
+    /// <param name="mtaFilePath">
+    ///	  SWMM control file path
+    ///	</param>
     procedure AssignMTARecFields(SWMMNodeName: string; var Conv: TMTARecord;
       constituentName: string; convFactor: Double; tsType: string;
       ScenarioDescription: string; swmmFilePath: string;
@@ -110,7 +195,7 @@ begin
   btnHelpClick(Sender);
 end;
 
-procedure TForm1.ProgressCallback(InProgressOverall: TProgressBar);
+{procedure TForm1.ProgressCallback(InProgressOverall: TProgressBar);
 var
   Index: Integer;
   // kIndex: Integer;
@@ -126,7 +211,7 @@ begin
     Application.ProcessMessages;
   end; // for Index := 1 to InProgressOverall.Max do begin
   MessageDlg('Task completed!', mtInformation, [mbOK], 0);
-end;
+end;}
 
 procedure TForm1.btnNextClick(Sender: TObject);
 var
@@ -151,7 +236,7 @@ begin
   SetLength(ConvertedFWTSArr, High(constituentNames) + 1);
   scenarioDescr := txtScenarioDescr.Text;
   if (operatingMode = opModes[0]) then // importing from swmm Binary
-    // do nothing swmmFilePath set globally by swmm file selection button,
+    newSWMMInputFilePath := Self.txtSwmmFilePath.Caption
   else // exporting to swmm input file
   begin
     newSWMMInputFilePath := workingDirPath + '\' +
@@ -322,6 +407,7 @@ begin
       { First check if the file exists. }
       if FileExists(OpenTextFileDialog1.FileName) then
       begin
+        Height := 234;
         // save the directory so can write TS to same directory later
         workingDirPath := ExtractFileDir(OpenTextFileDialog1.FileName);
         swmmFilePath := OpenTextFileDialog1.FileName;
@@ -372,7 +458,6 @@ begin
     end;
   finally
   end;
-  Height := 234;
 end;
 
 procedure TForm1.cbxSwmmNodeChange(Sender: TObject);
@@ -461,7 +546,7 @@ begin
   sgdUserInputGrid.Cells[2, 8] := '1.00';
 end;
 
-procedure TForm1.RadioGroup1Click(Sender: TObject);
+{procedure TForm1.RadioGroup1Click(Sender: TObject);
 var
   Index: Integer;
   val: Integer;
@@ -479,6 +564,6 @@ begin
     btnSelectSWMMFile.Caption := 'Select SWMM Input File';
   end;
   operatingMode := opModes[val];
-end;
+end;}
 
 end.

@@ -1,12 +1,12 @@
 { ------------------------------------------------------------------- }
-{ Unit:    FWControlScratchFile.pas }
-{ Project: WERF Framework - SWMM Converter }
-{ Version: 2.0 }
-{ Date:    2/28/2014 }
-{ Author:  Gesoyntec (D. Pankani) }
-{ }
-{ Delphi Pascal unit that mangages the reading and writting of the }
-{ Framework Control Scratch File (.txt) }
+{ Unit:    FWControlScratchFile.pas                                   }
+{ Project: WERF Framework - SWMM Converter                            }
+{ Version: 2.0                                                        }
+{ Date:    2/28/2014                                                  }
+{ Author:  Gesoyntec (D. Pankani)                                     }
+{                                                                     }
+{ Delphi Pascal unit that mangages the reading and writting of the    }
+{ Framework Control Scratch File (swmmconvertstring.txt)              }
 { ------------------------------------------------------------------- }
 
 unit FWControlScratchFile;
@@ -18,7 +18,9 @@ uses
   StrUtils, Dialogs, jpeg, ExtCtrls, ComCtrls, StdCtrls, Buttons, SWMMIO;
 
 type
-  FWCtrlScratchRecord = record // converted framework timeseries data structure
+
+  // converted framework timeseries data structure
+  FWCtrlScratchRecord = record
     scratchFilePath, tsNodeName, description: string;
     convFactor, startHourFrac: double;
     numPolls, startYear, startMonth, startDay: integer;
@@ -31,7 +33,34 @@ type
 var
   errorsList: TStringList;
 
+///	<summary>
+///	  Function for reading contents of framework control scratch file. Outputs
+///	  a structured representation of the contents of the framework control
+///	  scratch file
+///	</summary>
+///	<param name="fwCtrlFilePath">
+///	  full path to the framework control scratch file to be read
+///	</param>
+///	<returns>
+///	  Structured record data structure with contents of the framework control
+///	  file
+///	</returns>
 function Read(fwCtrlFilePath: string): FWCtrlScratchRecord;
+
+///	<summary>
+///	  Function to write a framework control scratch file to disc as text file. Also writes the framework
+///   timeseries reference in the file to disc
+///	</summary>
+///	<param name="FWCtrlRecord">
+///	  Data structure for holding contents of framework control file. Has
+///	  properties that map to the various options in the framework scratch file
+///	</param>
+///	<returns>
+///	  True if write operation is successful
+///	</returns>
+///	<remarks>
+///	  None
+///	</remarks>
 function Write(FWCtrlRecord: FWCtrlScratchRecord): Boolean;
 
 implementation
@@ -45,11 +74,13 @@ begin
   FileContentsList := TStringList.Create;
   try
     begin
-      { First check if the file exists. }
+      //First check if the file exists.
       if FileExists(fwCtrlFilePath) then
       begin
-        { If it exists, load the data into the stringlist. }
+        //If it exists, load the data into the stringlist.
         FileContentsList.LoadFromFile(fwCtrlFilePath);
+
+        //if file is in the proper format ie has at least 13 lines then read it in
         if (FileContentsList.Count > 13) then
         begin
           Rslt.scratchFilePath := FileContentsList[0];
@@ -82,18 +113,20 @@ begin
   result := Rslt;
 end;
 
+
 function Write(FWCtrlRecord: FWCtrlScratchRecord): Boolean;
 var
   FileContentsList: TStringList;
-  //descr: string;
   fwControlFilePath: string;
 begin
   FileContentsList := TStringList.Create;
   try
     begin
+      // if no description was provided, use the default descrition
       if (FWCtrlRecord.description = '') then
         FWCtrlRecord.description := 'Converted from SWMM 5';
 
+      // add structured data record contents as an ordered set of entries
       FileContentsList.Add(FWCtrlRecord.scratchFilePath);
       FileContentsList.Add(FWCtrlRecord.tsNodeName);
       FileContentsList.Add(FloatToStr(FWCtrlRecord.convFactor));

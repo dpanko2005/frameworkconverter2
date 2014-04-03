@@ -43,8 +43,8 @@ object OperationStatusDlg: TOperationStatusDlg
   object lblTSFilesCreated: TLabel
     Left = 8
     Top = 83
-    Width = 538
-    Height = 102
+    Width = 82
+    Height = 13
     Caption = 'lblTSFilesCreated'
     WordWrap = True
   end

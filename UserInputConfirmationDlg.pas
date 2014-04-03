@@ -1,3 +1,14 @@
+{ ------------------------------------------------------------------- }
+{ Unit:    UserInputConfirmationDlg.pas                               }
+{ Project: WERF Framework - SWMM Converter                            }
+{ Version: 2.0                                                        }
+{ Date:    2/28/2014                                                  }
+{ Author:  Gesoyntec (D. Pankani)                                     }
+{                                                                     }
+{ Delphi Pascal unit that dispalys a dialog that show the a summary   }
+{ of the imputs entered by the user                                   }
+{ ------------------------------------------------------------------- }
+
 unit UserInputConfirmationDlg;
 
 interface
@@ -23,7 +34,24 @@ type
     Label2: TLabel;
     btnRun: TButton;
     btnCancel: TButton;
+
+    ///	<summary>
+    ///	  Handler for moving forward and dismissing user verification dialog to
+    ///	  be used when the user is sure that all the input has been properly
+    ///	  entered
+    ///	</summary>
+    ///	<param name="Sender">
+    ///	  Owner
+    ///	</param>
     procedure btnRunClick(Sender: TObject);
+
+    ///	<summary>
+    ///	  Handler for canceling and dismissing user verification dialog to be
+    ///	  used if input summary shows unintended input
+    ///	</summary>
+    ///	<param name="Sender">
+    ///	  Owner
+    ///	</param>
     procedure btnCancelClick(Sender: TObject);
 
   private
@@ -33,7 +61,7 @@ type
 
   end;
 
-procedure ShowProgress(InCallback: TProgressCallback);
+//procedure ShowProgress(InCallback: TProgressCallback);
 
 var
   SWMMUserInputVerificationFrm: TUserInputVerificationFrm;
@@ -52,7 +80,7 @@ begin
   ModalResult := mrOk;
 end;
 
-procedure ShowProgress(InCallback: TProgressCallback);
+{procedure ShowProgress(InCallback: TProgressCallback);
 var
   LWindowList: TTaskWindowList;
   LSaveFocusState: TFocusState;
@@ -74,6 +102,6 @@ begin
     Application.ModalFinished;
     FreeAndNil(SWMMUserInputVerificationFrm);
   end;
-end;
+end; }
 
 end.

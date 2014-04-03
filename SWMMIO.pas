@@ -259,7 +259,7 @@ begin
       // numSubCatchs := 0;
       //numNodes := 0;
       // numLinks := 0;
-      numPolls := 0;
+      //numPolls := 0;
 
       Reader.ReadInteger; // Magic number
       Reader.ReadInteger; // SWMM Version number
@@ -267,7 +267,7 @@ begin
       numSubCatchs := Reader.ReadInteger; // # subcatchments
       numNodes := Reader.ReadInteger; // # nodes
       numLinks := Reader.ReadInteger; // # links
-      Reader.ReadInteger; // # pollutants
+      numPolls := Reader.ReadInteger; // # pollutants
 
       // Read all subcatchment IDs and discard, skipping this section is not straight forward since catchment
       // name lengths vary

@@ -1,3 +1,14 @@
+{ ------------------------------------------------------------------- }
+{ Unit:    OperationStatusDlgFrm.pas                                  }
+{ Project: WERF Framework - SWMM Converter                            }
+{ Version: 2.0                                                        }
+{ Date:    2/28/2014                                                  }
+{ Author:  Gesoyntec (D. Pankani)                                     }
+{                                                                     }
+{ Delphi Pascal unit that dispalys a dialog that show the status of   }
+{ the import or export operation                                      }
+{ ------------------------------------------------------------------- }
+
 unit OperationStatusDlgFrm;
 
 interface
@@ -15,7 +26,21 @@ type
     lblSWMMFileLabel: TLabel;
     lblSWMMFilePath: TLabel;
     btnClose: TButton;
+
+    ///	<summary>
+    ///	  Handler for dismissing the dialog
+    ///	</summary>
+    ///	<param name="Sender">
+    ///	  Owner
+    ///	</param>
     procedure btnCloseClick(Sender: TObject);
+
+    ///	<summary>
+    ///	  Handler for showing the dialog
+    ///	</summary>
+    ///	<param name="Sender">
+    ///	  Owner
+    ///	</param>
     procedure FormShow(Sender: TObject);
 
   private
