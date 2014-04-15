@@ -252,6 +252,7 @@ $(PostBuildEvent)]]></PostBuildEvent>
             <Form>ExportHelpDialogFrm</Form>
             <FormType>dfm</FormType>
         </DCCReference>
+        <DCCReference Include="gsmodules\GSControlGrid.pas"/>
         <RcItem Include="mtaTemplate.txt">
             <ContainerId>ResourceItem</ContainerId>
             <ResourceType>RCDATA</ResourceType>

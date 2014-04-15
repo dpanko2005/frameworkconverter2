@@ -76,9 +76,8 @@ object UserInputVerificationFrm: TUserInputVerificationFrm
     FixedColor = 16776176
     FixedCols = 0
     RowCount = 10
-    Options = [goFixedVertLine, goFixedHorzLine, goVertLine, goHorzLine, goRangeSelect, goEditing]
     ParentCtl3D = False
-    ScrollBars = ssNone
+    ScrollBars = ssVertical
     TabOrder = 0
     ColWidths = (
       138
@@ -90,7 +89,7 @@ object UserInputVerificationFrm: TUserInputVerificationFrm
     Top = 390
     Width = 75
     Height = 25
-    Caption = 'Run'
+    Caption = 'Run >>'
     TabOrder = 1
     OnClick = btnRunClick
   end
@@ -99,7 +98,7 @@ object UserInputVerificationFrm: TUserInputVerificationFrm
     Top = 390
     Width = 75
     Height = 25
-    Caption = 'Cancel'
+    Caption = '<< Back'
     TabOrder = 2
     OnClick = btnCancelClick
   end

@@ -80,28 +80,5 @@ begin
   ModalResult := mrOk;
 end;
 
-{procedure ShowProgress(InCallback: TProgressCallback);
-var
-  LWindowList: TTaskWindowList;
-  LSaveFocusState: TFocusState;
-  LProgressForm: TUserInputVerificationFrm;
-begin
-  LProgressForm := TUserInputVerificationFrm.Create(NIL);
-  try
-    LSaveFocusState := SaveFocusState;
-    Screen.SaveFocusedList.Insert(0, Screen.FocusedForm);
-    Application.ModalStarted;
-    LWindowList := DisableTaskWindows(0);
-    Screen.FocusedForm := LProgressForm;
-    SendMessage(LProgressForm.Handle, CM_ACTIVATE, 0, 0);
-    LProgressForm.Show;
-    //InCallback(LProgressForm.prgExectionProgress);
-    EnableTaskWindows(LWindowList);
-    RestoreFocusState(LSaveFocusState);
-  finally
-    Application.ModalFinished;
-    FreeAndNil(SWMMUserInputVerificationFrm);
-  end;
-end; }
 
 end.

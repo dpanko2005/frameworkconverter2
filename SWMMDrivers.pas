@@ -1,11 +1,11 @@
 { ------------------------------------------------------------------- }
-{ Unit:    SWMMDrivers.pas                                            }
-{ Project: WERF Framework - SWMM Converter                            }
-{ Version: 2.0                                                        }
-{ Date:    2/28/2014                                                  }
-{ Author:  Gesoyntec (D. Pankani)                                     }
-{                                                                     }
-{ Delphi Pascal unit that for the main interface GUI that             }
+{ Unit:    SWMMDrivers.pas }
+{ Project: WERF Framework - SWMM Converter }
+{ Version: 2.0 }
+{ Date:    2/28/2014 }
+{ Author:  Gesoyntec (D. Pankani) }
+{ }
+{ Delphi Pascal unit that for the main interface GUI that }
 { ------------------------------------------------------------------- }
 unit SWMMDrivers;
 
@@ -18,7 +18,7 @@ uses
   Vcl.ExtCtrls, UserInputConfirmationDlg, OperationStatusDlgFrm,
   ImportHelpDialogFrm, ExportHelpDlgFrm, SWMMIO,
   SWMMInput, SWMMOutput, ReadMTA, WriteMTA, ComCtrls, BusyDialogFrm, GIFImg,
-  FWControlScratchFile, StrUtils;
+  FWControlScratchFile, StrUtils, GSControlGrid;
 
 const
 
@@ -34,13 +34,6 @@ type
     txtSwmmFilePath: TLabel;
     cbxSwmmNode: TComboBox;
     sgdUserInputGrid: TStringGrid;
-    cbxFlow: TComboBox;
-    cbxDCu: TComboBox;
-    cbxTZn: TComboBox;
-    cbxDZn: TComboBox;
-    cbxDP: TComboBox;
-    cbxTP: TComboBox;
-    cbxTSS: TComboBox;
     Label2: TLabel;
     btnCancel: TButton;
     btnHelp: TButton;
@@ -51,29 +44,38 @@ type
     Label6: TLabel;
     Label7: TLabel;
     Label8: TLabel;
-    cbxTCu: TComboBox;
     RadioGroup1: TRadioGroup;
     txtScenarioDescr: TEdit;
     Label1: TLabel;
     Label9: TLabel;
     lblOperatingMode: TLabel;
     lblHelp: TLabel;
+    Label10: TLabel;
+    Label11: TLabel;
+    lbxFWConstituents: TListBox;
+    lbxSWMMConstituents: TListBox;
+    btnLinkConstituents: TButton;
+    lbxLinkedConstituents: TListBox;
+    Label12: TLabel;
+    Label13: TLabel;
+    Label14: TLabel;
+    unlinkConstituents: TButton;
 
-    ///	<summary>
-    ///	  Handler for button used to browse to SWMM file
-    ///	</summary>
-    ///	<param name="Sender">
-    ///	  Owner of the button (this form)
-    ///	</param>
+    /// <summary>
+    /// Handler for button used to browse to SWMM file
+    /// </summary>
+    /// <param name="Sender">
+    /// Owner of the button (this form)
+    /// </param>
     procedure btnSelectSWMMFileClick(Sender: TObject);
 
-    ///	<summary>
-    ///	  Handler for form show event. Most of the setup of the form occurs in
-    ///	  this method
-    ///	</summary>
-    ///	<param name="Sender">
-    ///	  Owner (this form)
-    ///	</param>
+    /// <summary>
+    /// Handler for form show event. Most of the setup of the form occurs in
+    /// this method
+    /// </summary>
+    /// <param name="Sender">
+    /// Owner (this form)
+    /// </param>
     procedure FormShow(Sender: TObject);
 
     /// <summary>
@@ -85,80 +87,84 @@ type
     /// Parent form - currently not used
     /// </param>
     procedure btnNextClick(Sender: TObject);
-    //procedure ProgressCallback(InProgressOverall: TProgressBar);
-    //procedure RadioGroup1Click(Sender: TObject);
+    // procedure ProgressCallback(InProgressOverall: TProgressBar);
+    // procedure RadioGroup1Click(Sender: TObject);
 
-    ///	<summary>
-    ///	  Handler for cancel button
-    ///	</summary>
-    ///	<param name="Sender">
-    ///	  Owner of the button (this form)
-    ///	</param>
+    /// <summary>
+    /// Handler for cancel button
+    /// </summary>
+    /// <param name="Sender">
+    /// Owner of the button (this form)
+    /// </param>
     procedure btnCancelClick(Sender: TObject);
 
-    ///	<summary>
-    ///	  Change handler for SWMM node selection combo box
-    ///	</summary>
-    ///	<param name="Sender">
-    ///	  Owner of the combo box (this form)
-    ///	</param>
+    /// <summary>
+    /// Change handler for SWMM node selection combo box
+    /// </summary>
+    /// <param name="Sender">
+    /// Owner of the combo box (this form)
+    /// </param>
     procedure cbxSwmmNodeChange(Sender: TObject);
 
-    ///	<summary>
-    ///	  Handler for help button. Displays a dialog with help on how to use
-    ///	  this tool
-    ///	</summary>
-    ///	<param name="Sender">
-    ///	  Owner of the button (this form)
-    ///	</param>
+    /// <summary>
+    /// Handler for help button. Displays a dialog with help on how to use
+    /// this tool
+    /// </summary>
+    /// <param name="Sender">
+    /// Owner of the button (this form)
+    /// </param>
     procedure btnHelpClick(Sender: TObject);
 
-    ///	<summary>
-    ///	  Handler for help link. Displays a dialog with help on how to use this
-    ///	  tool
-    ///	</summary>
-    ///	<param name="Sender">
-    ///	  Owner of the button (this form)
-    ///	</param>
+    /// <summary>
+    /// Handler for help link. Displays a dialog with help on how to use this
+    /// tool
+    /// </summary>
+    /// <param name="Sender">
+    /// Owner of the button (this form)
+    /// </param>
     procedure lblHelpClick(Sender: TObject);
+    procedure btnLinkConstituentsClick(Sender: TObject);
+    procedure unlinkConstituentsClick(Sender: TObject);
 
   private
     workingDirPath: string;
 
-    ///	<summary>
-    ///	  method for populating a TMTARecFields data structure which holds user input
-    ///	  collected on this form
-    ///	</summary>
-    ///	<param name="SWMMNodeName">
-    ///	  Name of SWMM node being acted on
-    ///	</param>
+    /// <summary>
+    /// method for populating a TMTARecFields data structure which holds user input
+    /// collected on this form
+    /// </summary>
+    /// <param name="SWMMNodeName">
+    /// Name of SWMM node being acted on
+    /// </param>
     /// <param name="Conv">
-    ///	  Name of SWMM node being acted on
-    ///	</param>
+    /// Name of SWMM node being acted on
+    /// </param>
     /// <param name="constituentName">
-    ///	  Name of constituent
-    ///	</param>
+    /// Name of constituent in Framework
+    /// <param name="constituentName">
+    /// Name of constituent in SWMM
+    /// </param>
     /// <param name="convFactor">
-    ///	  Conversion factor
-    ///	</param>
+    /// Conversion factor
+    /// </param>
     /// <param name="tsType">
-    ///	  Type of constituent (either CONCEN or FLOW)
-    ///	</param>
+    /// Type of constituent (either CONCEN or FLOW)
+    /// </param>
     /// <param name="ScenarioDescription">
-    ///	  Description of scenario
-    ///	</param>
+    /// Description of scenario
+    /// </param>
     /// <param name="swmmFilePath">
-    ///	  SWMM input or output filepath
-    ///	</param>
+    /// SWMM input or output filepath
+    /// </param>
     /// <param name="fwScratchFilePath">
-    ///	  Framework control scratch file path
-    ///	</param>
+    /// Framework control scratch file path
+    /// </param>
     /// <param name="mtaFilePath">
-    ///	  SWMM control file path
-    ///	</param>
+    /// SWMM control file path
+    /// </param>
     procedure AssignMTARecFields(SWMMNodeName: string; var Conv: TMTARecord;
-      constituentName: string; convFactor: Double; tsType: string;
-      ScenarioDescription: string; swmmFilePath: string;
+      constituentName: string; constituentSWMMName: string; convFactor: Double;
+      tsType: string; ScenarioDescription: string; swmmFilePath: string;
       fwScratchFilePath: string; mtaFilePath: string);
     { Private declarations }
 
@@ -195,24 +201,6 @@ begin
   btnHelpClick(Sender);
 end;
 
-{procedure TForm1.ProgressCallback(InProgressOverall: TProgressBar);
-var
-  Index: Integer;
-  // kIndex: Integer;
-begin
-  MessageDlg('Press OK to start a long task...', mtInformation, [mbOK], 0);
-  // 1000 steps
-  InProgressOverall.Max := 1000;
-
-  for Index := 1 to InProgressOverall.Max do
-  begin
-    InProgressOverall.Position := Index;
-    // force application to process messages
-    Application.ProcessMessages;
-  end; // for Index := 1 to InProgressOverall.Max do begin
-  MessageDlg('Task completed!', mtInformation, [mbOK], 0);
-end;}
-
 procedure TForm1.btnNextClick(Sender: TObject);
 var
   ConvertedFWTSArr: TArray<TMTARecord>;
@@ -226,12 +214,11 @@ var
   scenarioDescr: string;
   FWCtrlRecord: FWCtrlScratchRecord;
   fwTSFileToCreatePath: string;
-  tempStrList: TStringList;
+  TempStrList: TStringList;
 begin
 
   // Launch project form and force user to provide the project information
   SWMMUserInputVerificationFrm := TUserInputVerificationFrm.Create(Application);
-  // TODO delete - hardcoded filepaths
 
   SetLength(ConvertedFWTSArr, High(constituentNames) + 1);
   scenarioDescr := txtScenarioDescr.Text;
@@ -239,33 +226,34 @@ begin
     newSWMMInputFilePath := Self.txtSwmmFilePath.Caption
   else // exporting to swmm input file
   begin
+    // the modified swmm file will be saved as new swmm file with a datetime suffix at the same location
+    // as the input swmm file into which the framework ts will be exported
     newSWMMInputFilePath := workingDirPath + '\' +
       AnsiLeftStr(ChangeFileExt(ExtractFileName(Self.txtSwmmFilePath.Caption),
       ''), 10) + '_' + FormatDateTime('yyyymmddhhnnss', Now) + '.inp';
-    // swmmFilePath := newSWMMInputFilePath;
   end;
 
   with SWMMUserInputVerificationFrm do
   begin
-    constituentCbxs := TArray<TComboBox>.Create(cbxFlow, cbxTSS, cbxTP, cbxDP,
-      cbxDZn, cbxTZn, cbxDCu, cbxTCu);
-
     try
       begin // populate dialog fields
         txtSwmmFilePath.Caption := Self.txtSwmmFilePath.Caption;
 
+        // get the name of the selected SWMM node
         if Self.cbxSwmmNode.ItemIndex <> -1 then
           txtSWMMNodeID.Caption := cbxSwmmNode.Items[cbxSwmmNode.ItemIndex];
         selectedNodeName := txtSWMMNodeID.Caption;
 
-        // make up file path for the Framework scratch timeseries data file
+        // make up file path for the Framework scratch timeseries data file that will be created
+        // this is used only when importing into framework from swmm
         fwTSFileToCreatePath := ExtractFilePath(swmmFilePath) + selectedNodeName
           + 'FWTS.sct';
-        // make up file path for the Converter Control file
+
+        // make up file path for the Converter Control file .mta used in both import/export
         SWMMIO.mtaFilePath := ExtractFilePath(swmmFilePath) + selectedNodeName +
           SWMMIO.operatingMode + '.mta';
 
-        // column headers
+        // column headers of grid on user confirmation dialog
         StringGrid1.Cells[0, 0] := '* Framework Constituent';
         StringGrid1.Cells[1, 0] := 'SWMM Equivalent';
         StringGrid1.Cells[2, 0] := 'Unit Conversion Factor';
@@ -274,29 +262,33 @@ begin
         for j := Low(constituentNames) to High(constituentNames) do
         begin
           StringGrid1.Cells[0, j + 1] := constituentNames[j];
+          // set all cells to 'not selected' and overwrite selected ones later
           StringGrid1.Cells[1, j + 1] := 'Not Selected';
-          // set all cells to not select and overwrite selected ones later
           StringGrid1.Cells[2, j + 1] := Self.sgdUserInputGrid.Cells[2, j + 1];
         end;
 
         // Flow is a special case constituent which is always selected
         StringGrid1.Cells[1, 1] := 'FLOW'; // flow is always selected
-        AssignMTARecFields(selectedNodeName, ConvertedFWTSArr[0], 'FLOW',
-          StrToFloat(Self.sgdUserInputGrid.Cells[2, 1]), 'FLOW', scenarioDescr,
-          newSWMMInputFilePath, fwTSFileToCreatePath, mtaFilePath);
+        AssignMTARecFields(selectedNodeName, ConvertedFWTSArr[0],
+          constituentNames[0], 'FLOW', StrToFloat(Self.sgdUserInputGrid.Cells[2,
+          1]), 'FLOW', scenarioDescr, newSWMMInputFilePath,
+          fwTSFileToCreatePath, mtaFilePath);
 
         // save conversion factors and selected constituents into record array for use later
         numSelectedConstituents := 1;
         for j := Low(constituentNames) + 1 to High(constituentNames) do
         begin
-          if constituentCbxs[j].ItemIndex > 0 then
+          if (sgdUserInputGrid.Cells[1, j + 1] <> '') then
           begin
-            StringGrid1.Cells[1, j + 1] := constituentCbxs[j].Items
-              [constituentCbxs[j].ItemIndex];
+          //copy swmm constituent name to confirmation grid
+            StringGrid1.Cells[1, j + 1] := sgdUserInputGrid.Cells[1, j + 1];
+
+            //populate records with results of match and conversion factors
             AssignMTARecFields(selectedNodeName, ConvertedFWTSArr[j],
-              constituentNames[j], StrToFloat(Self.sgdUserInputGrid.Cells[2,
-              j + 1]), 'CONCEN', scenarioDescr, newSWMMInputFilePath,
-              fwTSFileToCreatePath, mtaFilePath);
+              constituentNames[j], sgdUserInputGrid.Cells[1, j + 1],
+              StrToFloat(Self.sgdUserInputGrid.Cells[2, j + 1]), 'CONCEN',
+              scenarioDescr, newSWMMInputFilePath, fwTSFileToCreatePath,
+              mtaFilePath);
             inc(numSelectedConstituents);
           end;
         end;
@@ -304,6 +296,7 @@ begin
       lblNumberOfConstituents.Caption := 'Constituents (' +
         IntToStr(numSelectedConstituents) + ' of 8 selected)';
 
+        //show the user confirmation dialog
       tempModalResult := SWMMUserInputVerificationFrm.ShowModal;
       if (tempModalResult = mrOk) then
       begin
@@ -320,11 +313,15 @@ begin
         if (operatingMode = opModes[0]) then // importing from swmm Binary
         begin
           BusyFrm.Caption := 'Importing from SWMM';
+
+          //call module to do the work of importing into framework from swmm
           FWCtrlRecord := SWMMOutput.importFromSWMMToFW(swmmFilePath,
             fwTSFileToCreatePath, selectedNodeName, ConvertedFWTSArr);
+
           // save user settings to MTA file to allow subsequent commandline executions without user intervention
           WriteMTA.Write(mtaFilePath, ConvertedFWTSArr);
           BusyFrm.Close;
+
           // populate operation status confirmation dialog
           OperationStatusDlg.Caption := 'Import Operation Status';
           OperationStatusDlg.lblHeader.Caption :=
@@ -338,26 +335,37 @@ begin
         else // exporting to swmm input file
         begin
           BusyFrm.Caption := 'Exporting to SWMM';
-          // open control file and read in path to scratchfile
-          tempStrList := TStringList.Create();
-          tempStrList.LoadFromFile(SWMMIO.frameCtrlFilePath);
-          // first line in the file should be the path to the timeseries input file
-          ConvertedFWTSArr := SWMMIO.readInFrameworkTSFile(tempStrList[0],
+
+          // open framework control file previously created by framework
+          //and read in path to scratchfile that points to the timeseries data file
+          TempStrList := TStringList.Create();
+          TempStrList.LoadFromFile(SWMMIO.frameCtrlFilePath);
+
+          // first line in the framework control file should be the path to the timeseries data file
+          //read in framework timeseries data file and convert it into an array of swmm timeseries files
+          ConvertedFWTSArr := SWMMIO.readInFrameworkTSFile(TempStrList[0],
             ConvertedFWTSArr);
+
+          //save converted timeseries files to disc
           SWMMInput.finalizeExport(ConvertedFWTSArr, workingDirPath);
-          // write exported TS to the confirmation dialog
+
+          // write the list of newly exported swmm timeseries file paths to the confirmation dialog
+          //for the use to see
           for j := Low(ConvertedFWTSArr) to High(ConvertedFWTSArr) do
           begin
             if (ConvertedFWTSArr[j].convertedTSFilePath <> '') then
               tempStr := tempStr + #13#10 + ConvertedFWTSArr[j]
                 .convertedTSFilePath;
           end;
+
           // write TS and Inflow blocks to swmm input file and save as new file
           SWMMInput.updateSWMMInputFile(ConvertedFWTSArr, swmmFilePath,
             newSWMMInputFilePath);
+
           // save user settings to MTA file to allow subsequent commandline executions without user intervention
           WriteMTA.Write(mtaFilePath, ConvertedFWTSArr);
           BusyFrm.Close;
+
           // populate operation status confirmation dialog
           OperationStatusDlg.Caption := 'Export Operation Status';
           OperationStatusDlg.lblHeader.Caption :=
@@ -377,13 +385,13 @@ begin
 end;
 
 procedure TForm1.AssignMTARecFields(SWMMNodeName: string; var Conv: TMTARecord;
-  constituentName: string; convFactor: Double; tsType: string;
-  ScenarioDescription: string; swmmFilePath: string; fwScratchFilePath: string;
-  mtaFilePath: string);
+  constituentName: string; constituentSWMMName: string; convFactor: Double;
+  tsType: string; ScenarioDescription: string; swmmFilePath: string;
+  fwScratchFilePath: string; mtaFilePath: string);
 begin
   Conv.tsUnitsFactor := 1.0;
-  Conv.constituentSWMMName := constituentName;
-  Conv.constituentFWName := constituentName + 'f';
+  Conv.constituentSWMMName := constituentSWMMName;
+  Conv.constituentFWName := constituentName;
   Conv.convFactor := convFactor;
   Conv.tsNodeName := SWMMNodeName;
   Conv.tsType := tsType;
@@ -442,30 +450,101 @@ begin
       begin
         { Otherwise, raise an exception. }
         raise Exception.Create('File does not exist.');
-        Exit
+        exit
       end;
       cbxSwmmNode.Items := SWMMIO.NodeNameList;
 
-      SWMMIO.PollList.Insert(0,'Exclude');
-      cbxFlow.Items := SWMMIO.PollList;
-      cbxDCu.Items := SWMMIO.PollList;
-      cbxTCu.Items := SWMMIO.PollList;
-      cbxTZn.Items := SWMMIO.PollList;
-      cbxDZn.Items := SWMMIO.PollList;
-      cbxDP.Items := SWMMIO.PollList;
-      cbxTP.Items := SWMMIO.PollList;
-      cbxTSS.Items := SWMMIO.PollList;
+      lbxSWMMConstituents.Items := SWMMIO.PollList;
+      // TODO delete left over from when using comboboxes for matching
+      SWMMIO.PollList.Insert(0, 'Exclude');
+      { cbxFlow.Items := SWMMIO.PollList;
+        cbxDCu.Items := SWMMIO.PollList;
+        cbxTCu.Items := SWMMIO.PollList;
+        cbxTZn.Items := SWMMIO.PollList;
+        cbxDZn.Items := SWMMIO.PollList;
+        cbxDP.Items := SWMMIO.PollList;
+        cbxTP.Items := SWMMIO.PollList;
+        cbxTSS.Items := SWMMIO.PollList; }
     end;
   finally
   end;
 end;
 
+procedure TForm1.btnLinkConstituentsClick(Sender: TObject);
+var
+  I: Integer;
+  constituentName: String;
+begin
+  if ((lbxFWConstituents.ItemIndex <> -1) and
+    (lbxSWMMConstituents.ItemIndex <> -1)) then
+  begin
+    constituentName := lbxFWConstituents.Items.Strings
+      [lbxFWConstituents.ItemIndex];
+    // added linked constituents to linked constituents list box
+    lbxLinkedConstituents.Items.Add(constituentName + ' <=> ' +
+      lbxSWMMConstituents.Items.Strings[lbxSWMMConstituents.ItemIndex]);
+
+    // update the string grid with the matching
+    for I := 1 to sgdUserInputGrid.RowCount do
+    begin
+      // find framework constituent and write corresponding swmm constituent
+      if (constituentName = sgdUserInputGrid.Cells[0, I]) then
+      begin
+        sgdUserInputGrid.Cells[1, I] := lbxSWMMConstituents.Items.Strings
+          [lbxSWMMConstituents.ItemIndex];
+        // exit;
+      end;
+    end;
+    // removed constituents from their source list boxes
+    lbxFWConstituents.Items.Delete(lbxFWConstituents.ItemIndex);
+    lbxSWMMConstituents.Items.Delete(lbxSWMMConstituents.ItemIndex);
+
+  end;
+end;
+
+procedure TForm1.unlinkConstituentsClick(Sender: TObject);
+var
+  tempIndex, I: Integer;
+  TempStrList: TStringList;
+begin
+  if (lbxLinkedConstituents.ItemIndex <> -1) then
+  begin
+    // create a string list to hold split strings to be put back in fw and swmm constituent list boxes
+    TempStrList := TStringList.Create();
+
+    // split the string selected in the matched constituents list box
+    SWMMIO.Split(' ', lbxLinkedConstituents.Items.Strings
+      [lbxLinkedConstituents.ItemIndex], TempStrList);
+
+    // add the first string in the stringlist to the fw constituents list box and the second to the swmm one
+    lbxFWConstituents.Items.Add(TempStrList[0]);
+    lbxSWMMConstituents.Items.Add(TempStrList[2]);
+
+    // update the string grid and removing the matching
+    for I := 1 to sgdUserInputGrid.RowCount do
+    begin
+      // find framework constituent delete it
+      if (TempStrList[0] = sgdUserInputGrid.Cells[0, I]) then
+      begin
+        sgdUserInputGrid.Cells[1, I] := '';
+        // exit;
+      end;
+    end;
+    // removed the matching from the matched constituents list box
+    lbxLinkedConstituents.Items.Delete(lbxLinkedConstituents.ItemIndex);
+    TempStrList.Free();
+  end;
+end;
+
 procedure TForm1.cbxSwmmNodeChange(Sender: TObject);
 begin
-  Height := 620;
+  // Height := 620;
+  Height := 800;
 end;
 
 procedure TForm1.FormShow(Sender: TObject);
+var
+  numConstituents, I: Integer;
 begin
   Height := 130;
   SWMMIO.errorsList := TStringList.Create();
@@ -517,53 +596,30 @@ begin
     SaveTextFileDialog1.Filter := 'SWMM Input (*.inp)|*.INP';
   end;
 
+  // prepare framework to SWMM pollutant matching grid to be populated
+  numConstituents := Length(SWMMIO.constituentNames);
+  sgdUserInputGrid.RowCount := numConstituents + 1;
   // column headers
   sgdUserInputGrid.Cells[0, 0] := '* Framework Constituent';
   sgdUserInputGrid.Cells[1, 0] := 'SWMM Equivalent';
   sgdUserInputGrid.Cells[2, 0] := 'Unit Conversion Factor';
 
+  lbxFWConstituents.Items.Clear;
   // default constituents
-  sgdUserInputGrid.Cells[0, 1] := 'FLOW ';
-  sgdUserInputGrid.Cells[0, 2] := 'TSS';
-  sgdUserInputGrid.Cells[0, 3] := 'TP';
-  sgdUserInputGrid.Cells[0, 4] := 'DP ';
-  sgdUserInputGrid.Cells[0, 5] := 'DZn';
-  sgdUserInputGrid.Cells[0, 6] := 'TZN';
-  sgdUserInputGrid.Cells[0, 7] := 'DCU';
-  sgdUserInputGrid.Cells[0, 8] := 'TCU';
+  for I := 0 to numConstituents - 1 do
+  begin
+    // pollutant framework pollutants list box with framework pollutant names
+    lbxFWConstituents.Items.Add(constituentNames[I]);
+
+    sgdUserInputGrid.Cells[0, I + 1] := constituentNames[I];
+    sgdUserInputGrid.Cells[2, I + 1] := '1.00';
+  end;
+
+  // remove flow from the fw constituents list box since always required
+  lbxFWConstituents.Items.Delete(0);
 
   // default selected constituents - Flow is allways selected
   sgdUserInputGrid.Cells[1, 1] := 'FLOW ';
-
-  // default unit conversion factors
-  sgdUserInputGrid.Cells[2, 1] := '1.00';
-  sgdUserInputGrid.Cells[2, 2] := '1.00';
-  sgdUserInputGrid.Cells[2, 3] := '1.00';
-  sgdUserInputGrid.Cells[2, 4] := '1.00 ';
-  sgdUserInputGrid.Cells[2, 5] := '1.00';
-  sgdUserInputGrid.Cells[2, 6] := '1.00';
-  sgdUserInputGrid.Cells[2, 7] := '1.00';
-  sgdUserInputGrid.Cells[2, 8] := '1.00';
 end;
-
-{procedure TForm1.RadioGroup1Click(Sender: TObject);
-var
-  Index: Integer;
-  val: Integer;
-begin
-  index := RadioGroup1.ItemIndex;
-  Assert(index >= 0);
-  // Sanity check
-  val := Integer(RadioGroup1.Items.Objects[index]);
-  if (val = 0) then
-  begin
-    btnSelectSWMMFile.Caption := 'Select SWMM Output File';
-  end;
-  if (val = 1) then
-  begin
-    btnSelectSWMMFile.Caption := 'Select SWMM Input File';
-  end;
-  operatingMode := opModes[val];
-end;}
 
 end.

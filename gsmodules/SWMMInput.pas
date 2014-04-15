@@ -160,6 +160,7 @@ begin
       begin
         Writeln(SWMMIO.errorsList[i]);
       end;
+      result := 0;
       Exit;
     end;
     Writeln('Operation completed successfully.');

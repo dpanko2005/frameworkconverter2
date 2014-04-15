@@ -47,8 +47,11 @@ const
   MAX_SYS_RESULTS = 14;
   opModes: array [0 .. 1] of string = ('SWMM_TO_FW', 'SWMM_FROM_FW');
   appTypes: array [0 .. 1] of string = ('SWMM_CONSOLE', 'SWMM_GUI');
-  constituentNames: array [0 .. 7] of string = ('FLOW', 'TSS', 'TP', 'DP',
-    'DZn', 'TZN', 'DCU', 'TCU');
+  { constituentNames: array [0 .. 7] of string = ('FLOW', 'TSS', 'TP', 'DP',
+    'DZn', 'TZN', 'DCU', 'TCU'); }
+  constituentNames: array [0 .. 22] of string = ('Q', 'FC', 'TSS1', 'TSS2',
+    'TSS3', 'TSS4', 'TSS5', 'TSS', 'TP', 'TDS', 'POO4', 'NO3', 'LDOM', 'RDOM',
+    'LPOM', 'RPOM', 'BOD1', 'ALGAE', 'DO', 'TIC', 'ALK', 'Gen 1', 'NH4');
   // NnodeResults,NODE_DEPTH,NODE_HEAD,NODE_VOLUME,NODE_LATFLOW,NODE_INFLO,NODE_OVERFLOW;
   NUMNODEVARS: integer = 7;
 
@@ -242,7 +245,7 @@ var
   Stream: TFileStream;
   Reader: TBinaryReader;
   // magicNum, flowUnits, SWMMVersion: integer;
-  numSubCatchs, numLinks, numPolls,numNodes: integer;
+  numSubCatchs, numLinks, numPolls, numNodes: integer;
   idx: long;
   numCharsInID: integer;
   tempID: string;
@@ -257,9 +260,9 @@ begin
     try
       // --- get number of objects reported on
       // numSubCatchs := 0;
-      //numNodes := 0;
+      // numNodes := 0;
       // numLinks := 0;
-      //numPolls := 0;
+      // numPolls := 0;
 
       Reader.ReadInteger; // Magic number
       Reader.ReadInteger; // SWMM Version number

@@ -9,19 +9,20 @@ program FrameWorkSwmmDrivers;
 uses
   System.SysUtils,
   Vcl.Forms,
-  SWMMDrivers in 'SWMMDrivers.pas' {Form1} ,
-  UserInputConfirmationDlg in 'UserInputConfirmationDlg.pas' {Form2} ,
-  OperationStatusDlgFrm in 'OperationStatusDlgFrm.pas' {OperationStatusDlg} ,
+  SWMMDrivers in 'SWMMDrivers.pas' {Form1},
+  UserInputConfirmationDlg in 'UserInputConfirmationDlg.pas' {Form2},
+  OperationStatusDlgFrm in 'OperationStatusDlgFrm.pas' {OperationStatusDlg},
   SWMMIO in 'SWMMIO.pas',
   ReadMTA in 'gsmodules\ReadMTA.pas',
   WriteMTA in 'gsmodules\WriteMTA.pas',
   SWMMInput in 'gsmodules\SWMMInput.pas',
   SWMMOutput in 'gsmodules\SWMMOutput.pas',
   FWControlScratchFile in 'gsmodules\FWControlScratchFile.pas',
-  BusyDialogFrm in 'BusyDialogFrm.pas' {BusyFrm} ,
+  BusyDialogFrm in 'BusyDialogFrm.pas' {BusyFrm},
   MTATemplateString in 'gsmodules\MTATemplateString.pas',
-  ImportHelpDialogFrm in 'ImportHelpDialogFrm.pas' {ImportHelpDialog} ,
-  ExportHelpDlgFrm in 'ExportHelpDlgFrm.pas' {ExportHelpDialogFrm};
+  ImportHelpDialogFrm in 'ImportHelpDialogFrm.pas' {ImportHelpDialog},
+  ExportHelpDlgFrm in 'ExportHelpDlgFrm.pas' {ExportHelpDialogFrm},
+  GSControlGrid in 'gsmodules\GSControlGrid.pas';
 
 {$R *.res}
 
