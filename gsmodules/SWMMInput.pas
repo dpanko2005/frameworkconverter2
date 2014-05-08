@@ -247,7 +247,7 @@ var
   tempInt: Integer;
   tsBlockInsertPosition: Integer;
   tempRec: TMTARecord;
-  pathSuffix: string;
+  //pathSuffix: string;
   tsName: string;
   duplicateLineNumber: Integer;
 begin

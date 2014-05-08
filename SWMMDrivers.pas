@@ -204,7 +204,7 @@ end;
 procedure TForm1.btnNextClick(Sender: TObject);
 var
   ConvertedFWTSArr: TArray<TMTARecord>;
-  constituentCbxs: TArray<TComboBox>;
+  //constituentCbxs: TArray<TComboBox>;
   tempStr: string;
   j: Integer;
   tempModalResult: Integer;
@@ -504,7 +504,7 @@ end;
 
 procedure TForm1.unlinkConstituentsClick(Sender: TObject);
 var
-  tempIndex, I: Integer;
+  I: Integer;
   TempStrList: TStringList;
 begin
   if (lbxLinkedConstituents.ItemIndex <> -1) then
