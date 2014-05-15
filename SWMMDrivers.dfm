@@ -2,7 +2,7 @@ object Form1: TForm1
   Left = 0
   Top = 0
   Caption = 'Framework SWMM Converter'
-  ClientHeight = 748
+  ClientHeight = 512
   ClientWidth = 476
   Color = clBtnFace
   Font.Charset = DEFAULT_CHARSET
@@ -11,6 +11,7 @@ object Form1: TForm1
   Font.Name = 'Tahoma'
   Font.Style = []
   OldCreateOrder = False
+  OnClose = FormClose
   OnShow = FormShow
   PixelsPerInch = 96
   TextHeight = 13
@@ -21,16 +22,6 @@ object Form1: TForm1
     Height = 13
     Color = clInfoBk
     ParentColor = False
-  end
-  object Label2: TLabel
-    Left = 0
-    Top = 631
-    Width = 445
-    Height = 13
-    Caption = 
-      '*TSS - Total Susp. Solids, TP - Total Phosphorus, DP - Dissolved' +
-      ' Phosphorus, TZn - Total Zinc'
-    WordWrap = True
   end
   object Label3: TLabel
     Left = 40
@@ -47,27 +38,12 @@ object Form1: TForm1
     ParentColor = False
     ParentFont = False
   end
-  object Label4: TLabel
-    Left = 32
-    Top = 663
-    Width = 220
-    Height = 19
-    Caption = 'OptionalTimeseries Description'
-    Color = clInfoBk
-    Font.Charset = DEFAULT_CHARSET
-    Font.Color = clWindowText
-    Font.Height = -16
-    Font.Name = 'Tahoma'
-    Font.Style = []
-    ParentColor = False
-    ParentFont = False
-  end
   object Label5: TLabel
     Left = 32
-    Top = 367
-    Width = 226
+    Top = 287
+    Width = 178
     Height = 19
-    Caption = 'Provide Unit Conversion Factors'
+    Caption = 'Select SWMM Constituent'
     Color = clInfoBk
     Font.Charset = DEFAULT_CHARSET
     Font.Color = clWindowText
@@ -92,24 +68,9 @@ object Form1: TForm1
     ParentColor = False
     ParentFont = False
   end
-  object Label7: TLabel
-    Left = 11
-    Top = 663
-    Width = 15
-    Height = 19
-    Caption = '4:'
-    Color = clRed
-    Font.Charset = DEFAULT_CHARSET
-    Font.Color = clRed
-    Font.Height = -16
-    Font.Name = 'Tahoma'
-    Font.Style = []
-    ParentColor = False
-    ParentFont = False
-  end
   object Label8: TLabel
     Left = 11
-    Top = 367
+    Top = 287
     Width = 15
     Height = 19
     Caption = '3:'
@@ -119,36 +80,6 @@ object Form1: TForm1
     Font.Height = -16
     Font.Name = 'Tahoma'
     Font.Style = []
-    ParentColor = False
-    ParentFont = False
-  end
-  object Label1: TLabel
-    Left = 19
-    Top = 127
-    Width = 15
-    Height = 19
-    Caption = '2:'
-    Color = clRed
-    Font.Charset = DEFAULT_CHARSET
-    Font.Color = clRed
-    Font.Height = -16
-    Font.Name = 'Tahoma'
-    Font.Style = []
-    ParentColor = False
-    ParentFont = False
-  end
-  object Label9: TLabel
-    Left = 19
-    Top = 224
-    Width = 64
-    Height = 13
-    Caption = 'Framework'
-    Color = clInfoBk
-    Font.Charset = DEFAULT_CHARSET
-    Font.Color = clWindowText
-    Font.Height = -11
-    Font.Name = 'Tahoma'
-    Font.Style = [fsBold]
     ParentColor = False
     ParentFont = False
   end
@@ -182,10 +113,10 @@ object Form1: TForm1
   end
   object Label10: TLabel
     Left = 40
-    Top = 199
-    Width = 217
+    Top = 119
+    Width = 142
     Height = 19
-    Caption = 'Match Framework Constituents'
+    Caption = 'Select SWMM Nodes'
     Color = clInfoBk
     Font.Charset = DEFAULT_CHARSET
     Font.Color = clWindowText
@@ -197,10 +128,10 @@ object Form1: TForm1
   end
   object Label11: TLabel
     Left = 19
-    Top = 199
+    Top = 119
     Width = 15
     Height = 19
-    Caption = '3:'
+    Caption = '2:'
     Color = clRed
     Font.Charset = DEFAULT_CHARSET
     Font.Color = clRed
@@ -210,27 +141,60 @@ object Form1: TForm1
     ParentColor = False
     ParentFont = False
   end
-  object Label12: TLabel
-    Left = 40
-    Top = 127
-    Width = 135
-    Height = 19
-    Caption = 'Select SWMM Node'
+  object Label15: TLabel
+    Left = 19
+    Top = 317
+    Width = 96
+    Height = 26
+    Caption = 'Available SWMM Constituents'
     Color = clInfoBk
     Font.Charset = DEFAULT_CHARSET
     Font.Color = clWindowText
-    Font.Height = -16
+    Font.Height = -11
     Font.Name = 'Tahoma'
-    Font.Style = []
+    Font.Style = [fsBold]
     ParentColor = False
     ParentFont = False
+    WordWrap = True
+  end
+  object lblSelectedFWConstituents: TLabel
+    Left = 226
+    Top = 321
+    Width = 116
+    Height = 26
+    Caption = 'Selected For Import to Framework'
+    Color = clInfoBk
+    Font.Charset = DEFAULT_CHARSET
+    Font.Color = clWindowText
+    Font.Height = -11
+    Font.Name = 'Tahoma'
+    Font.Style = [fsBold]
+    ParentColor = False
+    ParentFont = False
+    WordWrap = True
+  end
+  object Label9: TLabel
+    Left = 19
+    Top = 141
+    Width = 96
+    Height = 26
+    Caption = 'Available SWMM Constituents'
+    Color = clInfoBk
+    Font.Charset = DEFAULT_CHARSET
+    Font.Color = clWindowText
+    Font.Height = -11
+    Font.Name = 'Tahoma'
+    Font.Style = [fsBold]
+    ParentColor = False
+    ParentFont = False
+    WordWrap = True
   end
   object Label13: TLabel
-    Left = 301
-    Top = 221
-    Width = 112
-    Height = 13
-    Caption = 'Linked Constituents'
+    Left = 226
+    Top = 145
+    Width = 116
+    Height = 26
+    Caption = 'Selected For Import to Framework'
     Color = clInfoBk
     Font.Charset = DEFAULT_CHARSET
     Font.Color = clWindowText
@@ -239,19 +203,20 @@ object Form1: TForm1
     Font.Style = [fsBold]
     ParentColor = False
     ParentFont = False
+    WordWrap = True
   end
-  object Label14: TLabel
-    Left = 113
-    Top = 224
-    Width = 38
+  object lblTSStartEndDate: TLabel
+    Left = 19
+    Top = 93
+    Width = 251
     Height = 13
-    Caption = 'SWMM'
+    Caption = 'Simulation Period: From mm/dd/yyyy to mm/dd/yyyy'
     Color = clInfoBk
     Font.Charset = DEFAULT_CHARSET
-    Font.Color = clWindowText
+    Font.Color = clGrayText
     Font.Height = -11
     Font.Name = 'Tahoma'
-    Font.Style = [fsBold]
+    Font.Style = []
     ParentColor = False
     ParentFont = False
   end
@@ -264,82 +229,96 @@ object Form1: TForm1
     TabOrder = 0
     OnClick = btnSelectSWMMFileClick
   end
-  object cbxSwmmNode: TComboBox
-    Left = 16
-    Top = 152
-    Width = 356
-    Height = 21
-    TabOrder = 1
-    Text = 'Select SWMM Node'
-    OnChange = cbxSwmmNodeChange
-  end
-  object sgdUserInputGrid: TStringGrid
-    Left = 19
-    Top = 392
-    Width = 422
-    Height = 233
-    Color = clBtnFace
-    ColCount = 3
-    Ctl3D = False
-    FixedColor = 16776176
-    FixedCols = 0
-    RowCount = 10
-    Options = [goFixedVertLine, goFixedHorzLine, goVertLine, goHorzLine, goRangeSelect, goEditing]
-    ParentCtl3D = False
-    ScrollBars = ssVertical
-    TabOrder = 2
-    ColWidths = (
-      136
-      165
-      136)
-  end
   object btnCancel: TButton
-    Left = 174
-    Top = 715
+    Left = 168
+    Top = 467
     Width = 75
     Height = 25
     Caption = 'Cancel'
-    TabOrder = 3
+    TabOrder = 1
     OnClick = btnCancelClick
   end
   object btnHelp: TButton
-    Left = 270
-    Top = 715
+    Left = 264
+    Top = 467
     Width = 75
     Height = 25
     Caption = 'Help'
-    TabOrder = 4
+    TabOrder = 2
     OnClick = btnHelpClick
   end
-  object btnNext: TButton
-    Left = 366
-    Top = 715
+  object btnRun: TButton
+    Left = 360
+    Top = 467
     Width = 75
     Height = 25
-    Caption = 'Next'
-    TabOrder = 5
-    OnClick = btnNextClick
+    Caption = 'Run'
+    Enabled = False
+    TabOrder = 3
+    OnClick = btnRunClick
   end
-  object RadioGroup1: TRadioGroup
-    Left = 316
-    Top = 80
-    Width = 133
-    Height = 66
-    Caption = 'Desired Operation'
-    TabOrder = 6
-    Visible = False
-  end
-  object txtScenarioDescr: TEdit
-    Left = 8
-    Top = 688
-    Width = 352
-    Height = 21
-    TabOrder = 7
-  end
-  object lbxFWConstituents: TListBox
+  object lbxAvailSWMMConstituents: TListBox
     Left = 19
-    Top = 240
-    Width = 70
+    Top = 353
+    Width = 88
+    Height = 97
+    Font.Charset = DEFAULT_CHARSET
+    Font.Color = clWindowText
+    Font.Height = -11
+    Font.Name = 'Tahoma'
+    Font.Style = []
+    ItemHeight = 13
+    ParentFont = False
+    TabOrder = 4
+  end
+  object lbxSelectedSWMMConstituents: TListBox
+    Left = 226
+    Top = 353
+    Width = 88
+    Height = 97
+    Font.Charset = DEFAULT_CHARSET
+    Font.Color = clWindowText
+    Font.Height = -11
+    Font.Name = 'Tahoma'
+    Font.Style = []
+    ItemHeight = 13
+    ParentFont = False
+    TabOrder = 5
+  end
+  object btnConstituentInclude: TButton
+    Left = 129
+    Top = 361
+    Width = 75
+    Height = 25
+    Caption = 'Include >>'
+    Font.Charset = DEFAULT_CHARSET
+    Font.Color = clWindowText
+    Font.Height = -11
+    Font.Name = 'Tahoma'
+    Font.Style = []
+    ParentFont = False
+    TabOrder = 6
+    OnClick = btnConstituentIncludeClick
+  end
+  object btnConstituentExclude: TButton
+    Left = 129
+    Top = 392
+    Width = 75
+    Height = 25
+    Caption = '<< Exclude'
+    Font.Charset = DEFAULT_CHARSET
+    Font.Color = clWindowText
+    Font.Height = -11
+    Font.Name = 'Tahoma'
+    Font.Style = []
+    ParentFont = False
+    TabOrder = 7
+    OnClick = btnConstituentExcludeClick
+  end
+  object lbxAvailSWMMNodes: TListBox
+    Left = 19
+    Top = 177
+    Width = 88
     Height = 97
     Font.Charset = DEFAULT_CHARSET
     Font.Color = clWindowText
@@ -350,20 +329,26 @@ object Form1: TForm1
     ParentFont = False
     TabOrder = 8
   end
-  object lbxSWMMConstituents: TListBox
-    Left = 113
-    Top = 240
-    Width = 70
+  object lbxSelectedSWMMNodes: TListBox
+    Left = 226
+    Top = 177
+    Width = 88
     Height = 97
+    Font.Charset = DEFAULT_CHARSET
+    Font.Color = clWindowText
+    Font.Height = -11
+    Font.Name = 'Tahoma'
+    Font.Style = []
     ItemHeight = 13
+    ParentFont = False
     TabOrder = 9
   end
-  object btnLinkConstituents: TButton
-    Left = 205
-    Top = 257
+  object btnNodeInclude: TButton
+    Left = 129
+    Top = 185
     Width = 75
     Height = 25
-    Caption = 'Link >>'
+    Caption = 'Include >>'
     Font.Charset = DEFAULT_CHARSET
     Font.Color = clWindowText
     Font.Height = -11
@@ -371,36 +356,29 @@ object Form1: TForm1
     Font.Style = []
     ParentFont = False
     TabOrder = 10
-    OnClick = btnLinkConstituentsClick
+    OnClick = btnNodeIncludeClick
   end
-  object lbxLinkedConstituents: TListBox
-    Left = 301
-    Top = 240
-    Width = 140
-    Height = 97
-    ItemHeight = 13
-    TabOrder = 11
-  end
-  object unlinkConstituents: TButton
-    Left = 205
-    Top = 288
+  object btnNodeExclude: TButton
+    Left = 129
+    Top = 216
     Width = 75
     Height = 25
-    Caption = '<< Unlink'
+    Caption = '<< Exclude'
     Font.Charset = DEFAULT_CHARSET
     Font.Color = clWindowText
     Font.Height = -11
     Font.Name = 'Tahoma'
     Font.Style = []
     ParentFont = False
-    TabOrder = 12
-    OnClick = unlinkConstituentsClick
+    TabOrder = 11
+    OnClick = btnNodeExcludeClick
   end
   object OpenTextFileDialog1: TOpenTextFileDialog
-    Top = 712
+    Left = 10
+    Top = 456
   end
   object SaveTextFileDialog1: TSaveTextFileDialog
-    Left = 48
-    Top = 712
+    Left = 90
+    Top = 472
   end
 end

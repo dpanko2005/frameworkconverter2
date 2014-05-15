@@ -16,7 +16,7 @@ interface
 
 uses
   Windows, Messages, SysUtils, Variants, Classes, Graphics, Controls, Forms,
-  StrUtils, Dialogs, jpeg, ExtCtrls, ComCtrls, StdCtrls, Buttons;
+  StrUtils, Dialogs, jpeg, ExtCtrls, ComCtrls, StdCtrls, Buttons,DateUtils;
 
 type
   TMTARecord = record // converted framework timeseries data structure
@@ -244,25 +244,40 @@ function getSWMMNodeIDsFromBinary(SWMMFilePath: string): TArray<TStringList>;
 var
   Stream: TFileStream;
   Reader: TBinaryReader;
-  // magicNum, flowUnits, SWMMVersion: integer;
+  numberOfPeriods, outputStartPos: integer;
   numSubCatchs, numLinks, numPolls, numNodes: integer;
+  reportStartDate, reportTimeInterv: Double;
+  days: TDateTime;
+  myYear, myMonth, myDay: Word;
+  myHour, myMin, mySec, myMilli: Word;
   idx: long;
   numCharsInID: integer;
   tempID: string;
   tempIDCharArr: TArray<Char>;
   nodeIDList, pollutantIDList: TStringList;
+  startDateList, endDateList: TStringList;
 begin
+
   Stream := TFileStream.Create(SWMMFilePath, fmOpenRead or fmShareDenyWrite);
   nodeIDList := TStringList.Create();
   pollutantIDList := TStringList.Create();
+  endDateList := TStringList.Create();
+  startDateList := TStringList.Create();
+
   try
     Reader := TBinaryReader.Create(Stream);
     try
-      // --- get number of objects reported on
-      // numSubCatchs := 0;
-      // numNodes := 0;
-      // numLinks := 0;
-      // numPolls := 0;
+
+      // First get number of periods from the end of the file
+      Stream.Seek(-4 * sizeof(Integer), soEnd);
+
+      // the byte position where the Computed Results section of the file begins (4-byte integer)
+      outputStartPos := Reader.ReadInteger;
+
+      // number of periods
+      numberOfPeriods := Reader.ReadInteger;;
+
+      Stream.Seek(0, soBeginning);
 
       Reader.ReadInteger; // Magic number
       Reader.ReadInteger; // SWMM Version number
@@ -315,6 +330,34 @@ begin
 
       // save stream position for later when we extract node results to avoid having to start over
       SWMMFileStreamPosition := Stream.Position;
+
+          Stream.Seek(outputStartPos - (sizeof(Double) + sizeof(Integer)),
+        soBeginning);
+
+      // Get Start date and reporting timestep
+      reportStartDate := Reader.ReadDouble;
+
+      // StartDateTime  = getDateTime(reportStartDate)
+      reportTimeInterv := Reader.ReadInteger;
+
+      // compute timeseries start date
+      days := reportStartDate;
+      DecodeDateTime(days, myYear, myMonth, myDay, myHour, myMin,
+        mySec, myMilli);
+      startDateList.Add(IntToStr(myYear));
+      startDateList.Add(IntToStr(myMonth));
+      startDateList.Add(IntToStr(myMonth));
+      startDateList.Add(IntToStr(myHour));
+
+      // compute timeseries end date
+      days := reportStartDate + (reportTimeInterv * numberOfPeriods / 86400.0);
+      DecodeDateTime(days, myYear, myMonth, myDay, myHour, myMin,
+        mySec, myMilli);
+      endDateList.Add(IntToStr(myYear));
+      endDateList.Add(IntToStr(myMonth));
+      endDateList.Add(IntToStr(myMonth));
+      endDateList.Add(IntToStr(myHour));
+
     finally
       Reader.Free;
     end;
@@ -324,6 +367,8 @@ begin
   SetLength(result, 2);
   result[0] := nodeIDList;
   result[1] := pollutantIDList;
+  result[2] := startDateList;
+  result[3] := endDateList;
 end;
 
 procedure Split(const Delimiter: Char; Input: string; const Strings: TStrings);
