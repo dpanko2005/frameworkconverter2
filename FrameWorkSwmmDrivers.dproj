@@ -227,22 +227,12 @@ $(PostBuildEvent)]]></PostBuildEvent>
 			<DCCReference Include="SWMMDrivers.pas">
 				<Form>Form1</Form>
 			</DCCReference>
-			<DCCReference Include="UserInputConfirmationDlg.pas">
-				<Form>Form2</Form>
-			</DCCReference>
-			<DCCReference Include="OperationStatusDlgFrm.pas">
-				<Form>OperationStatusDlg</Form>
-			</DCCReference>
 			<DCCReference Include="SWMMIO.pas"/>
 			<DCCReference Include="gsmodules\ReadMTA.pas"/>
 			<DCCReference Include="gsmodules\WriteMTA.pas"/>
 			<DCCReference Include="gsmodules\SWMMInput.pas"/>
 			<DCCReference Include="gsmodules\SWMMOutput.pas"/>
 			<DCCReference Include="gsmodules\FWControlScratchFile.pas"/>
-			<DCCReference Include="BusyDialogFrm.pas">
-				<Form>BusyFrm</Form>
-				<FormType>dfm</FormType>
-			</DCCReference>
 			<DCCReference Include="gsmodules\MTATemplateString.pas"/>
 			<DCCReference Include="ImportHelpDialogFrm.pas">
 				<Form>ImportHelpDialog</Form>
@@ -253,6 +243,8 @@ $(PostBuildEvent)]]></PostBuildEvent>
 				<FormType>dfm</FormType>
 			</DCCReference>
 			<DCCReference Include="gsmodules\GSControlGrid.pas"/>
+			<DCCReference Include="gsmodules\ConverterErrors.pas"/>
+			<DCCReference Include="gsmodules\FWIO.pas"/>
 			<RcItem Include="mtaTemplate.txt">
 				<ContainerId>ResourceItem</ContainerId>
 				<ResourceType>RCDATA</ResourceType>
@@ -361,10 +353,8 @@ $(PostBuildEvent)]]></PostBuildEvent>
 						<Source Name="MainSource">FrameWorkSwmmDrivers.dpr</Source>
 					</Source>
 					<Excluded_Packages>
-						<Excluded_Packages Name="$(BDSBIN)\dcloffice2k190.bpl">Microsoft Office 2000 Sample Automation Server Wrapper Components</Excluded_Packages>
-						<Excluded_Packages Name="$(BDSBIN)\dclofficexp190.bpl">Microsoft Office XP Sample Automation Server Wrapper Components</Excluded_Packages>
-						<Excluded_Packages Name="$(BDSBIN)\bcboffice2k190.bpl">Embarcadero C++Builder Office 2000 Servers Package</Excluded_Packages>
-						<Excluded_Packages Name="$(BDSBIN)\bcbofficexp190.bpl">Embarcadero C++Builder Office XP Servers Package</Excluded_Packages>
+						<Excluded_Packages Name="$(BDSBIN)\dcloffice2k160.bpl">Microsoft Office 2000 Sample Automation Server Wrapper Components</Excluded_Packages>
+						<Excluded_Packages Name="$(BDSBIN)\dclofficexp160.bpl">Microsoft Office XP Sample Automation Server Wrapper Components</Excluded_Packages>
 					</Excluded_Packages>
 				</Delphi.Personality>
 				<Deployment/>

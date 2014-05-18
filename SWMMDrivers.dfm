@@ -1,8 +1,8 @@
 object Form1: TForm1
   Left = 0
   Top = 0
-  Caption = 'Framework SWMM Converter'
-  ClientHeight = 512
+  Caption = 'Framework SWMM Converter v2.0'
+  ClientHeight = 578
   ClientWidth = 476
   Color = clBtnFace
   Font.Charset = DEFAULT_CHARSET
@@ -144,7 +144,7 @@ object Form1: TForm1
   object Label15: TLabel
     Left = 19
     Top = 317
-    Width = 96
+    Width = 163
     Height = 26
     Caption = 'Available SWMM Constituents'
     Color = clInfoBk
@@ -158,9 +158,9 @@ object Form1: TForm1
     WordWrap = True
   end
   object lblSelectedFWConstituents: TLabel
-    Left = 226
+    Left = 306
     Top = 321
-    Width = 116
+    Width = 164
     Height = 26
     Caption = 'Selected For Import to Framework'
     Color = clInfoBk
@@ -176,7 +176,7 @@ object Form1: TForm1
   object Label9: TLabel
     Left = 19
     Top = 141
-    Width = 96
+    Width = 164
     Height = 26
     Caption = 'Available SWMM Constituents'
     Color = clInfoBk
@@ -190,9 +190,9 @@ object Form1: TForm1
     WordWrap = True
   end
   object Label13: TLabel
-    Left = 226
+    Left = 306
     Top = 145
-    Width = 116
+    Width = 164
     Height = 26
     Caption = 'Selected For Import to Framework'
     Color = clInfoBk
@@ -220,18 +220,80 @@ object Form1: TForm1
     ParentColor = False
     ParentFont = False
   end
+  object lblTimeSpanTitleNo: TLabel
+    Left = 11
+    Top = 463
+    Width = 15
+    Height = 19
+    Caption = '4:'
+    Color = clRed
+    Font.Charset = DEFAULT_CHARSET
+    Font.Color = clRed
+    Font.Height = -16
+    Font.Name = 'Tahoma'
+    Font.Style = []
+    ParentColor = False
+    ParentFont = False
+  end
+  object lblTimeSpanTitle: TLabel
+    Left = 32
+    Top = 463
+    Width = 296
+    Height = 19
+    Caption = 'Select SWMM Time Series Start/End Dates'
+    Color = clInfoBk
+    Font.Charset = DEFAULT_CHARSET
+    Font.Color = clWindowText
+    Font.Height = -16
+    Font.Name = 'Tahoma'
+    Font.Style = []
+    ParentColor = False
+    ParentFont = False
+  end
+  object lblStrtDatePicker: TLabel
+    Left = 19
+    Top = 488
+    Width = 62
+    Height = 22
+    Caption = 'Start Date:'
+    Color = clInfoBk
+    Font.Charset = DEFAULT_CHARSET
+    Font.Color = clWindowText
+    Font.Height = -11
+    Font.Name = 'Tahoma'
+    Font.Style = [fsBold]
+    ParentColor = False
+    ParentFont = False
+    WordWrap = True
+  end
+  object lblEndDatePicker: TLabel
+    Left = 302
+    Top = 488
+    Width = 62
+    Height = 26
+    Caption = 'End Date:'
+    Color = clInfoBk
+    Font.Charset = DEFAULT_CHARSET
+    Font.Color = clWindowText
+    Font.Height = -11
+    Font.Name = 'Tahoma'
+    Font.Style = [fsBold]
+    ParentColor = False
+    ParentFont = False
+    WordWrap = True
+  end
   object btnSelectSWMMFile: TButton
     Left = 168
-    Top = 49
-    Width = 204
+    Top = 52
+    Width = 240
     Height = 25
     Caption = 'Browse...'
     TabOrder = 0
     OnClick = btnSelectSWMMFileClick
   end
   object btnCancel: TButton
-    Left = 168
-    Top = 467
+    Left = 231
+    Top = 523
     Width = 75
     Height = 25
     Caption = 'Cancel'
@@ -239,8 +301,8 @@ object Form1: TForm1
     OnClick = btnCancelClick
   end
   object btnHelp: TButton
-    Left = 264
-    Top = 467
+    Left = 312
+    Top = 523
     Width = 75
     Height = 25
     Caption = 'Help'
@@ -248,8 +310,8 @@ object Form1: TForm1
     OnClick = btnHelpClick
   end
   object btnRun: TButton
-    Left = 360
-    Top = 467
+    Left = 393
+    Top = 523
     Width = 75
     Height = 25
     Caption = 'Run'
@@ -259,8 +321,8 @@ object Form1: TForm1
   end
   object lbxAvailSWMMConstituents: TListBox
     Left = 19
-    Top = 353
-    Width = 88
+    Top = 349
+    Width = 164
     Height = 97
     Font.Charset = DEFAULT_CHARSET
     Font.Color = clWindowText
@@ -272,9 +334,9 @@ object Form1: TForm1
     TabOrder = 4
   end
   object lbxSelectedSWMMConstituents: TListBox
-    Left = 226
+    Left = 306
     Top = 353
-    Width = 88
+    Width = 164
     Height = 97
     Font.Charset = DEFAULT_CHARSET
     Font.Color = clWindowText
@@ -286,7 +348,7 @@ object Form1: TForm1
     TabOrder = 5
   end
   object btnConstituentInclude: TButton
-    Left = 129
+    Left = 209
     Top = 361
     Width = 75
     Height = 25
@@ -301,7 +363,7 @@ object Form1: TForm1
     OnClick = btnConstituentIncludeClick
   end
   object btnConstituentExclude: TButton
-    Left = 129
+    Left = 209
     Top = 392
     Width = 75
     Height = 25
@@ -318,7 +380,7 @@ object Form1: TForm1
   object lbxAvailSWMMNodes: TListBox
     Left = 19
     Top = 177
-    Width = 88
+    Width = 164
     Height = 97
     Font.Charset = DEFAULT_CHARSET
     Font.Color = clWindowText
@@ -330,9 +392,9 @@ object Form1: TForm1
     TabOrder = 8
   end
   object lbxSelectedSWMMNodes: TListBox
-    Left = 226
+    Left = 306
     Top = 177
-    Width = 88
+    Width = 164
     Height = 97
     Font.Charset = DEFAULT_CHARSET
     Font.Color = clWindowText
@@ -344,7 +406,7 @@ object Form1: TForm1
     TabOrder = 9
   end
   object btnNodeInclude: TButton
-    Left = 129
+    Left = 209
     Top = 185
     Width = 75
     Height = 25
@@ -359,7 +421,7 @@ object Form1: TForm1
     OnClick = btnNodeIncludeClick
   end
   object btnNodeExclude: TButton
-    Left = 129
+    Left = 209
     Top = 216
     Width = 75
     Height = 25
@@ -373,12 +435,32 @@ object Form1: TForm1
     TabOrder = 11
     OnClick = btnNodeExcludeClick
   end
+  object strtDatePicker: TDateTimePicker
+    Left = 87
+    Top = 488
+    Width = 96
+    Height = 21
+    Date = 41775.721259039350000000
+    Time = 41775.721259039350000000
+    TabOrder = 12
+    OnChange = strtDatePickerChange
+  end
+  object endDatePicker: TDateTimePicker
+    Left = 370
+    Top = 488
+    Width = 98
+    Height = 21
+    Date = 41775.722280659720000000
+    Time = 41775.722280659720000000
+    TabOrder = 13
+    OnChange = endDatePickerChange
+  end
   object OpenTextFileDialog1: TOpenTextFileDialog
-    Left = 10
-    Top = 456
+    Left = 65525
+    Top = 520
   end
   object SaveTextFileDialog1: TSaveTextFileDialog
-    Left = 90
-    Top = 472
+    Left = 69
+    Top = 536
   end
 end

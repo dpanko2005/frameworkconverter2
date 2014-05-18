@@ -15,7 +15,7 @@ unit SWMMInput;
 interface
 
 uses
-  Windows, Messages, SysUtils, Variants, Classes, StrUtils, SWMMIO, ReadMTA,
+  Windows, Messages, SysUtils, Variants, Classes, StrUtils, SWMMIO,ConverterErrors, ReadMTA,
   FWControlScratchFile,
   ComCtrls;
 
@@ -154,11 +154,11 @@ begin
     updateSWMMInputFile(mtaData, swmmFilePath, swmmFilePath);
 
     //if any errors occur print to the console and exit
-    if (SWMMIO.errorsList.Count > 0) then
+    if (ConverterErrors.errorsList.Count > 0) then
     begin
-      for i := 0 + 1 to SWMMIO.errorsList.Count - 1 do
+      for i := 0 + 1 to ConverterErrors.errorsList.Count - 1 do
       begin
-        Writeln(SWMMIO.errorsList[i]);
+        Writeln(ConverterErrors.errorsList[i]);
       end;
       result := 0;
       Exit;
@@ -258,7 +258,7 @@ begin
   swmmIDsListArr := SWMMIO.getSWMMNodeIDsFromTxtInput(origSWMMInputFilePath);
 
   //check to see if any errors occured while attempting to read in SWMM node IDs
-  if (SWMMIO.errorsList.Count > 0) then
+  if (ConverterErrors.errorsList.Count > 0) then
   begin
     Exit;
   end;

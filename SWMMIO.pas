@@ -15,7 +15,7 @@ unit SWMMIO;
 interface
 
 uses
-  Windows, Messages, SysUtils, Variants, Classes, Graphics, Controls, Forms,
+  Windows, Messages, SysUtils, Variants, Classes, Graphics, Controls, Forms, ConverterErrors,
   StrUtils, Dialogs, jpeg, ExtCtrls, ComCtrls, StdCtrls, Buttons,DateUtils;
 
 type
@@ -58,6 +58,13 @@ const
   // NlinkResults,LINK_FLOW,LINK_DEPTH,LINK_VELOCITY,LINK_FROUDE,LINK_CAPACITY;
   NUMLINKVARS: integer = 6;
 
+  // input/output file names
+  fileNameGroupNames = 'groupnames.txt'; //provides FW timespan and hold file paths for batching
+  fileNameParamsList = 'params.txt';    //number and list of constituents
+  fileNameScratch = 'scratch';      //fw times series file
+  fileNameFWControlFile = 'swmmconvertstrings.txt';  //fw times series control metatadata file
+  fileNameMessages = 'messages.txt'; //communicates successes and errors to framework
+
 var
   workingDir: string; // exe folder
   SWMMFileStreamPosition: long;
@@ -67,7 +74,7 @@ var
   TSList, InflowsList: TStringList;
   PollList, NodeNameList: TStringList;
   frameCtrlFilePath, mtaFilePath: string;
-  errorsList: TStringList;
+  //errorsList: TStringList;
 
   // stores file stream seek position after node and poll names are read
 function readInFrameworkTSFile(filePath: string; var Conv: TArray<TMTARecord>)
@@ -364,7 +371,7 @@ begin
   finally
     Stream.Free;
   end;
-  SetLength(result, 2);
+  SetLength(result, 4);
   result[0] := nodeIDList;
   result[1] := pollutantIDList;
   result[2] := startDateList;

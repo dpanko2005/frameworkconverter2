@@ -13,20 +13,15 @@ interface
 
 uses
   Winapi.Windows, Winapi.Messages, System.SysUtils, System.Variants,
-  System.Classes,Vcl.Graphics,
+  System.Classes, Vcl.Graphics,
   Generics.Defaults, Generics.Collections,
-  Vcl.Forms, Vcl.Dialogs,Vcl.StdCtrls,Vcl.ExtDlgs,
+  Vcl.Forms, Vcl.Dialogs, Vcl.StdCtrls, Vcl.ExtDlgs,
   UserInputConfirmationDlg, OperationStatusDlgFrm,
-  ImportHelpDialogFrm, ExportHelpDlgFrm, SWMMIO,
+  ImportHelpDialogFrm, ExportHelpDlgFrm, SWMMIO, ConverterErrors,
   SWMMInput, SWMMOutput, ReadMTA, WriteMTA, ComCtrls, BusyDialogFrm, GIFImg,
-  FWControlScratchFile, StrUtils, GSControlGrid, Vcl.Controls;
+  FWControlScratchFile, StrUtils, GSControlGrid, Vcl.Controls, FWIO;
 
 const
-  //output file names
-  fileNameGroupNames = 'groupnames.txt';
-  fileNameParamsList = 'params.txt';
-  fileNameScratch = 'scratch';
-  fileNameFWControlFile = 'swmmconvertstrings.txt';
 
   Errs: array [0 .. 4] of string =
     ('An unknown error occured when reading the SWMM file',
@@ -65,8 +60,14 @@ type
     Label9: TLabel;
     Label13: TLabel;
     lblTSStartEndDate: TLabel;
+    strtDatePicker: TDateTimePicker;
+    endDatePicker: TDateTimePicker;
+    lblTimeSpanTitleNo: TLabel;
+    lblTimeSpanTitle: TLabel;
+    lblStrtDatePicker: TLabel;
+    lblEndDatePicker: TLabel;
 
-    procedure transferToFromListBox(lbxFrom:TListBox; lbxTo:TListBox);
+    procedure transferToFromListBox(lbxFrom: TListBox; lbxTo: TListBox);
     /// <summary>
     /// Handler for button used to browse to SWMM file
     /// </summary>
@@ -110,7 +111,7 @@ type
     /// <param name="Sender">
     /// Owner of the combo box (this form)
     /// </param>
-    //procedure cbxSwmmNodeChange(Sender: TObject);
+    // procedure cbxSwmmNodeChange(Sender: TObject);
 
     /// <summary>
     /// Handler for help button. Displays a dialog with help on how to use
@@ -134,6 +135,8 @@ type
     procedure btnNodeExcludeClick(Sender: TObject);
     procedure btnConstituentExcludeClick(Sender: TObject);
     procedure FormClose(Sender: TObject; var Action: TCloseAction);
+    procedure strtDatePickerChange(Sender: TObject);
+    procedure endDatePickerChange(Sender: TObject);
 
   private
     workingDirPath: string;
@@ -176,12 +179,14 @@ type
       tsType: string; ScenarioDescription: string; swmmFilePath: string;
       fwScratchFilePath: string; mtaFilePath: string);
 
-
     { Private declarations }
 
   var
     swmmFilePath: string;
     startDateList, endDateList: TStringList;
+    swmmSeriesStrtDate: TDateTime;
+    swmmSeriesEndDate: TDateTime;
+    InputGroupNames: GroupNames;
 
   public
     { Public declarations }
@@ -202,15 +207,17 @@ end;
 
 procedure TForm1.btnConstituentExcludeClick(Sender: TObject);
 begin
-transferToFromListBox(lbxSelectedSWMMConstituents, lbxAvailSWMMConstituents);
+  transferToFromListBox(lbxSelectedSWMMConstituents, lbxAvailSWMMConstituents);
 end;
 
 procedure TForm1.btnConstituentIncludeClick(Sender: TObject);
 begin
-  //only enable run button if at least one constituent selected
+  if (Height < 610) then
+    Height := 610;
+  // only enable run button if at least one constituent selected
   btnRun.Enabled := true;
 
-  //move currently selected constituent to select constituents list box
+  // move currently selected constituent to select constituents list box
   transferToFromListBox(lbxAvailSWMMConstituents, lbxSelectedSWMMConstituents);
 end;
 
@@ -227,69 +234,94 @@ begin
   btnHelpClick(Sender);
 end;
 
+procedure TForm1.strtDatePickerChange(Sender: TObject);
+begin
+  if (strtDatePicker.Date < swmmSeriesStrtDate) then
+  begin
+    MessageDlg
+      ('The start date you selected is earlier than the time span of the available SWMM timeseries, please try again',
+      mtInformation, [mbOK], 0);
+    strtDatePicker.Date := swmmSeriesStrtDate;
+  end;
+end;
+
 procedure TForm1.btnRunClick(Sender: TObject);
 var
-  //lists for holding output filename contents
+  // lists for holding output filename contents
   lstGroupnames, lstParams, lstFWControlMetafile: TStringList;
   I: Integer;
 begin
 
-  //0. init lists to hold content of output files
+  // 0. init lists to hold content of output files
   lstGroupnames := TStringList.Create;
   lstParams := TStringList.Create;
-  lstFWControlMetafile := TStringList.Create;
+  //lstFWControlMetafile := TStringList.Create;
 
-  //1. create content to be written to - groupnames.txt - file containing file, and node names
-  for I := 0 to lbxSelectedSWMMNodes.Items.Count -1 do
+  // 1. create content to be written to - groupnames.txt - file containing file, and node names
+  lstGroupnames.Add('''' + StringReplace(FormatDateTime('yyyy,mm,d',
+    InputGroupNames.startDate), ',', ''',''', [rfReplaceAll]) + '''');
+  lstGroupnames.Add('''' + StringReplace(FormatDateTime('yyyy,mm,d',
+    InputGroupNames.endDate), ',', ''',''', [rfReplaceAll]) + '''');
+
+  for I := 0 to lbxSelectedSWMMNodes.Items.Count - 1 do
   begin
     lstGroupnames.Add(swmmFilePath + ',' + lbxSelectedSWMMNodes.Items[I]);
   end;
 
-  //2. create content to be written to - paramslist.txt - file containing list of selected SWMM pollutants
+  // 2. create content to be written to - paramslist.txt - file containing list of selected SWMM pollutants
   lstParams.Add(IntToStr(lbxSelectedSWMMConstituents.Items.Count));
   for I := 0 to lbxSelectedSWMMConstituents.Items.Count - 1 do
   begin
     lstParams.Add(lbxSelectedSWMMConstituents.Items[I]);
   end;
 
-  //3. create content to be written to - swmmconvertstrings.txt - file containing framework scratch metadata control file
+  // 3. create content to be written to - swmmconvertstrings.txt - file containing framework scratch metadata control file
 
+  // 4. write output files to disc
+  saveTextFileToDisc(lstGroupnames, SWMMIO.workingDir +
+    fileNameGroupNames, true);
+  saveTextFileToDisc(lstParams, SWMMIO.workingDir + fileNameParamsList, true);
+  // saveTextFileToDisc(lstFWControlMetafile, fileNameFWControlFile, True);
 
-  //4. write output files to disc
-  saveTextFileToDisc(lstGroupnames, SWMMIO.workingDir + fileNameGroupNames, True);
-  saveTextFileToDisc(lstParams, SWMMIO.workingDir + fileNameParamsList, True);
-  //saveTextFileToDisc(lstFWControlMetafile, fileNameFWControlFile, True);
+  // 5. report errors or success to FW
+  ConverterErrors.reportErrorsToFW();
 
-  if(assigned(lstGroupnames)) then lstGroupnames.Free;
-  if(assigned(lstParams)) then lstParams.Free;
-  if(assigned(lstFWControlMetafile)) then lstFWControlMetafile.Free;
+  // release resources and exit program
+  if (assigned(lstGroupnames)) then
+    lstGroupnames.Free;
+  if (assigned(lstParams)) then
+    lstParams.Free;
+  if (assigned(lstFWControlMetafile)) then
+    lstFWControlMetafile.Free;
+
+  Self.Close();
 end;
 
-procedure TForm1.transferToFromListBox(lbxFrom:TListBox; lbxTo:TListBox);
+procedure TForm1.transferToFromListBox(lbxFrom: TListBox; lbxTo: TListBox);
 var
-itemName:string;
+  itemName: string;
 begin
-  //move currently selected item to select items list box
-  if (lbxFrom.ItemIndex <> -1)  then
+  // move currently selected item to select items list box
+  if (lbxFrom.ItemIndex <> -1) then
   begin
-    itemName := lbxFrom.Items.Strings
-      [lbxFrom.ItemIndex];
+    itemName := lbxFrom.Items.Strings[lbxFrom.ItemIndex];
 
-      //add selected item to selected items listbox
-      lbxTo.Items.Add(itemName);
-      //deleted items from available items listbox
-       lbxFrom.Items.Delete(lbxFrom.ItemIndex);
+    // add selected item to selected items listbox
+    lbxTo.Items.Add(itemName);
+    // deleted items from available items listbox
+    lbxFrom.Items.Delete(lbxFrom.ItemIndex);
   end;
 end;
 
 procedure TForm1.btnNodeExcludeClick(Sender: TObject);
 begin
-transferToFromListBox(lbxSelectedSWMMNodes, lbxAvailSWMMNodes);
+  transferToFromListBox(lbxSelectedSWMMNodes, lbxAvailSWMMNodes);
 end;
 
 procedure TForm1.btnNodeIncludeClick(Sender: TObject);
 begin
-  if(Height < 550) then Height := 550;
+  if (Height < 550) then
+    Height := 500;
   transferToFromListBox(lbxAvailSWMMNodes, lbxSelectedSWMMNodes);
 end;
 
@@ -314,17 +346,16 @@ end;
 procedure TForm1.btnSelectSWMMFileClick(Sender: TObject);
 var
   TempListArr: TArray<TStringList>;
-  // intTokenLoc: Integer;
   swmmIDsListArr: TArray<TStringList>;
 begin
-  // intTokenLoc := 0;
+
   try
     if OpenTextFileDialog1.Execute then
     begin
       { First check if the file exists. }
       if FileExists(OpenTextFileDialog1.FileName) then
       begin
-        Height := 400;
+        Height := 325;
         // save the directory so can write TS to same directory later
         workingDirPath := ExtractFileDir(OpenTextFileDialog1.FileName);
         swmmFilePath := OpenTextFileDialog1.FileName;
@@ -336,27 +367,41 @@ begin
           TempListArr := SWMMIO.getSWMMNodeIDsFromBinary(swmmFilePath);
           if (TempListArr[0].Count < 1) then
             // Unable to read nodes in SWMM output file
-            SWMMIO.errorsList.Add(Errs[2])
+            ConverterErrors.errorsList.Add(Errs[2])
           else
             NodeNameList := TempListArr[0];
 
           if (TempListArr[1].Count < 1) then
             // Unable to read pollutant names in SWMM output file
-            SWMMIO.errorsList.Add(Errs[3])
+            ConverterErrors.errorsList.Add(Errs[3])
           else
             PollList := TempListArr[1];
 
           if ((TempListArr[2].Count < 1) and (TempListArr[3].Count < 1)) then
             // Unable to read simulation start end dates in SWMM output file
-            SWMMIO.errorsList.Add(Errs[4])
+            ConverterErrors.errorsList.Add(Errs[4])
           else
           begin
-            startDateList :=  TempListArr[2];
-            endDateList :=  TempListArr[3];
+            startDateList := TempListArr[2];
+            endDateList := TempListArr[3];
+
+            swmmSeriesStrtDate := EncodeDate(StrToInt(startDateList[0]),
+              StrToInt(startDateList[1]), StrToInt(startDateList[2]));
+            swmmSeriesEndDate := EncodeDate(StrToInt(endDateList[0]),
+              StrToInt(TempListArr[3][1]), StrToInt(endDateList[2]));
+
+            // if swmm timeseries starts later than FW timespan set start datepicker to swmm timeseries start
+            if (strtDatePicker.Date < swmmSeriesStrtDate) then
+              strtDatePicker.Date := swmmSeriesStrtDate;
+
+            // if swmm timeseries ends earlier than FW timespan set end datepicker to swmm timeseries end
+            if (endDatePicker.Date < swmmSeriesEndDate) then
+              endDatePicker.Date := swmmSeriesEndDate;
           end;
-            lblTSStartEndDate.Caption := Format('Simulation Period: From %s to %s', [FormatDateTime('mm/dd/yyyy',
-            EncodeDate(StrToInt(startDateList[0]), StrToInt(startDateList[1]), StrToInt(startDateList[2]))),FormatDateTime('mm/dd/yyyy',
-            EncodeDate(StrToInt(endDateList[0]), StrToInt(TempListArr[3][1]), StrToInt(endDateList[2])))]);
+          lblTSStartEndDate.Caption :=
+            Format('Simulation Period: From %s to %s',
+            [FormatDateTime('mm/dd/yyyy', swmmSeriesStrtDate),
+            FormatDateTime('mm/dd/yyyy', swmmSeriesEndDate)]);
         end
         else // we are exporting to swmm so using SWMM input file
         begin
@@ -376,7 +421,7 @@ begin
         exit
       end;
 
-      lbxAvailSWMMNodes.Items :=SWMMIO.NodeNameList;
+      lbxAvailSWMMNodes.Items := SWMMIO.NodeNameList;
       lbxAvailSWMMConstituents.Items := SWMMIO.PollList;
       SWMMIO.PollList.Insert(0, 'Exclude');
     end;
@@ -384,25 +429,57 @@ begin
   end;
 end;
 
+procedure TForm1.endDatePickerChange(Sender: TObject);
+begin
+  if (endDatePicker.Date > swmmSeriesEndDate) then
+  begin
+    MessageDlg
+      ('The end date you selected is later than the time span of the available SWMM timeseries, please try again',
+      mtInformation, [mbOK], 0);
+    endDatePicker.Date := swmmSeriesEndDate;
+  end;
+end;
+
 procedure TForm1.FormClose(Sender: TObject; var Action: TCloseAction);
 begin
-    if(assigned(endDateList)) then
-      endDateList.Free;
-      if(assigned(SWMMIO.errorsList)) then
-      SWMMIO.errorsList.Free;
+  if (assigned(endDateList)) then
+    endDateList.Free;
+  if (assigned(ConverterErrors.errorsList)) then
+    ConverterErrors.errorsList.Free;
 end;
 
 procedure TForm1.FormShow(Sender: TObject);
 var
   numConstituents, I: Integer;
+
 begin
   Height := 130;
-  SWMMIO.errorsList := TStringList.Create();
+  // SWMMIO.errorsList := TStringList.Create();
+  ConverterErrors.errorsList := TStringList.Create();
   Form1.color := clwhite;
 
+  // 0. For SWMM_TO_FW, if groupnames file does not exist cannot continue, alert user and exit else get FW time span
+  If (SWMMIO.operatingMode = SWMMIO.opModes[0]) then
+  begin
+    If (ConverterErrors.checkInputFiles() = -1) then
+    begin
+      MessageDlg
+        ('A Valid Framework File (groupnames.txt) was not found. SWMM Converter cannot continue',
+        mtInformation, [mbOK], 0);
+      Self.Close();
+    end
+    else
+    begin
+      // read groupnames file, extract dates and list of files for use later and set time span datepickers
+      InputGroupNames := FWIO.readGroupNames();
+      strtDatePicker.DateTime := InputGroupNames.startDate;
+      endDatePicker.DateTime := InputGroupNames.endDate;
+    end;
+  end;
+  {
   // need framwork metadata scratchfile file for export
   // control file tells us what the name of the framework node is that we will be exporting from
-  // so if framwork metadata scratchfile was not passed in via commandline so ask for it
+  // so if framwork metadata scratchfile was not passed in via commandline or does not exist in current dir then ask for it
   if (SWMMIO.frameCtrlFilePath = '') and
     (SWMMIO.operatingMode = SWMMIO.opModes[1]) then
   begin
@@ -416,7 +493,7 @@ begin
 
       if OpenTextFileDialog1.Execute then
       begin
-        { First check if the file exists. }
+        // First check if the file exists.
         if FileExists(OpenTextFileDialog1.FileName) then
         begin
           SWMMIO.frameCtrlFilePath := OpenTextFileDialog1.FileName;
@@ -429,6 +506,8 @@ begin
       end;
     end;
   end;
+}
+
   lblTSStartEndDate.Caption := '';
   if (SWMMIO.operatingMode = SWMMIO.opModes[0]) then
   // SWMM_TO_FW importing from swmm binary file
@@ -446,12 +525,18 @@ begin
     OpenTextFileDialog1.Filter := 'SWMM Input (*.inp)|*.INP';
     SaveTextFileDialog1.Filter := 'SWMM Input (*.inp)|*.INP';
     lblSelectedFWConstituents.Caption := 'Selected For Export to Framework';
+    strtDatePicker.Hide; // not needed for SWMM_FROM_FW
+    endDatePicker.Hide; //not needed for SWMM_FROM_FW
+    lblTimeSpanTitle.Hide;
+    lblStrtDatePicker.Hide;
+    lblEndDatePicker.Hide;
+    lblTimeSpanTitleNo.Hide;
   end;
 
   // prepare framework to SWMM pollutant matching grid to be populated
   numConstituents := Length(SWMMIO.constituentNames);
 
-  //clear all list boxes
+  // clear all list boxes
   lbxAvailSWMMNodes.Items.Clear;
   lbxSelectedSWMMNodes.Items.Clear;
   lbxAvailSWMMConstituents.Items.Clear;
