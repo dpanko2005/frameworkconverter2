@@ -16,7 +16,7 @@ interface
 
 uses
   Windows, Messages, SysUtils, Variants, Classes, StrUtils, SWMMIO,ConverterErrors, ReadMTA,
-  FWControlScratchFile,
+  FWIO,
   ComCtrls;
 
 var

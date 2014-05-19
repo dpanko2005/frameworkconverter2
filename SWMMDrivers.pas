@@ -19,7 +19,7 @@ uses
   UserInputConfirmationDlg, OperationStatusDlgFrm,
   ImportHelpDialogFrm, ExportHelpDlgFrm, SWMMIO, ConverterErrors,
   SWMMInput, SWMMOutput, ReadMTA, WriteMTA, ComCtrls, BusyDialogFrm, GIFImg,
-  FWControlScratchFile, StrUtils, GSControlGrid, Vcl.Controls, FWIO;
+  StrUtils, GSControlGrid, Vcl.Controls, FWIO;
 
 const
 
@@ -141,44 +141,6 @@ type
   private
     workingDirPath: string;
 
-    /// <summary>
-    /// method for populating a TMTARecFields data structure which holds user input
-    /// collected on this form
-    /// </summary>
-    /// <param name="SWMMNodeName">
-    /// Name of SWMM node being acted on
-    /// </param>
-    /// <param name="Conv">
-    /// Name of SWMM node being acted on
-    /// </param>
-    /// <param name="constituentName">
-    /// Name of constituent in Framework
-    /// <param name="constituentName">
-    /// Name of constituent in SWMM
-    /// </param>
-    /// <param name="convFactor">
-    /// Conversion factor
-    /// </param>
-    /// <param name="tsType">
-    /// Type of constituent (either CONCEN or FLOW)
-    /// </param>
-    /// <param name="ScenarioDescription">
-    /// Description of scenario
-    /// </param>
-    /// <param name="swmmFilePath">
-    /// SWMM input or output filepath
-    /// </param>
-    /// <param name="fwScratchFilePath">
-    /// Framework control scratch file path
-    /// </param>
-    /// <param name="mtaFilePath">
-    /// SWMM control file path
-    /// </param>
-    procedure AssignMTARecFields(SWMMNodeName: string; var Conv: TMTARecord;
-      constituentName: string; constituentSWMMName: string; convFactor: Double;
-      tsType: string; ScenarioDescription: string; swmmFilePath: string;
-      fwScratchFilePath: string; mtaFilePath: string);
-
     { Private declarations }
 
   var
@@ -255,7 +217,7 @@ begin
   // 0. init lists to hold content of output files
   lstGroupnames := TStringList.Create;
   lstParams := TStringList.Create;
-  //lstFWControlMetafile := TStringList.Create;
+  // lstFWControlMetafile := TStringList.Create;
 
   // 1. create content to be written to - groupnames.txt - file containing file, and node names
   lstGroupnames.Add('''' + StringReplace(FormatDateTime('yyyy,mm,d',
@@ -265,7 +227,8 @@ begin
 
   for I := 0 to lbxSelectedSWMMNodes.Items.Count - 1 do
   begin
-    lstGroupnames.Add(swmmFilePath + ',' + lbxSelectedSWMMNodes.Items[I]);
+    lstGroupnames.Add('''' + swmmFilePath + ''',''' + lbxSelectedSWMMNodes.Items
+      [I] + '''');
   end;
 
   // 2. create content to be written to - paramslist.txt - file containing list of selected SWMM pollutants
@@ -275,16 +238,14 @@ begin
     lstParams.Add(lbxSelectedSWMMConstituents.Items[I]);
   end;
 
-  // 3. create content to be written to - swmmconvertstrings.txt - file containing framework scratch metadata control file
+  // 3. content for messages.txt created and saved below
+  // report errors or success to FW
+  ConverterErrors.reportErrorsToFW();
 
-  // 4. write output files to disc
+  // 4. write groupnames.txt and paramslist.txt files to disc
   saveTextFileToDisc(lstGroupnames, SWMMIO.workingDir +
     fileNameGroupNames, true);
   saveTextFileToDisc(lstParams, SWMMIO.workingDir + fileNameParamsList, true);
-  // saveTextFileToDisc(lstFWControlMetafile, fileNameFWControlFile, True);
-
-  // 5. report errors or success to FW
-  ConverterErrors.reportErrorsToFW();
 
   // release resources and exit program
   if (assigned(lstGroupnames)) then
@@ -323,24 +284,6 @@ begin
   if (Height < 550) then
     Height := 500;
   transferToFromListBox(lbxAvailSWMMNodes, lbxSelectedSWMMNodes);
-end;
-
-procedure TForm1.AssignMTARecFields(SWMMNodeName: string; var Conv: TMTARecord;
-  constituentName: string; constituentSWMMName: string; convFactor: Double;
-  tsType: string; ScenarioDescription: string; swmmFilePath: string;
-  fwScratchFilePath: string; mtaFilePath: string);
-begin
-  Conv.tsUnitsFactor := 1.0;
-  Conv.constituentSWMMName := constituentSWMMName;
-  Conv.constituentFWName := constituentName;
-  Conv.convFactor := convFactor;
-  Conv.tsNodeName := SWMMNodeName;
-  Conv.tsType := tsType;
-  Conv.tsName := constituentName;
-  Conv.modelRunScenarioID := ScenarioDescription;
-  Conv.swmmFilePath := swmmFilePath;
-  Conv.scratchFilePath := fwScratchFilePath;
-  Conv.mtaFilePath := mtaFilePath;
 end;
 
 procedure TForm1.btnSelectSWMMFileClick(Sender: TObject);
@@ -454,8 +397,6 @@ var
 
 begin
   Height := 130;
-  // SWMMIO.errorsList := TStringList.Create();
-  ConverterErrors.errorsList := TStringList.Create();
   Form1.color := clwhite;
 
   // 0. For SWMM_TO_FW, if groupnames file does not exist cannot continue, alert user and exit else get FW time span
@@ -476,37 +417,6 @@ begin
       endDatePicker.DateTime := InputGroupNames.endDate;
     end;
   end;
-  {
-  // need framwork metadata scratchfile file for export
-  // control file tells us what the name of the framework node is that we will be exporting from
-  // so if framwork metadata scratchfile was not passed in via commandline or does not exist in current dir then ask for it
-  if (SWMMIO.frameCtrlFilePath = '') and
-    (SWMMIO.operatingMode = SWMMIO.opModes[1]) then
-  begin
-    SWMMIO.frameCtrlFilePath := SWMMIO.workingDir + 'swmmconvertstring.txt';
-    if (Not(FileExists(SWMMIO.frameCtrlFilePath))) then
-    begin
-      MessageDlg
-        ('A Valid Framework Control File was not located. Press okay to browse and select one',
-        mtInformation, [mbOK], 0);
-      OpenTextFileDialog1.Filter := 'Framework Control File (*.txt)|*.TXT';
-
-      if OpenTextFileDialog1.Execute then
-      begin
-        // First check if the file exists.
-        if FileExists(OpenTextFileDialog1.FileName) then
-        begin
-          SWMMIO.frameCtrlFilePath := OpenTextFileDialog1.FileName;
-        end
-        else // we are exporting to swmm so using SWMM input file
-        begin
-          MessageDlg('A Valid Framework Control File was not Found',
-            mtInformation, [mbOK], 0);
-        end;
-      end;
-    end;
-  end;
-}
 
   lblTSStartEndDate.Caption := '';
   if (SWMMIO.operatingMode = SWMMIO.opModes[0]) then
@@ -526,11 +436,11 @@ begin
     SaveTextFileDialog1.Filter := 'SWMM Input (*.inp)|*.INP';
     lblSelectedFWConstituents.Caption := 'Selected For Export to Framework';
     strtDatePicker.Hide; // not needed for SWMM_FROM_FW
-    endDatePicker.Hide; //not needed for SWMM_FROM_FW
-    lblTimeSpanTitle.Hide;
-    lblStrtDatePicker.Hide;
-    lblEndDatePicker.Hide;
-    lblTimeSpanTitleNo.Hide;
+    endDatePicker.Hide; // not needed for SWMM_FROM_FW
+    lblTimeSpanTitle.Hide; // not needed for SWMM_FROM_FW
+    lblStrtDatePicker.Hide; // not needed for SWMM_FROM_FW
+    lblEndDatePicker.Hide; // not needed for SWMM_FROM_FW
+    lblTimeSpanTitleNo.Hide; // not needed for SWMM_FROM_FW
   end;
 
   // prepare framework to SWMM pollutant matching grid to be populated

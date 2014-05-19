@@ -144,7 +144,7 @@ object Form1: TForm1
   object Label15: TLabel
     Left = 19
     Top = 317
-    Width = 163
+    Width = 96
     Height = 26
     Caption = 'Available SWMM Constituents'
     Color = clInfoBk
@@ -160,7 +160,7 @@ object Form1: TForm1
   object lblSelectedFWConstituents: TLabel
     Left = 306
     Top = 321
-    Width = 164
+    Width = 131
     Height = 26
     Caption = 'Selected For Import to Framework'
     Color = clInfoBk
@@ -176,7 +176,7 @@ object Form1: TForm1
   object Label9: TLabel
     Left = 19
     Top = 141
-    Width = 164
+    Width = 96
     Height = 26
     Caption = 'Available SWMM Constituents'
     Color = clInfoBk
@@ -192,7 +192,7 @@ object Form1: TForm1
   object Label13: TLabel
     Left = 306
     Top = 145
-    Width = 164
+    Width = 131
     Height = 26
     Caption = 'Selected For Import to Framework'
     Color = clInfoBk
@@ -254,7 +254,7 @@ object Form1: TForm1
     Left = 19
     Top = 488
     Width = 62
-    Height = 22
+    Height = 13
     Caption = 'Start Date:'
     Color = clInfoBk
     Font.Charset = DEFAULT_CHARSET
@@ -269,8 +269,8 @@ object Form1: TForm1
   object lblEndDatePicker: TLabel
     Left = 302
     Top = 488
-    Width = 62
-    Height = 26
+    Width = 53
+    Height = 13
     Caption = 'End Date:'
     Color = clInfoBk
     Font.Charset = DEFAULT_CHARSET

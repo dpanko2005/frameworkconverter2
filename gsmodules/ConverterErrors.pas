@@ -3,26 +3,45 @@ unit ConverterErrors;
 interface
 
 uses
-   Classes, SysUtils;
+  Classes, SysUtils;
 
 const
-  Errs: array [0 .. 5] of string = ('F001 - Input file does not exist',
+  Errs: array [0 .. 7] of string = ('F001 - Input file does not exist',
     'S001 - An unknown error occured when reading the SWMM file',
     'S002 - An unknown error occured when saving the new SWMM file',
     'S003 - Unable to read node IDs in the SWMM ouput file',
     'S004 - Unable to read pollutant IDs in the SWMM output file',
-    'S005 - Unable to read the start/end dates of the simulation in the SWMM output file');
+    'S005 - Unable to read the start/end dates of the simulation in the SWMM output file',
+    'S006 - User specified time span begins earlier than available swmm data or User specified time span ends later than available swmm data',
+    'F002 - The file provided is either the wrong file or has the wrong extention');
 
 var
   errorsList: TStringList;
 
 function checkInputFiles(): integer;
 function checkIfFileExists(fileNameOrPath: string): integer;
+function checkFileExt(filePath:string; desiredExt:string):integer;
 procedure reportErrorsToFW();
+procedure displayErrors();
 
 implementation
-     uses
-     SWMMIO;
+
+uses
+  SWMMIO;
+
+  function checkFileExt(filePath:string; desiredExt:string):integer;
+  var
+  tempStr:string;
+  begin
+    tempStr := ExtractFileExt(filePath);
+    if(desiredExt <> tempStr) then
+    begin
+      result := -1;
+      errorsList.Add(errs[7] + ': ' + filePath);
+      Exit;
+    end;
+    result := 1;
+  end;
 
 function checkInputFiles(): integer;
 begin
@@ -59,6 +78,17 @@ begin
     errorsList.Add('''ALL OK''');
   SWMMIO.saveTextFileToDisc(errorsList, SWMMIO.workingDir +
     SWMMIO.fileNameMessages, true);
+end;
+
+procedure displayErrors();
+var
+  tempStr: string;
+begin
+  if ((errorsList.Count > 0) and (SWMMIO.appType = appTypes[0])) then
+  begin
+    for tempStr in errorsList do
+      Writeln(tempStr);
+  end
 end;
 
 end.
