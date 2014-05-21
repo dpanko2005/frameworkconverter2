@@ -6,19 +6,21 @@ program FrameWorkSwmmDrivers;
 {$R *.dres}
 {$ENDIF}
 
+{$R *.dres}
+
 uses
-  SysUtils,Classes,
+  SysUtils,
+  Classes,
   Vcl.Forms,
-  SWMMDrivers in 'SWMMDrivers.pas' {Form1} ,
+  SWMMDrivers in 'SWMMDrivers.pas' {Form1},
   SWMMIO in 'gsmodules\SWMMIO.pas',
   ReadMTA in 'gsmodules\ReadMTA.pas',
   WriteMTA in 'gsmodules\WriteMTA.pas',
-  SWMMInput in 'gsmodules\SWMMInput.pas',
   SWMMOutput in 'gsmodules\SWMMOutput.pas',
-  FWControlScratchFile in 'gsmodules\FWControlScratchFile.pas',
+  SWMMInput in 'gsmodules\SWMMInput.pas',
   MTATemplateString in 'gsmodules\MTATemplateString.pas',
-  ImportHelpDialogFrm in 'ImportHelpDialogFrm.pas' {ImportHelpDialog} ,
-  ExportHelpDlgFrm in 'ExportHelpDlgFrm.pas' {ExportHelpDialogFrm} ,
+  ImportHelpDialogFrm in 'ImportHelpDialogFrm.pas' {ImportHelpDialog},
+  ExportHelpDlgFrm in 'ExportHelpDlgFrm.pas' {ExportHelpDialogFrm},
   GSControlGrid in 'gsmodules\GSControlGrid.pas',
   ConverterErrors in 'gsmodules\ConverterErrors.pas',
   FWIO in 'gsmodules\FWIO.pas';
@@ -59,7 +61,7 @@ begin
         exit;
         end;
         SWMMIO.mtaFilePath := ParamStr(1); }
-      SWMMOutput.consoleImportFromSWMMToFW(SWMMIO.fileNameFWControlFile)
+      SWMMInput.consoleImportFromSWMMToFW(SWMMIO.fileNameFWControlFile)
       // importing
     end
     else
@@ -73,7 +75,7 @@ begin
         SWMMIO.mtaFilePath := ParamStr(1);
         Writeln('SWMM Converter Version 1.0.20140228');
         Writeln('Opening SWMM Converter Control File:' + SWMMIO.mtaFilePath); }
-      SWMMInput.consoleExportFromFWToSWMM(SWMMIO.fileNameFWControlFile)
+      SWMMOutput.consoleExportFromFWToSWMM(SWMMIO.fileNameFWControlFile)
       // exporting
     end;
   except

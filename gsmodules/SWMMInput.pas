@@ -1,13 +1,12 @@
 { ------------------------------------------------------------------- }
-{ Unit:    SWMMInput.pas                                              }
-{ Project: WERF Framework - SWMM Converter                            }
-{ Version: 2.0                                                        }
-{ Date:    2/28/2014                                                  }
-{ Author:  Gesoyntec (D. Pankani)                                     }
-{                                                                     }
-{ Delphi Pascal unit that exports time series from the framework      }
-{ to a SWMM input file. TS are saved to external files and reference  }
-{ in SWMM input file                                                  }
+{ Unit:    SWMMOutput.pas }
+{ Project: WERF Framework - SWMM Converter }
+{ Version: 2.0 }
+{ Date:    2/28/2014 }
+{ Author:  Gesoyntec (D. Pankani) }
+{ }
+{ Delphi Pascal unit that imports time series from a swmm result }
+{ binary file and formats it for use in the the Framework. }
 { ------------------------------------------------------------------- }
 
 unit SWMMInput;
@@ -15,393 +14,601 @@ unit SWMMInput;
 interface
 
 uses
-  Windows, Messages, SysUtils, Variants, Classes, StrUtils, SWMMIO,ConverterErrors, ReadMTA,
-  FWIO,
-  ComCtrls;
+  Windows, Messages, SysUtils, DateUtils, Variants, Classes, StrUtils, SWMMIO,
+  ReadMTA, ComCtrls, Vcl.Forms, FWIO, ConverterErrors;
 
-var
-  swmmIDsListArr: TArray<TStringList>;
+// var
+// errorsList: TStringList;
 
-///	<summary>
-///	  Command line version of function that takes timeseries from the framework
-///	  into SWMM 5
-///	</summary>
-///	<param name="MTAFilePath">
-///	  The SWMM 5 converter control file path that contains SWMM specific
-///	  information needed for the operation
-///	</param>
-///	<returns>
-///	  Returns 1 if operation was successful; 0 if operation had to be abandoned
-///	  due to an error or missing data
-///	</returns>
-function consoleExportFromFWToSWMM(MTAFilePath: string): Integer;
+/// <summary>
+/// Command line version of function that takes timeseries from SWMM into the
+/// framework
+/// </summary>
+/// <param name="MTAFilePath">
+/// Path to SWMM 5 control file with user options for the conversions
+/// </param>
+/// <returns>
+/// Returns 1 if the operation was successful
+/// </returns>
+function consoleImportFromSWMMToFW(MTAFilePath: string): Integer;
 
-///	<summary>
-///	  Function that finalizes the export from the framework to SWMM by writing
-///	  time series to disc that are formatted for use in SWMM 5
-///	</summary>
-///	<param name="Conv">
-///	  Conversion factor
-///	</param>
-///	<param name="filePathDir">
-///	  Directory where times series formatted for SWMM 5 will be saved
-///	</param>
-procedure finalizeExport(var ConvertedFWTSArr: array of TMTARecord; filePathDir: string);
+/// <summary>
+/// Function to read computed results for a single node at a specific time
+/// period or time step
+/// </summary>
+/// <param name="period">
+/// Time period or time step for which node results will be read
+/// </param>
+/// <param name="nodeIndex">
+/// Array index of node for which node results will be read
+/// </param>
+/// <param name="numNodeResults">
+/// Total number of node results to be read
+/// </param>
+/// <param name="numSubCatchs">
+/// Total number of subcatchments for which results are saved
+/// </param>
+/// <param name="numSubCatchRslts">
+/// Total number of types of subcatchment results saved by the simulation
+/// </param>
+/// <param name="outputStartPos">
+/// Binary file position to begin reading from
+/// </param>
+/// <param name="bytesPerPeriod">
+/// Number of bytes save to binary file for each time period or time step of
+/// the simulation
+/// </param>
+/// <param name="Reader">
+/// File stream reader
+/// </param>
+/// <returns>
+/// Array of node results for the desired time period or time step
+/// </returns>
+function output_readNodeResults(period: Integer; nodeIndex: Integer;
+  numNodeResults: Integer; numSubCatchs: Integer; numSubCatchRslts: Integer;
+  outputStartPos: Integer; bytesPerPeriod: Integer; Reader: TBinaryReader)
+  : TArray<single>;
 
-///	<summary>
-///	  Inspects portions of the SWMM 5 input file to see if entries pertaining
-///	  to the framwork time series that is being exported already exist in the
-///	  SWMM input file
-///	</summary>
-///	<param name="tsBlockInsertPosition">
-///	  searches the contents of the SWMM 5 input file from this point forward
-///	</param>
-///	<param name="TSList">
-///	  Saved list of SWMM 5 time series names to check for against SWMM 5 input
-///	  file for duplicates
-///	</param>
-///	<param name="NewFileContentsList">
-///	  Contents of the SWMM 5 input file receiving the export from the framework
-///	</param>
-///	<param name="tsName">
-///	  Name of the current time series for which the duplicate check is being
-///	  executed
-///	</param>
-///	<returns>
-///	  Returns 0 if no duplicates and position of duplicate otherwise
-///	</returns>
-function checkForDuplicateTS(tsBlockInsertPosition: Integer;
-  TSList: TStringList; NewFileContentsList: TStringList;
-  tsName: string): Integer;
+/// <summary>
+/// Function to read SWMM node results from SWMM 5 binary results file for
+/// flow and all framework pollutants. Framework pollutants without matching
+/// SWMM pollutants are filled in with 0s
+/// </summary>
+/// <param name="SWMMFilePath">
+/// Path to binary SWMM 5 output file
+/// </param>
+/// <param name="nodeName">
+/// SWMM5 node name for which results will be extracted
+/// </param>
+/// <param name="selectedConstituentRecs">
+/// Data strucutre of constituents and user selected options
+/// </param>
+/// <returns>
+/// Framework record / data structure to hold extracted result and timeseiries
+/// </returns>
+{ function getSWMMNodeResults(SWMMFilePath: string; nodeName: string;
+  selectedConstituentRecs: ParameterMapRecord): FWCtrlScratchRecord; }
+function getSWMMNodeResults(SWMMFilePath: string; nodeName: string;
+  selectedConstituentRecs: ParameterMapRecord; FWCtrlRec: FWCtrlMetadataRecord)
+  : FWCtrlMetadataRecord;
 
-///	<summary>
-///	  Updates a SWMM 5 input file by writting TIMESERIES and INFLOWS block ///
-///	  entries that associated exported framework timeseries with the ///
-///	  appropriate SWMM node and point SWMM to the external exported time series
-///	  /// files
-///	</summary>
-///	<param name="ConvertedFWTSArr">
-///	  array of converted framework time series
-///	</param>
-///	<param name="origSWMMInputFilePath">
-///	  path to the original SWMM 5 input file to be edited and saved as a new
-///	  file
-///	</param>
-///	<param name="newSWMMInputFilePath">
-///	  path to new file to be created from modified original SWMM 5 input file
-///	  to be edited
-///	</param>
-///  ///	<returns>
-///	  Returns path to modified SWMM 5 input file saved to a new location
-///	</returns>
-function updateSWMMInputFile(var ConvertedFWTSArr: array of TMTARecord;
-  origSWMMInputFilePath: string; newSWMMInputFilePath: string): string;
+/// <summary>
+/// Wrapper function that processes conversions from SWMM to the framework
+/// </summary>
+/// <param name="SWMMFilePath">
+/// Path to binary SWMM 5 output file
+/// </param>
+/// <param name="fwTSFileToCreatePath">
+/// Path to the location where the resulting framework timeseries will be
+/// created
+/// </param>
+/// <param name="nodeName">
+/// Name of node for which results will be extracted
+/// </param>
+/// <param name="selectedConstituentRecs">
+/// Data strucutre of constituents and user selected options
+/// </param>
+/// <returns>
+/// Framework record / data structure to hold extracted result and timeseiries
+/// </returns>
+function importFromSWMMToFW(SWMMFilePath: string; fwTSFileToCreatePath: string;
+  nodeName: string; selectedConstituentRecs: ParameterMapRecord;
+  FWCtrlRec: FWCtrlMetadataRecord): FWCtrlMetadataRecord;
 
 implementation
 
-function consoleExportFromFWToSWMM(MTAFilePath: string): Integer;
+function consoleImportFromSWMMToFW(MTAFilePath: string): Integer;
 var
-  mtaData: TArray<TMTARecord>;
-  tempStr, swmmFilePath,workingDirPath: string;
+  // mtaData: TArray<TMTARecord>;
+  fwCtrlFileData: FWCtrlMetadataRecord;
+  pMapData: ParameterMapRecord;
+  tempStr: string;
   i: Integer;
 begin
-//read in SWMM converter control file
-  mtaData := ReadMTA.Read(MTAFilePath);
+  // read in MTA file which contains user inputs
+  // mtaData := ReadMTA.Read(MTAFilePath);
 
-  //if there were errors write errors to the console  and exit
-  if (ReadMTA.errorsList.Count > 0) then
+  // read in FWControlMetadata file which contains inputs
+  fwCtrlFileData := FWIO.readFWControlMetadataFile();
+
+  // read in parametermap.txt which contains mappings between fw and swmm constituents and conv factors
+  pMapData := readFWParameterMapFile();
+
+  // check to see if any error occured while attempting to read the parameterMapFile
+  if (ConverterErrors.errorsList.Count > 0) then
   begin
-    for tempStr in ReadMTA.errorsList do
-      Writeln(tempStr);
-
+    ConverterErrors.displayErrors();
     Writeln('Operation failed.');
     result := 0;
     Exit;
   end
   else
   begin
-    //if there were no errors process export
-    Assert(Assigned(mtaData));
-    swmmFilePath := mtaData[0].swmmFilePath;
-    Writeln('SWMM output input file to insert timeseries into: ' + swmmFilePath
-      + sLineBreak);
-    Writeln('Target SWMM Node: ' + mtaData[0].tsNodeName);
-    Writeln('Source framework scratch file to import timeseries from: ' +
-      mtaData[0].scratchFilePath);
-
+    // Assert(Assigned(fwCtrlFileData));
+    Writeln('SWMM output binary file to read from: ' +
+      fwCtrlFileData.sourceFilePath + sLineBreak);
+    Writeln('Target SWMM Node: ' + fwCtrlFileData.tsNodeName);
+    Writeln('Generated framework scratch file output filepath: ' +
+      fwCtrlFileData.scratchFilePath);
     // flow is in position 0 so highest array index is count of pollutants
-    Writeln('Total number of pollutants:' + IntToStr(High(mtaData)));
+    Writeln('Total number of pollutants:' + IntToStr(pMapData.numberOfEntries));
 
-    //print all included pollutants to the console
-    for i := Low(mtaData) + 1 to High(mtaData) do
+    for i := 0 + 1 to pMapData.numberOfEntries - 1 do
     begin
       Writeln(Format
         ('Pollutant %d: framework name: %s SWMM name: %s conversion factor: %9.3f',
-        [i, mtaData[i].constituentFWName, mtaData[i].constituentSWMMName,
-        mtaData[i].convFactor]) + sLineBreak);
+        [i, pMapData.fwNames[i], pMapData.swmmNames[i], pMapData.convFactors[i]]
+        ) + sLineBreak);
     end;
 
-    //begin extracting and formatting the framework time series for SWMM 5
     Writeln('Now extracting SWMM timeseries. Please wait...');
-    workingDirPath := ExtractFileDir(swmmFilePath);
-    mtaData := SWMMIO.readInFrameworkTSFile(mtaData[0].scratchFilePath,
-      mtaData);
+    importFromSWMMToFW(fwCtrlFileData.sourceFilePath,
+      fwCtrlFileData.scratchFilePath, fwCtrlFileData.tsNodeName, pMapData,
+      fwCtrlFileData);
 
-    //finalize the export by writting the extracted framework time series to disc in SWMM 5 format
-    SWMMInput.finalizeExport(mtaData, workingDirPath);
-
-    //update the SWMM 5 input file by writing entries that point to the location of the exported time series files
-    updateSWMMInputFile(mtaData, swmmFilePath, swmmFilePath);
-
-    //if any errors occur print to the console and exit
+    // check to see if any errors occured while attempting to read node results
     if (ConverterErrors.errorsList.Count > 0) then
     begin
-      for i := 0 + 1 to ConverterErrors.errorsList.Count - 1 do
-      begin
-        Writeln(ConverterErrors.errorsList[i]);
-      end;
-      result := 0;
+      displayErrors();
+      reportErrorsToFW();
+      Writeln('Operation failed.');
       Exit;
     end;
+
     Writeln('Operation completed successfully.');
   end;
-  //if no errors occured return success
+  ConverterErrors.errorsList.Free;
   result := 1;
 end;
 
-procedure finalizeExport(var ConvertedFWTSArr: array of TMTARecord; filePathDir: string);
+function importFromSWMMToFW(SWMMFilePath: string; fwTSFileToCreatePath: string;
+  nodeName: string; selectedConstituentRecs: ParameterMapRecord;
+  FWCtrlRec: FWCtrlMetadataRecord): FWCtrlMetadataRecord;
 var
-  filePath: string;
-  pathPrefix: string;
-  pathSuffix: string;
-  i: Integer;
+  swmmNodeResults: FWCtrlMetadataRecord;
 begin
-  //export framework time series are placed in TS direction with the following naming convention
-  pathPrefix := filePathDir + '\TS\FrameworkTS_';
+  // errorsList := TStringList.Create();
 
-  //name includes a time stamp so subsequent exports are not overwritten in advertently
-  pathSuffix := FormatDateTime('yyyymmddhhnnss', Now) + '.dat';
+  swmmNodeResults := getSWMMNodeResults(SWMMFilePath, nodeName,
+    selectedConstituentRecs, FWCtrlRec);
 
-  //look through aray of converted framework time series and write them to disc in format usable in SWMM
-  for i := Low(ConvertedFWTSArr) to High(ConvertedFWTSArr) do
-  begin
-    if ((ConvertedFWTSArr[i].constituentSWMMName <> '') and (ConvertedFWTSArr[i].convFactor <> 0)) then
-    begin
-    //following above name convention for file names and save to TS subdirectory
-      filePath := pathPrefix + ConvertedFWTSArr[i].constituentSWMMName + pathSuffix;
-      ConvertedFWTSArr[i].convertedTSFilePath := filePath;
-
-      //delegate to SWMMIO to do the actual save operation
-      SWMMIO.saveTextFileToDisc(ConvertedFWTSArr[i].convertedTS, filePath);
-    end;
-  end;
-end;
-
-function checkForDuplicateTS(tsBlockInsertPosition: Integer;
-  TSList: TStringList; NewFileContentsList: TStringList;
-  tsName: string): Integer;
-var
-  i: Integer;
-begin
-  // check our cached list of TS names for a hit
-  // TS names were previously saved when we read the file
-  for i := 0 to TSList.Count - 1 do
-  begin
-
-  // if the current TS name is found in the list of saved TS names  then ran check
-  // duplicate TS exists in the swmmfile so return its line number so we can overwrite with replacement
-    if (Pos(AnsiUpperCase(tsName), AnsiUpperCase(TSList[i])) > 0) then
-    begin
-      //skip all comments in the SWMM 5 input file
-      while ((Pos(';;', NewFileContentsList[tsBlockInsertPosition]) > 0) and
-        (tsBlockInsertPosition < NewFileContentsList.Count)) do
-      begin
-        inc(tsBlockInsertPosition);
-      end;
-
-      //search for the line containing the duplicate TS
-      while ((Pos(AnsiUpperCase(tsName), UpperCase(NewFileContentsList[tsBlockInsertPosition])) = 0) and
-        (tsBlockInsertPosition < NewFileContentsList.Count)) do
-      begin
-        inc(tsBlockInsertPosition);
-      end;
-
-      //if found return the position of the line that contains it so calling routine can insert the new
-      //TS entry as a replacement at the same location
-      if (Pos(AnsiUpperCase(tsName), AnsiUpperCase(NewFileContentsList[tsBlockInsertPosition])) > 0) then
-      begin
-        result := tsBlockInsertPosition;
-        Exit;
-      end
-      else
-        result := 0;
-    end;
-  end;
-  result := 0;
-end;
-
-function updateSWMMInputFile(var ConvertedFWTSArr: array of TMTARecord;
-  origSWMMInputFilePath: string; newSWMMInputFilePath: string): string;
-var
-  NewFileContentsList: TStringList;
-  tempInt: Integer;
-  tsBlockInsertPosition: Integer;
-  tempRec: TMTARecord;
-  //pathSuffix: string;
-  tsName: string;
-  duplicateLineNumber: Integer;
-begin
-  NewFileContentsList := TStringList.Create;
-
-  // take an inventory of the contents of the swmm file to avoid duplicates later
-  // 0-NodeIDs list, 1-Pollutants list, 2-Timeseries list, 3-Inflows list
-  swmmIDsListArr := SWMMIO.getSWMMNodeIDsFromTxtInput(origSWMMInputFilePath);
-
-  //check to see if any errors occured while attempting to read in SWMM node IDs
+  // check to see if any errors occured while attempting to read node results
   if (ConverterErrors.errorsList.Count > 0) then
+    Exit;
+
+  swmmNodeResults.scratchFilePath := fwTSFileToCreatePath;
+  swmmNodeResults.sourceFilePath := SWMMFilePath;
+  swmmNodeResults.scratchControlFilePath := SWMMIO.workingDir +
+    SWMMIO.fileNameFWControlFile;
+
+  FWIO.writeFWControlMetadataFile(swmmNodeResults);
+  // check to see if any error occured while attempting to write scratch file
+  if (ConverterErrors.errorsList.Count > 0) then
+    Exit;
+
+  result := swmmNodeResults;
+end;
+
+function getSWMMNodeResults(SWMMFilePath: string; nodeName: string;
+  selectedConstituentRecs: ParameterMapRecord; FWCtrlRec: FWCtrlMetadataRecord)
+  : FWCtrlMetadataRecord;
+var
+  rslt: FWCtrlMetadataRecord;
+  Stream: TFileStream;
+  Reader: TBinaryReader;
+  Value: Integer;
+  numberOfPeriods, outputStartPos, magicNum, flowUnits: Integer;
+  SWMMVersion: Integer;
+  numNodes, numSubCatchs, numLinks, numPolls: Integer;
+  idx, currentBytePos: long;
+  pollIdx, numCharsInID: Integer;
+  tsResultEntryStr, tempID, tempPollHeader: string;
+  tempIDCharArr: TArray<Char>;
+  fwTS, nodeIDList, pollutantIDList, targetSWMPollutants: TStringList;
+  pollUnits: TArray<Integer>;
+  numLinkProperities, numNodeProperties, tempInt, reportTimeInterv: Integer;
+  tempDouble, reportStartDate, tempReal8: Double;
+  tempReal4: single;
+  days: TDateTime;
+  totalNumOfMatchedFRWPollutants, startPeriod, endPeriod,
+    numberOfPeriodsToRead: Integer;
+  formattedTSDate, formattedTSTime: string;
+  myYear, myMonth, myDay: Word;
+  myHour, myMin, mySec, myMilli: Word;
+  nodeResultsForPeriod: TArray<single>;
+  numNodeResults, numSubcatchResults: Integer;
+  numlinkResults, bytesPerPeriod, targetNodeIndex: Integer;
+  k, j: Integer;
+  targetPollutantSWMMOrder, targetPollutantFRWOrder: TArray<Integer>;
+begin
+  // Assert(Assigned(selectedConstituentRecs));
+  if Not(FileExists(SWMMFilePath)) then
   begin
+    ConverterErrors.errorsList.Add('SWMM results file not found at: ' +
+      SWMMFilePath);
     Exit;
   end;
-  SWMMIO.TSList := swmmIDsListArr[2];
-  SWMMIO.InflowsList := swmmIDsListArr[3];
-  SWMMIO.NodeNameList := swmmIDsListArr[0];
-  SWMMIO.PollList := swmmIDsListArr[1];
+  if (checkFileExt(SWMMFilePath, '.out') = -1) then
+    Exit;
+
+  Stream := TFileStream.Create(SWMMFilePath, fmOpenRead or fmShareDenyWrite);
+  nodeIDList := TStringList.Create();
+  pollutantIDList := TStringList.Create();
+  fwTS := TStringList.Create();
+  targetSWMPollutants := TStringList.Create();
+  SetLength(pollUnits, selectedConstituentRecs.numberOfEntries);
+
+  // save headers for output FW TS file#SWMM Trial Run Under pre-BMP conditions
+  fwTS.Add(Format('#NodeID:%s', [nodeName]));
+  fwTS.Add('#');
+  fwTS.Add('#');
+  tempPollHeader := '# Yr,MM,DD, hours,     FLOW,';
+
+  //for j := 1 to selectedConstituentRecs.numberOfEntries - 1 do
+  for j := 0 to selectedConstituentRecs.numberOfEntries - 1 do
+  begin
+    if (selectedConstituentRecs.swmmNames[j] <> '') then
+      targetSWMPollutants.Add(selectedConstituentRecs.swmmNames[j]);
+  end;
+
+  // DO NOT DELETE may revert to this in future
+  // used in scheme for matching only selected fw pollutants
+  SetLength(targetPollutantSWMMOrder, targetSWMPollutants.Count);
+  SetLength(targetPollutantFRWOrder, targetSWMPollutants.Count);
+
+  { //DO NOT DELETE may revert to this in future
+    // used in scheme for matching all fw pollutants
+    SetLength(targetPollutantSWMMOrder, High(constituentNames) + 1);
+    SetLength(targetPollutantFRWOrder, High(constituentNames) + 1); }
   try
+    Reader := TBinaryReader.Create(Stream);
+    try
+      // First get number of periods from the end of the file
+      Stream.Seek(-4 * sizeof(Integer), soEnd);
 
-   // First check if the swmm file we will be updating exists - note that updated version will be saved to new path.
-    if FileExists(origSWMMInputFilePath) then
-    begin
-      // If it exists, load the data into a stringlist.
-      NewFileContentsList.LoadFromFile(origSWMMInputFilePath);
+      // the byte position where the Computed Results section of the file begins (4-byte integer)
+      outputStartPos := Reader.ReadInteger;
 
-      // Look for insertion points for TIMESERIES and INFLOW blocks
-      tsBlockInsertPosition := NewFileContentsList.IndexOf('[REPORT]');
-      if (tsBlockInsertPosition < 0) then
-        tsBlockInsertPosition := NewFileContentsList.IndexOf('[CURVES]')
-      else if (tsBlockInsertPosition < 0) then
-        tsBlockInsertPosition := NewFileContentsList.IndexOf('[WASHOFF]')
-      else if (tsBlockInsertPosition < 0) then
-        tsBlockInsertPosition := NewFileContentsList.IndexOf('[TAGS]')
-      else if (tsBlockInsertPosition < 0) then
+      // number of periods
+      numberOfPeriods := Reader.ReadInteger;;
+
+      Stream.Seek(0, soBeginning);
+
+      magicNum := Reader.ReadInteger; // Magic number
+      SWMMVersion := Reader.ReadInteger; // Version number
+      flowUnits := Reader.ReadInteger; // Flow units
+      numSubCatchs := Reader.ReadInteger; // # subcatchments
+      numNodes := Reader.ReadInteger; // # nodes
+      numLinks := Reader.ReadInteger; // # links
+      numPolls := Reader.ReadInteger; // # pollutants
+
+      numNodeResults := MAX_NODE_RESULTS - 1 + numPolls;
+      numSubcatchResults := MAX_SUBCATCH_RESULTS - 1 + numPolls;
+      numlinkResults := MAX_LINK_RESULTS - 1 + numPolls;
+
+      bytesPerPeriod := sizeof(Double) + numSubCatchs * numSubcatchResults *
+        sizeof(single) + numNodes * numNodeResults * sizeof(single) + numLinks *
+        numlinkResults * sizeof(single) + MAX_SYS_RESULTS * sizeof(single);
+
+      // Read all subcatchment IDs and discard, skipping this section is not straight forward since catchment
+      // name lengths vary
+      for idx := 0 to numSubCatchs - 1 do
       begin
-        raise Exception.Create
-          ('Check SWMM input file format. Unable to write timeseries to SWMM input file');
+        numCharsInID := Reader.ReadInteger;
+        tempIDCharArr := Reader.ReadChars(numCharsInID);
+      end;
+
+      // Read all node IDs and save for use later
+      for idx := 0 to numNodes - 1 do
+      begin
+        numCharsInID := Reader.ReadInteger;
+        tempIDCharArr := Reader.ReadChars(numCharsInID);
+        if Length(tempIDCharArr) > 0 then
+        begin
+          SetString(tempID, PChar(@tempIDCharArr[0]), Length(tempIDCharArr));
+          nodeIDList.Add(tempID);
+        end
+      end;
+
+      // Read all link IDs and discard, skipping this section is not straight forward since catchment
+      // name lengths vary
+      for idx := 0 to numLinks - 1 do
+      begin
+        numCharsInID := Reader.ReadInteger;
+        tempIDCharArr := Reader.ReadChars(numCharsInID);
+      end;
+
+      // Read all pollutant IDs and save for use later
+      for idx := 0 to numPolls - 1 do
+      begin
+        numCharsInID := Reader.ReadInteger;
+        tempIDCharArr := Reader.ReadChars(numCharsInID);
+        if Length(tempIDCharArr) > 0 then
+        begin
+          SetString(tempID, PChar(@tempIDCharArr[0]), Length(tempIDCharArr));
+          pollutantIDList.Add(tempID);
+        end
+        else
+      end;
+
+      { //DO NOT DELETE may revert to this in future
+        // Matching scheme that includes all fw pollutants
+        // Match swmm pollutants to framework pollutants and determine pollutant order - order by framework pollutants
+        k := 0;
+        for idx := 1 to selectedConstituentRecs.numberOfEntries-1 do
+        begin
+        // -1 means no match to be overwritten below if match later found
+        targetPollutantSWMMOrder[idx] := -1;
+
+        // -1 means no match to be overwritten below if match later found
+        targetPollutantFRWOrder[idx] := -1;
+
+        tempPollHeader := tempPollHeader +
+        Format('%9s,', [constituentNames[idx]]);
+        if (selectedConstituentRecs.swmmNames[idx] <> '') then
+        begin
+        for j := 0 to numPolls - 1 do
+        begin
+        if (AnsiCompareText(selectedConstituentRecs.swmmNames[idx],
+        pollutantIDList[j]) = 0) then
+        begin
+        targetPollutantSWMMOrder[idx] := j;
+        targetPollutantFRWOrder[idx] := j;
+        inc(k);
+        break;
+        end;
+        end;
+        end;
+        end;
+        totalNumOfMatchedFRWPollutants := k;
+        fwTS.Add('#' + tempPollHeader); }
+
+      // Matching scheme that includes only user selected fw pollutants
+      // Match swmm pollutants to framework pollutants and determine pollutant order - order by framework pollutants
+      k := 0;
+      for idx := 0 to targetSWMPollutants.Count - 1 do
+      begin
+        for j := 0 to numPolls - 1 do
+        begin
+          if (AnsiCompareText(targetSWMPollutants[idx], pollutantIDList[j]) = 0)
+          then
+          begin
+            targetPollutantSWMMOrder[idx] := j;
+            targetPollutantFRWOrder[k] := idx;
+            //tempPollHeader := tempPollHeader +
+            //  Format('%9s,', [targetSWMPollutants[idx]]);
+            tempPollHeader := tempPollHeader +
+             Format('%9s,', [selectedConstituentRecs.fwNames[idx]]);
+            inc(k);
+            break;
+          end;
+        end;
+      end;
+      // totalNumOfMatchedFRWPollutants := k+1;
+      totalNumOfMatchedFRWPollutants := k;
+      fwTS.Add('#' + tempPollHeader);
+
+      // skip to section in file we reached when we read in node names
+      Stream.Seek(SWMMFileStreamPosition, soBeginning);
+      SWMMFileStreamPosition := Stream.Position;
+
+      // --- save codes of pollutant concentration units
+      for idx := 0 to numPolls - 1 do
+      begin
+        pollUnits[0] := Reader.ReadInteger;
+      end;
+
+      // --- skip subcatchment area and associated codes
+      tempInt := Reader.ReadInteger; // number of subcatchment properties
+      tempInt := Reader.ReadInteger; // code number for subcatchment area
+      if (numSubCatchs > 0) then
+      begin
+        currentBytePos := Stream.Position;
+        Stream.Seek((numSubCatchs) * sizeof(single), currentBytePos);
+      end;
+
+      // --- skip through node type, invert, & max. depth
+      numNodeProperties := Reader.ReadInteger; // 3 - number of node properties
+      Reader.ReadInteger; // INPUT_TYPE_CODE
+      Reader.ReadInteger; // INPUT_INVERT
+      Reader.ReadInteger; // INPUT_MAX_DEPTH;
+      // Type code is int rest are real4 so read type code seperately
+      if (numNodes > 0) then
+      begin
+        currentBytePos := Stream.Position;
+        Stream.Seek((numNodes) * sizeof(Integer) + (numNodes) *
+          (numNodeProperties - 1) * sizeof(single), currentBytePos);
+      end;
+
+      // --- skip link type, offsets, max. depth, & length
+      numLinkProperities := Reader.ReadInteger; // 3 - number of link properties
+      Reader.ReadInteger; // INPUT_TYPE_CODE code number
+      Reader.ReadInteger; // // INPUT_OFFSET
+      Reader.ReadInteger; // // INPUT_OFFSET
+      Reader.ReadInteger; // INPUT_MAX_DEPTH
+      Reader.ReadInteger; // INPUT_LENGTH
+
+      // Type code is int rest are real4 so read type code seperately
+      if (numLinks > 0) then
+      begin
+        currentBytePos := Stream.Position;
+        Stream.Seek((numLinks) * sizeof(Integer) + (numLinks) *
+          (numLinkProperities - 1) * sizeof(single), currentBytePos);
+      end;
+
+      Stream.Seek(outputStartPos - (sizeof(Double) + sizeof(Integer)),
+        soBeginning);
+
+      // Get Start date and reporting timestep
+      reportStartDate := Reader.ReadDouble;
+      reportTimeInterv := Reader.ReadInteger;
+      rslt.swmmReportTimestepSecs := reportTimeInterv;
+
+      // calculate numberOfPeriods in user specified timespan
+      numberOfPeriodsToRead := Round((FWCtrlRec.endDate - FWCtrlRec.startDate) *
+        86400 / reportTimeInterv);
+      // calculate period in user specified timespan to start reading from
+      startPeriod := Round((FWCtrlRec.startDate - reportStartDate) * 86400 /
+        reportTimeInterv);
+      endPeriod := startPeriod + numberOfPeriodsToRead;
+      if ((startPeriod < 0) or (numberOfPeriodsToRead > numberOfPeriods)) then
+      begin
+        errorsList.Add(ConverterErrors.Errs[6]);
+        displayErrors();
+        reportErrorsToFW();
         Exit;
       end;
+      // skip to begining of user specified timespan
+      Stream.Seek(outputStartPos + numberOfPeriods * bytesPerPeriod,
+        soBeginning);
 
-      // Write TimeSeries Block
-      // check TS list that was passed in to see if input file already contains TS to avoid duplicates
-      if (SWMMIO.TSList.Count > 0) then
+      // get node results for all user specified timespan
+      targetNodeIndex := nodeIDList.IndexOf(nodeName);
+      if(  targetNodeIndex < 0 ) then
       begin
-        // timeseries section already exists in swmm input file so simply add to it while checking for duplicate names
-        tsBlockInsertPosition := NewFileContentsList.IndexOf('[TIMESERIES]');
-        while (Pos(';;', NewFileContentsList[tsBlockInsertPosition + 1]) < 1) do
-        begin
-          inc(tsBlockInsertPosition);
-        end;
-        // see checkForDuplicateTS fxn which checks for duplicate TS names in swmm file below;
-      end
-      else
-      begin
-        tsBlockInsertPosition := tsBlockInsertPosition - 1;
-        // timeseries section does not already exist in swmm input file so write times series block and add TS entries to it
-        NewFileContentsList.Insert(tsBlockInsertPosition, ' ');
-        NewFileContentsList.Insert(tsBlockInsertPosition + 1, '[TIMESERIES]');
-        NewFileContentsList.Insert(tsBlockInsertPosition + 2,
-          ';;Name          	Type      	Path');
-        NewFileContentsList.Insert(tsBlockInsertPosition + 3,
-          ';;-------------- ---------- ---------- ----------');
-        tsBlockInsertPosition := tsBlockInsertPosition + 4;
+        errorsList.add(Errs[8]);
+        exit;
       end;
-
-      tempInt := 0;
-      //check for duplicate TIMESERIES block entries in the SWMM file
-      for tempRec in ConvertedFWTSArr do
+      for idx := startPeriod to endPeriod do
       begin
-        tsName := tempRec.constituentSWMMName + 'TS';
-        if (tempRec.convertedTSFilePath <> '') then
+        application.processmessages;
+        days := reportStartDate + (reportTimeInterv * idx / 86400.0);
+
+        DecodeDateTime(days, myYear, myMonth, myDay, myHour, myMin,
+          mySec, myMilli);
+
+        formattedTSDate := Format(' %s,%s,%s',
+          [IntToStr(myYear), IntToStr(myMonth), IntToStr(myDay)]);
+        formattedTSTime := Format(' %7.5f',
+          [myHour + myMin / 60.0 + mySec / 3600.0]);
+
+        nodeResultsForPeriod := output_readNodeResults(idx, targetNodeIndex,
+          numNodeResults, numSubCatchs, numSubcatchResults, outputStartPos,
+          bytesPerPeriod, Reader);
+
+        // add formatted flow entry
+        tsResultEntryStr :=
+          (Format('%s,%s,%9.3f', [formattedTSDate, formattedTSTime,
+          nodeResultsForPeriod[NODE_INFLOW] *
+          selectedConstituentRecs.convFactors[0]]));
+        if (appType = appTypes[0]) then
+          Writeln('Exporting data for: ' + formattedTSDate + ' ' +
+            formattedTSTime);
+
+        // write results for all framework pollutants fill in zeros for fw polls that were not selected by the user
+        // DO NOT DELETE may revert to this in future for pollIdx := 1 to High(constituentNames) do // pollIdx = 1 if flow
+
+        // alternative below outputs results for matched fw pollutants only
+        for pollIdx := 0 to totalNumOfMatchedFRWPollutants - 1 do    //outputs results for matched fw pollutants only
         begin
-          duplicateLineNumber := checkForDuplicateTS(tsBlockInsertPosition,
-            SWMMIO.TSList, NewFileContentsList, tsName);
-          if (duplicateLineNumber <> 0) then
-          begin
-            NewFileContentsList[duplicateLineNumber] := tsName +
-              '      FILE      "' + tempRec.convertedTSFilePath + '"';
-          end
+          if ((nodeResultsForPeriod[NODE_INFLOW] < MIN_WQ_FLOW) or
+            (targetPollutantSWMMOrder[pollIdx] < 0)) then
+            tsResultEntryStr := Format('%s,%9.3f', [tsResultEntryStr, 0.0])
           else
-            NewFileContentsList.Insert(tsBlockInsertPosition + tempInt,
-              tsName + '      FILE      "' + tempRec.convertedTSFilePath + '"');
-          inc(tempInt);
-        end;
-
-      end;
-      tsBlockInsertPosition := tsBlockInsertPosition + tempInt;
-
-      // Write Inflow Block
-      // check TS list that was passed in to see if input file already contains TS
-      if ((SWMMIO.TSList.Count > 0) and
-        (NewFileContentsList.IndexOf('[INFLOWS]') > -1)) then
-      begin
-        // Inflow section already exists in swmm input file so simply add to it - check for duplicate names
-        tsBlockInsertPosition := NewFileContentsList.IndexOf('[INFLOWS]') + 1;
-        while (Pos(';;', NewFileContentsList[tsBlockInsertPosition]) > 0) do
-        begin
-          inc(tsBlockInsertPosition);
-        end;
-        // see checkForDuplicateTS fxn which checks for duplicate TS names in swmm file below;
-      end
-      else
-      begin
-        // Inflow section does not already exist in swmm input file so write times series block and add to TS to it
-        NewFileContentsList.Insert(tsBlockInsertPosition, '');
-        NewFileContentsList.Insert(tsBlockInsertPosition + 1, '[INFLOWS]');
-        NewFileContentsList.Insert(tsBlockInsertPosition + 2,
-          ';;                                                 Param    Units    Scale    Baseline Baseline');
-        NewFileContentsList.Insert(tsBlockInsertPosition + 3,
-          ';;Node           Parameter        Time Series      Type     Factor   Factor   Value    Pattern');
-        NewFileContentsList.Insert(tsBlockInsertPosition + 4,
-          ';;-------------- ---------------- ---------------- -------- -------- -------- -------- --------');
-        tsBlockInsertPosition := tsBlockInsertPosition + 5;
-      end;
-
-      tempInt := 0;
-      //check for duplicate INFLOW block entries in the SWMM file
-      for tempRec in ConvertedFWTSArr do
-      begin
-        if (tempRec.convertedTSFilePath <> '') then
-        begin
-          duplicateLineNumber := checkForDuplicateTS(tsBlockInsertPosition,
-            SWMMIO.InflowsList, NewFileContentsList,
-            tempRec.tsNodeName + '        ' + tempRec.constituentSWMMName);
-          if (duplicateLineNumber <> 0) then
           begin
-            NewFileContentsList[duplicateLineNumber] := tempRec.tsNodeName +
-              '        ' + tempRec.constituentSWMMName + '        ' +
-              tempRec.constituentSWMMName + 'TS' + '        ' + tempRec.tsType +
-              '        ' + FloatToStr(tempRec.tsUnitsFactor) + '        ' +
-              FloatToStr(tempRec.convFactor);
-          end
-          else
-            NewFileContentsList.Insert(tsBlockInsertPosition + tempInt,
-              tempRec.tsNodeName + '        ' + tempRec.constituentSWMMName +
-              '        ' + tempRec.constituentSWMMName + 'TS' + '        ' +
-              tempRec.tsType + '        ' + FloatToStr(tempRec.tsUnitsFactor) +
-              '        ' + FloatToStr(tempRec.convFactor));
-          inc(tempInt);
+            tsResultEntryStr := Format('%s,%9.3f',
+              [tsResultEntryStr, nodeResultsForPeriod[NODE_QUAL +
+              targetPollutantSWMMOrder[pollIdx]] *
+              selectedConstituentRecs.convFactors[targetPollutantSWMMOrder
+              [pollIdx]]]);
+          end;
         end;
-
+        fwTS.Add(tsResultEntryStr);
       end;
-      SWMMIO.saveTextFileToDisc(NewFileContentsList,
-        newSWMMInputFilePath, true);
-    end
-    else
-      // Otherwise, raise an exception.
-      raise Exception.Create('File does not exist.');
+
+      rslt.scratchFilePath := FWCtrlRec.scratchFilePath;
+      rslt.tsNodeName := FWCtrlRec.tsNodeName;
+      rslt.flowConvFactor := selectedConstituentRecs.convFactors[0];
+      //rslt.numPolls := selectedConstituentRecs.numberOfEntries;
+      rslt.description := 'Converted from SWMM 5';
+      // selectedConstituentRecs[0].ModelRunScenarioID;
+
+      // compute timeseries start date
+      days := reportStartDate;
+      DecodeDateTime(days, myYear, myMonth, myDay, myHour, myMin,
+        mySec, myMilli);
+      rslt.startYear := myYear;
+      rslt.startMonth := myMonth;
+      rslt.startDay := myMonth;
+      rslt.startHourFrac := myHour;
+
+      // compute timeseries end date
+      days := reportStartDate + (reportTimeInterv * numberOfPeriods / 86400.0);
+      DecodeDateTime(days, myYear, myMonth, myDay, myHour, myMin,
+        mySec, myMilli);
+      rslt.endYear := myYear;
+      rslt.endMonth := myMonth;
+      rslt.endDay := myDay;
+      rslt.endHourFrac := myHour;
+
+      // save user specified timeseries start date variables
+      DecodeDateTime(FWCtrlRec.startDate, myYear, myMonth, myDay, myHour, myMin,
+        mySec, myMilli);
+      rslt.userStartYear := myYear;
+      rslt.userStartMonth := myMonth;
+      rslt.userStartDay := myMonth;
+      rslt.userStartHourFrac := myHour;
+
+      // save user specified timeseries start date variables
+      DecodeDateTime(FWCtrlRec.endDate, myYear, myMonth, myDay, myHour, myMin,
+        mySec, myMilli);
+      rslt.userEndYear := myYear;
+      rslt.userEndMonth := myMonth;
+      rslt.userEndDay := myDay;
+      rslt.userEndHourFrac := myHour;
+
+      rslt.numberOfTimesteps := numberOfPeriods;
+      rslt.fwTimeSeries := fwTS;
+    finally
+      Reader.Free;
+    end;
   finally
-    result := '';
-    NewFileContentsList.Free;
+    Stream.Free;
   end;
-  result := newSWMMInputFilePath;
+  result := rslt;
+end;
+
+function output_readNodeResults(period: Integer; nodeIndex: Integer;
+  numNodeResults: Integer; numSubCatchs: Integer; numSubCatchRslts: Integer;
+  outputStartPos: Integer; bytesPerPeriod: Integer; Reader: TBinaryReader)
+  : TArray<single>;
+
+var
+  bytePos: Integer;
+  rslt: TArray<single>;
+  idx: Integer;
+begin
+  SetLength(rslt, numNodeResults);
+  bytePos := outputStartPos + (period - 1) * bytesPerPeriod;
+  bytePos := bytePos + sizeof(Double) + numSubCatchs * numSubCatchRslts *
+    sizeof(single);
+  bytePos := bytePos + nodeIndex * numNodeResults * sizeof(single);
+  Reader.BaseStream.Seek(bytePos, soBeginning);
+  for idx := 0 to numNodeResults do
+  begin
+    rslt[idx] := Reader.ReadSingle;
+  end;
+  result := rslt;
 end;
 
 end.

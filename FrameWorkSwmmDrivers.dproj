@@ -34,7 +34,7 @@
 			<Cfg_1>true</Cfg_1>
 			<Base>true</Base>
 		</PropertyGroup>
-		<PropertyGroup Condition="'$(Config)'=='SWMMOutputDebug' or '$(Cfg_5)'!=''">
+		<PropertyGroup Condition="'$(Config)'=='SWMMInputDebug' or '$(Cfg_5)'!=''">
 			<Cfg_5>true</Cfg_5>
 			<CfgParent>Cfg_1</CfgParent>
 			<Cfg_1>true</Cfg_1>
@@ -47,7 +47,7 @@
 			<Cfg_1>true</Cfg_1>
 			<Base>true</Base>
 		</PropertyGroup>
-		<PropertyGroup Condition="'$(Config)'=='SWMMInputDebug' or '$(Cfg_4)'!=''">
+		<PropertyGroup Condition="'$(Config)'=='SWMMOutputDebug' or '$(Cfg_4)'!=''">
 			<Cfg_4>true</Cfg_4>
 			<CfgParent>Cfg_1</CfgParent>
 			<Cfg_1>true</Cfg_1>
@@ -60,7 +60,7 @@
 			<Cfg_1>true</Cfg_1>
 			<Base>true</Base>
 		</PropertyGroup>
-		<PropertyGroup Condition="'$(Config)'=='GUISWMMOutputDebug' or '$(Cfg_6)'!=''">
+		<PropertyGroup Condition="'$(Config)'=='GUISWMMInputDebug' or '$(Cfg_6)'!=''">
 			<Cfg_6>true</Cfg_6>
 			<CfgParent>Cfg_1</CfgParent>
 			<Cfg_1>true</Cfg_1>
@@ -73,7 +73,7 @@
 			<Cfg_1>true</Cfg_1>
 			<Base>true</Base>
 		</PropertyGroup>
-		<PropertyGroup Condition="'$(Config)'=='GUISWMMIputDebug' or '$(Cfg_7)'!=''">
+		<PropertyGroup Condition="'$(Config)'=='GUISWMMOutputDebug' or '$(Cfg_7)'!=''">
 			<Cfg_7>true</Cfg_7>
 			<CfgParent>Cfg_1</CfgParent>
 			<Cfg_1>true</Cfg_1>
@@ -84,7 +84,7 @@
 			<CfgParent>Base</CfgParent>
 			<Base>true</Base>
 		</PropertyGroup>
-		<PropertyGroup Condition="'$(Config)'=='SWMMOutput' or '$(Cfg_3)'!=''">
+		<PropertyGroup Condition="'$(Config)'=='SWMMInput' or '$(Cfg_3)'!=''">
 			<Cfg_3>true</Cfg_3>
 			<CfgParent>Cfg_2</CfgParent>
 			<Cfg_2>true</Cfg_2>
@@ -97,7 +97,7 @@
 			<Cfg_2>true</Cfg_2>
 			<Base>true</Base>
 		</PropertyGroup>
-		<PropertyGroup Condition="'$(Config)'=='GUISWMMInput' or '$(Cfg_8)'!=''">
+		<PropertyGroup Condition="'$(Config)'=='GUISWMMOutput' or '$(Cfg_8)'!=''">
 			<Cfg_8>true</Cfg_8>
 			<CfgParent>Cfg_2</CfgParent>
 			<Cfg_2>true</Cfg_2>
@@ -110,7 +110,7 @@
 			<Cfg_2>true</Cfg_2>
 			<Base>true</Base>
 		</PropertyGroup>
-		<PropertyGroup Condition="'$(Config)'=='GUISWMMOutput' or '$(Cfg_9)'!=''">
+		<PropertyGroup Condition="'$(Config)'=='GUISWMMInput' or '$(Cfg_9)'!=''">
 			<Cfg_9>true</Cfg_9>
 			<CfgParent>Cfg_2</CfgParent>
 			<Cfg_2>true</Cfg_2>
@@ -123,7 +123,7 @@
 			<Cfg_2>true</Cfg_2>
 			<Base>true</Base>
 		</PropertyGroup>
-		<PropertyGroup Condition="'$(Config)'=='SWMMInput' or '$(Cfg_10)'!=''">
+		<PropertyGroup Condition="'$(Config)'=='SWMMOutput' or '$(Cfg_10)'!=''">
 			<Cfg_10>true</Cfg_10>
 			<CfgParent>Cfg_2</CfgParent>
 			<Cfg_2>true</Cfg_2>
@@ -230,9 +230,8 @@ $(PostBuildEvent)]]></PostBuildEvent>
 			<DCCReference Include="gsmodules\SWMMIO.pas"/>
 			<DCCReference Include="gsmodules\ReadMTA.pas"/>
 			<DCCReference Include="gsmodules\WriteMTA.pas"/>
-			<DCCReference Include="gsmodules\SWMMInput.pas"/>
 			<DCCReference Include="gsmodules\SWMMOutput.pas"/>
-			<DCCReference Include="gsmodules\FWControlScratchFile.pas"/>
+			<DCCReference Include="gsmodules\SWMMInput.pas"/>
 			<DCCReference Include="gsmodules\MTATemplateString.pas"/>
 			<DCCReference Include="ImportHelpDialogFrm.pas">
 				<Form>ImportHelpDialog</Form>
@@ -248,30 +247,30 @@ $(PostBuildEvent)]]></PostBuildEvent>
 				<ResourceType>RCDATA</ResourceType>
 				<ResourceId>mtaTemplate</ResourceId>
 			</RcItem>
-			<BuildConfiguration Include="SWMMInputDebug">
+			<BuildConfiguration Include="SWMMOutputDebug">
 				<Key>Cfg_4</Key>
 				<CfgParent>Cfg_1</CfgParent>
 			</BuildConfiguration>
-			<BuildConfiguration Include="SWMMOutputDebug">
+			<BuildConfiguration Include="SWMMInputDebug">
 				<Key>Cfg_5</Key>
 				<CfgParent>Cfg_1</CfgParent>
 			</BuildConfiguration>
-			<BuildConfiguration Include="SWMMInput">
+			<BuildConfiguration Include="SWMMOutput">
 				<Key>Cfg_10</Key>
 				<CfgParent>Cfg_2</CfgParent>
 			</BuildConfiguration>
-			<BuildConfiguration Include="GUISWMMOutputDebug">
+			<BuildConfiguration Include="GUISWMMInputDebug">
 				<Key>Cfg_6</Key>
 				<CfgParent>Cfg_1</CfgParent>
 			</BuildConfiguration>
-			<BuildConfiguration Include="GUISWMMIputDebug">
+			<BuildConfiguration Include="GUISWMMOutputDebug">
 				<Key>Cfg_7</Key>
 				<CfgParent>Cfg_1</CfgParent>
 			</BuildConfiguration>
 			<BuildConfiguration Include="Base">
 				<Key>Base</Key>
 			</BuildConfiguration>
-			<BuildConfiguration Include="GUISWMMOutput">
+			<BuildConfiguration Include="GUISWMMInput">
 				<Key>Cfg_9</Key>
 				<CfgParent>Cfg_2</CfgParent>
 			</BuildConfiguration>
@@ -279,11 +278,11 @@ $(PostBuildEvent)]]></PostBuildEvent>
 				<Key>Cfg_2</Key>
 				<CfgParent>Base</CfgParent>
 			</BuildConfiguration>
-			<BuildConfiguration Include="SWMMOutput">
+			<BuildConfiguration Include="SWMMInput">
 				<Key>Cfg_3</Key>
 				<CfgParent>Cfg_2</CfgParent>
 			</BuildConfiguration>
-			<BuildConfiguration Include="GUISWMMInput">
+			<BuildConfiguration Include="GUISWMMOutput">
 				<Key>Cfg_8</Key>
 				<CfgParent>Cfg_2</CfgParent>
 			</BuildConfiguration>
@@ -366,7 +365,7 @@ $(PostBuildEvent)]]></PostBuildEvent>
 		</ProjectExtensions>
 		<Import Condition="Exists('$(BDS)\Bin\CodeGear.Delphi.Targets')" Project="$(BDS)\Bin\CodeGear.Delphi.Targets"/>
 		<Import Condition="Exists('$(APPDATA)\Embarcadero\$(BDSAPPDATABASEDIR)\$(PRODUCTVERSION)\UserTools.proj')" Project="$(APPDATA)\Embarcadero\$(BDSAPPDATABASEDIR)\$(PRODUCTVERSION)\UserTools.proj"/>
-		<PropertyGroup Condition="'$(Config)'=='SWMMOutput' And '$(Platform)'=='Win32'">
+		<PropertyGroup Condition="'$(Config)'=='SWMMInput' And '$(Platform)'=='Win32'">
 			<PreBuildEvent/>
 			<PreBuildEventIgnoreExitCode>False</PreBuildEventIgnoreExitCode>
 			<PreLinkEvent/>

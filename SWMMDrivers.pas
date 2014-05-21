@@ -23,12 +23,14 @@ uses
 
 const
 
-  Errs: array [0 .. 4] of string =
+  Errs: array [0 .. 6] of string =
     ('An unknown error occured when reading the SWMM file',
     'An unknown error occured when saving the new SWMM file',
     'Unable to read node IDs in the SWMM ouput file',
     'Unable to read pollutant IDs in the SWMM output file',
-    'Unable to read the start/end dates of the simulation in the SWMM output file');
+    'Unable to read the start/end dates of the simulation in the SWMM output file',
+    'User specified time span begins earlier than available swmm data',
+    'User specified time span ends later than available swmm data');
 
 type
   TForm1 = class(TForm)
@@ -255,6 +257,7 @@ begin
   if (assigned(lstFWControlMetafile)) then
     lstFWControlMetafile.Free;
 
+  reportErrorsToFW();
   Self.Close();
 end;
 
@@ -288,6 +291,7 @@ end;
 
 procedure TForm1.btnSelectSWMMFileClick(Sender: TObject);
 var
+  swmmFileContents:TStringList;
   TempListArr: TArray<TStringList>;
   swmmIDsListArr: TArray<TStringList>;
 begin
@@ -350,7 +354,9 @@ begin
         begin
 
           // 0-NodeIDs list, 1-Pollutants list, 2-Timeseries list, 3-Inflows list
-          swmmIDsListArr := SWMMIO.getSWMMNodeIDsFromTxtInput(swmmFilePath);
+          //swmmIDsListArr := SWMMIO.getSWMMNodeIDsFromTxtInput(swmmFilePath);
+          swmmFileContents := readSWMMInputFile(swmmFilePath);
+          swmmIDsListArr := SWMMIO.getSWMMNodeIDsFromTxtInput(swmmFileContents);
           SWMMIO.TSList := swmmIDsListArr[2];
           SWMMIO.InflowsList := swmmIDsListArr[3];
           SWMMIO.NodeNameList := swmmIDsListArr[0];
@@ -434,7 +440,7 @@ begin
     btnSelectSWMMFile.Caption := 'Select SWMM Input File';
     OpenTextFileDialog1.Filter := 'SWMM Input (*.inp)|*.INP';
     SaveTextFileDialog1.Filter := 'SWMM Input (*.inp)|*.INP';
-    lblSelectedFWConstituents.Caption := 'Selected For Export to Framework';
+    lblSelectedFWConstituents.Caption := 'Selected For Export from Framework';
     strtDatePicker.Hide; // not needed for SWMM_FROM_FW
     endDatePicker.Hide; // not needed for SWMM_FROM_FW
     lblTimeSpanTitle.Hide; // not needed for SWMM_FROM_FW

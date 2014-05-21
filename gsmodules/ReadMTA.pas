@@ -120,7 +120,7 @@ begin
       TempTokens := TStringList.Create;
 
       // Add supported MTA token names to the list of tokens to search for
-      TempTokens.Delimiter := ' '; // Each list item will be blank separated
+      TempTokens.Delimiter := ' '; // Each list item will be comma separated
       TempTokens.QuoteChar := '|'; // And each item will be quoted with |'s
       TempTokens.DelimitedText :=
         '|ModelRunScenarioID| |SWMMNodeID| |SWMMFilePath| |scratchFilePath| |FlowConv| |NumPolls| |FrameworkPollutants|';
@@ -237,3 +237,4 @@ begin
 end;
 
 end.
+
