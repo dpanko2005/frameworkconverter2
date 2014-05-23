@@ -119,10 +119,20 @@ begin
   begin
     ConverterErrors.errorsList.Add('SWMM input file not found at: ' +
       fwCtrlFileData.sourceFilePath);
+    displayErrors();
+    reportErrorsToFW();
+    Writeln('Operation failed.');
+    result := -1;
     Exit;
   end;
   if (checkFileExt(fwCtrlFileData.sourceFilePath, '.inp') = -1) then
+  begin
+    displayErrors();
+    reportErrorsToFW();
+    Writeln('Operation failed.');
+    result := -1;
     Exit;
+  end;
   swmmFileContents := readSWMMInputFile(fwCtrlFileData.sourceFilePath);
 
   // read in parametermap.txt which contains mappings between fw and swmm constituents and conv factors
@@ -131,9 +141,10 @@ begin
   // check to see if any error occured while attempting to read the parameterMapFile
   if (ConverterErrors.errorsList.Count > 0) then
   begin
-    ConverterErrors.displayErrors();
+    displayErrors();
+    reportErrorsToFW();
     Writeln('Operation failed.');
-    result := 0;
+    result := -1;
     Exit;
   end
   else
@@ -152,7 +163,7 @@ begin
     for i := 0 + 1 to pMapData.numberOfEntries - 1 do
     begin
       Writeln(Format
-        ('Pollutant %d: framework name: %s SWMM name: %s conversion factor: %9.3f',
+        ('Pollutant %d: framework name: %s SWMM name: %s conversion factor: %12.5f',
         [i, pMapData.fwNames[i], pMapData.swmmNames[i], pMapData.convFactors[i]]
         ) + sLineBreak);
     end;
@@ -207,8 +218,10 @@ begin
   begin
     nameIndex := pMapData.fwNames.IndexOf(fwCtrlFileData.fwTimeSeriesNames[i]);
     if ((nameIndex > -1) and (pMapData.convFactors[nameIndex] <> 0)) then
+    // if (pMapData.convFactors[i] <> 0) then
     begin
       swmmName := pMapData.fwNames[nameIndex];
+      // swmmName := pMapData.fwNames[i];
       // following above name convention for file names, save to TS subdirectory
       filePath := pathPrefix + swmmName + pathSuffix;
       fwCtrlFileData.swmmTSFilePaths.Add(filePath);
@@ -273,7 +286,7 @@ function updateSWMMInputFile(swmmFileContentsList: TStringList;
   var fwCtrlFileData: FWCtrlMetadataRecord): string;
 var
   NewFileContentsList: TStringList;
-  tempInt, i: Integer;
+  tempInt, i, nameIndex: Integer;
   tsBlockInsertPosition: Integer;
   tsName, inflowType: string;
   duplicateLineNumber: Integer;
@@ -345,23 +358,28 @@ begin
       // check for duplicate TIMESERIES block entries in the SWMM file
       for i := 0 to pMapData.numberOfEntries - 1 do
       begin
-        tsName := pMapData.swmmNames[i] + 'TS';
-        if (fwCtrlFileData.swmmTSFilePaths[i] <> '') then
+        nameIndex := pMapData.fwNames.IndexOf
+          (fwCtrlFileData.fwTimeSeriesNames[i]);
+        if ((nameIndex > -1) and (pMapData.convFactors[nameIndex] <> 0)) then
         begin
-          duplicateLineNumber := checkForDuplicateTS(tsBlockInsertPosition,
-            SWMMIO.TSList, NewFileContentsList, tsName);
-          if (duplicateLineNumber <> 0) then
+        //tsName := pMapData.swmmNames[i] + 'TS';
+          tsName := pMapData.swmmNames[nameIndex] + 'TS';
+          if (fwCtrlFileData.swmmTSFilePaths[nameIndex] <> '') then
           begin
-            NewFileContentsList[duplicateLineNumber] := tsName +
-              '      FILE      "' + fwCtrlFileData.swmmTSFilePaths[i] + '"';
-          end
-          else
-            NewFileContentsList.Insert(tsBlockInsertPosition + tempInt,
-              tsName + '      FILE      "' + fwCtrlFileData.swmmTSFilePaths
-              [i] + '"');
-          inc(tempInt);
+            duplicateLineNumber := checkForDuplicateTS(tsBlockInsertPosition,
+              SWMMIO.TSList, NewFileContentsList, tsName);
+            if (duplicateLineNumber <> 0) then
+            begin
+              NewFileContentsList[duplicateLineNumber] := tsName +
+                '      FILE      "' + fwCtrlFileData.swmmTSFilePaths[i] + '"';
+            end
+            else
+              NewFileContentsList.Insert(tsBlockInsertPosition + tempInt,
+                tsName + '      FILE      "' + fwCtrlFileData.swmmTSFilePaths
+                [i] + '"');
+            inc(tempInt);
+          end;
         end;
-
       end;
       tsBlockInsertPosition := tsBlockInsertPosition + tempInt;
 
@@ -380,7 +398,13 @@ begin
       end
       else
       begin
-        // Inflow section does not already exist in swmm input file so write times series block and add to TS to it
+        // Inflow section does not already exist in swmm input file so write times series block and add Inflow block to it
+        // assuming inflow section directly follows timeseries section does not always work. More reliable to recompute the position of
+        // the inflow block based on the position of the report block. If report block does not exist will default to placing inflow block
+        // based on position after writting timeseries block
+        if (NewFileContentsList.IndexOf('[REPORT]') > -1) then
+          tsBlockInsertPosition := NewFileContentsList.IndexOf('[REPORT]') - 1;
+
         NewFileContentsList.Insert(tsBlockInsertPosition, '');
         NewFileContentsList.Insert(tsBlockInsertPosition + 1, '[INFLOWS]');
         NewFileContentsList.Insert(tsBlockInsertPosition + 2,

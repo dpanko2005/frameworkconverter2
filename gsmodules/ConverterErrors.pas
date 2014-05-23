@@ -15,15 +15,14 @@ const
     'S006 - User specified time span begins earlier than available SWMM data or User specified time span ends later than available SWMM data',
     'F002 - The file provided is either the wrong file or has the wrong extension',
     'S006 - Matching node not found in SWMM for node:',
-    'F003 - Framework time series data file not found at:'
- );
+    'F003 - Framework time series data file not found at:');
 
 var
   errorsList: TStringList;
 
 function checkInputFiles(): integer;
 function checkIfFileExists(fileNameOrPath: string): integer;
-function checkFileExt(filePath:string; desiredExt:string):integer;
+function checkFileExt(filePath: string; desiredExt: string): integer;
 procedure reportErrorsToFW();
 procedure displayErrors();
 
@@ -32,19 +31,19 @@ implementation
 uses
   SWMMIO;
 
-  function checkFileExt(filePath:string; desiredExt:string):integer;
-  var
-  tempStr:string;
+function checkFileExt(filePath: string; desiredExt: string): integer;
+var
+  tempStr: string;
+begin
+  tempStr := ExtractFileExt(filePath);
+  if (desiredExt <> tempStr) then
   begin
-    tempStr := ExtractFileExt(filePath);
-    if(desiredExt <> tempStr) then
-    begin
-      result := -1;
-      errorsList.Add(errs[7] + ': ' + filePath);
-      Exit;
-    end;
-    result := 1;
+    result := -1;
+    errorsList.Add(Errs[7] + ': ' + filePath);
+    Exit;
   end;
+  result := 1;
+end;
 
 function checkInputFiles(): integer;
 begin

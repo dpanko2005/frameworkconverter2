@@ -156,7 +156,7 @@ begin
     for i := 0 + 1 to pMapData.numberOfEntries - 1 do
     begin
       Writeln(Format
-        ('Pollutant %d: framework name: %s SWMM name: %s conversion factor: %9.3f',
+        ('Pollutant %d: framework name: %s SWMM name: %s conversion factor: %12.5f',
         [i, pMapData.fwNames[i], pMapData.swmmNames[i], pMapData.convFactors[i]]
         ) + sLineBreak);
     end;
@@ -177,6 +177,7 @@ begin
 
     Writeln('Operation completed successfully.');
   end;
+  reportErrorsToFW();
   ConverterErrors.errorsList.Free;
   result := 1;
 end;
@@ -271,15 +272,6 @@ begin
       targetSWMPollutants.Add(selectedConstituentRecs.swmmNames[j]);
   end;
 
-  // DO NOT DELETE may revert to this in future
-  // used in scheme for matching only selected fw pollutants
-  SetLength(targetPollutantSWMMOrder, targetSWMPollutants.Count);
-  SetLength(targetPollutantFRWOrder, targetSWMPollutants.Count);
-
-  { //DO NOT DELETE may revert to this in future
-    // used in scheme for matching all fw pollutants
-    SetLength(targetPollutantSWMMOrder, High(constituentNames) + 1);
-    SetLength(targetPollutantFRWOrder, High(constituentNames) + 1); }
   try
     Reader := TBinaryReader.Create(Stream);
     try
@@ -309,6 +301,11 @@ begin
       bytesPerPeriod := sizeof(Double) + numSubCatchs * numSubcatchResults *
         sizeof(single) + numNodes * numNodeResults * sizeof(single) + numLinks *
         numlinkResults * sizeof(single) + MAX_SYS_RESULTS * sizeof(single);
+
+      // used in scheme for matching only selected fw pollutants
+      // SetLength(targetPollutantSWMMOrder, targetSWMPollutants.Count);
+      SetLength(targetPollutantSWMMOrder, numPolls);
+      SetLength(targetPollutantFRWOrder, targetSWMPollutants.Count);
 
       // Read all subcatchment IDs and discard, skipping this section is not straight forward since catchment
       // name lengths vary
@@ -350,60 +347,6 @@ begin
         end
         else
       end;
-
-      { //DO NOT DELETE may revert to this in future
-        // Matching scheme that includes all fw pollutants
-        // Match swmm pollutants to framework pollutants and determine pollutant order - order by framework pollutants
-        k := 0;
-        for idx := 1 to selectedConstituentRecs.numberOfEntries-1 do
-        begin
-        // -1 means no match to be overwritten below if match later found
-        targetPollutantSWMMOrder[idx] := -1;
-
-        // -1 means no match to be overwritten below if match later found
-        targetPollutantFRWOrder[idx] := -1;
-
-        tempPollHeader := tempPollHeader +
-        Format('%9s,', [constituentNames[idx]]);
-        if (selectedConstituentRecs.swmmNames[idx] <> '') then
-        begin
-        for j := 0 to numPolls - 1 do
-        begin
-        if (AnsiCompareText(selectedConstituentRecs.swmmNames[idx],
-        pollutantIDList[j]) = 0) then
-        begin
-        targetPollutantSWMMOrder[idx] := j;
-        targetPollutantFRWOrder[idx] := j;
-        inc(k);
-        break;
-        end;
-        end;
-        end;
-        end;
-        totalNumOfMatchedFRWPollutants := k;
-        fwTS.Add('#' + tempPollHeader); }
-
-      { // Matching scheme that includes only user selected fw pollutants
-        // Match swmm pollutants to framework pollutants and determine pollutant order - order by framework pollutants
-        k := 0;
-        for idx := 0 to targetSWMPollutants.Count - 1 do
-        begin
-        for j := 0 to numPolls - 1 do
-        begin
-        if (AnsiCompareText(targetSWMPollutants[idx], pollutantIDList[j]) = 0)
-        then
-        begin
-        targetPollutantSWMMOrder[idx] := j;
-        targetPollutantFRWOrder[k] := idx;
-        //tempPollHeader := tempPollHeader +
-        //  Format('%9s,', [targetSWMPollutants[idx]]);
-        tempPollHeader := tempPollHeader +
-        Format('%9s,', [selectedConstituentRecs.fwNames[idx]]);
-        inc(k);
-        break;
-        end;
-        end;
-        end; }
 
       k := 0;
       for j := 0 to numPolls - 1 do
@@ -532,7 +475,7 @@ begin
 
         // add formatted flow entry
         tsResultEntryStr :=
-          (Format('%s,%s,%9.3f', [formattedTSDate, formattedTSTime,
+          (Format('%s,%s,%12.5f', [formattedTSDate, formattedTSTime,
           nodeResultsForPeriod[NODE_INFLOW] *
           selectedConstituentRecs.convFactors[0]]));
         if (appType = appTypes[0]) then
@@ -551,10 +494,10 @@ begin
           if (targetPollutantSWMMOrder[pollIdx] > -1) then // there was a match
           begin
             if ((nodeResultsForPeriod[NODE_INFLOW] < MIN_WQ_FLOW)) then
-              tsResultEntryStr := Format('%s,%9.3f', [tsResultEntryStr, 0.0])
+              tsResultEntryStr := Format('%s,%12.5f', [tsResultEntryStr, 0.0])
             else
             begin
-              { tsResultEntryStr := Format('%s,%9.3f',
+              { tsResultEntryStr := Format('%s,%12.5f',
                 [tsResultEntryStr, nodeResultsForPeriod[NODE_QUAL +
                 targetPollutantSWMMOrder[pollIdx]] *
                 selectedConstituentRecs.convFactors[targetPollutantSWMMOrder
@@ -563,7 +506,7 @@ begin
               // Note: since flow is included as a pollutant in parametermap.txt but not in swmm the first position
               // of targetPollutantSWMMOrder[pollIdx] shd be occupied by the m
               tsResultEntryStr :=
-                Format('%s,%9.3f', [tsResultEntryStr,
+                Format('%s,%12.5f', [tsResultEntryStr,
                 nodeResultsForPeriod[NODE_QUAL + pollIdx] *
                 selectedConstituentRecs.convFactors[targetPollutantSWMMOrder
                 [pollIdx]]]);
@@ -586,7 +529,7 @@ begin
         mySec, myMilli);
       rslt.startYear := myYear;
       rslt.startMonth := myMonth;
-      rslt.startDay := myMonth;
+      rslt.startDay := myDay;
       rslt.startHourFrac := myHour;
 
       // compute timeseries end date
@@ -603,7 +546,7 @@ begin
         mySec, myMilli);
       rslt.userStartYear := myYear;
       rslt.userStartMonth := myMonth;
-      rslt.userStartDay := myMonth;
+      rslt.userStartDay := myDay;
       rslt.userStartHourFrac := myHour;
 
       // save user specified timeseries start date variables

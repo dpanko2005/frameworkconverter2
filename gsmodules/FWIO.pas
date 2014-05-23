@@ -158,7 +158,6 @@ begin
   FileContentsList := TStringList.Create;
   Rslt.fwNames := TStringList.Create;
   Rslt.swmmNames := TStringList.Create;
-  // Rslt.swmmTSFilePaths := TStringList.Create;
 
   try
     { load the data into the stringlist. }
@@ -322,7 +321,7 @@ begin
       TempTokens.Delimiter := ','; // Each list item will be comma separated
       TempTokens.QuoteChar := ''''; // And each item will be quoted with '
 
-      while lineNumber < FileContentsList.Count - 1 do
+      while lineNumber < FileContentsList.Count do
       begin
         strLine := FileContentsList[lineNumber];
 

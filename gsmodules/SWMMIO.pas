@@ -314,7 +314,7 @@ begin
         mySec, myMilli);
       startDateList.Add(IntToStr(myYear));
       startDateList.Add(IntToStr(myMonth));
-      startDateList.Add(IntToStr(myMonth));
+      startDateList.Add(IntToStr(myDay));
       startDateList.Add(IntToStr(myHour));
 
       // compute timeseries end date
@@ -323,7 +323,7 @@ begin
         mySec, myMilli);
       endDateList.Add(IntToStr(myYear));
       endDateList.Add(IntToStr(myMonth));
-      endDateList.Add(IntToStr(myMonth));
+      endDateList.Add(IntToStr(myDay));
       endDateList.Add(IntToStr(myHour));
 
     finally

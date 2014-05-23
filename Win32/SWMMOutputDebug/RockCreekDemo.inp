@@ -1,8 +1,666 @@
-7
-'TSSf','1','1','TSS'
-'TPf','1','1','TP'
-'TKNf','1','1','TKN'
-'NO3f','1','1','NO3'
-'NH3f','1','1','NH3'
-'TCuf','1','1','TCu'
-'DCuf','1','1','DCu'
+[TITLE]
+
+[OPTIONS]
+FLOW_UNITS           CFS
+INFILTRATION         GREEN_AMPT
+FLOW_ROUTING         DYNWAVE
+START_DATE           08/01/1991
+START_TIME           00:00:00
+REPORT_START_DATE    08/01/1991
+REPORT_START_TIME    00:00:00
+END_DATE             10/04/1993
+END_TIME             06:00:00
+SWEEP_START          01/01
+SWEEP_END            12/31
+DRY_DAYS             0
+REPORT_STEP          00:15:00
+WET_STEP             00:05:00
+DRY_STEP             01:00:00
+ROUTING_STEP         0:00:30 
+ALLOW_PONDING        NO
+INERTIAL_DAMPING     PARTIAL
+VARIABLE_STEP        0.75
+LENGTHENING_STEP     0
+MIN_SURFAREA         0
+NORMAL_FLOW_LIMITED  BOTH
+SKIP_STEADY_STATE    NO
+FORCE_MAIN_EQUATION  H-W
+LINK_OFFSETS         DEPTH
+MIN_SLOPE            0
+
+[EVAPORATION]
+;;Type       Parameters
+;;---------- ----------
+CONSTANT     0.0
+DRY_ONLY     NO
+
+[RAINGAGES]
+;;               Rain      Time   Snow   Data      
+;;Name           Type      Intrvl Catch  Source    
+;;-------------- --------- ------ ------ ----------
+1                VOLUME    1:00   1.0    FILE       "clck4804.ncd"   010000     IN   
+
+[SUBCATCHMENTS]
+;;                                                 Total    Pcnt.             Pcnt.    Curb     Snow    
+;;Name           Raingage         Outlet           Area     Imperv   Width    Slope    Length   Pack    
+;;-------------- ---------------- ---------------- -------- -------- -------- -------- -------- --------
+UpperWest        1                juncUpper        5        25       500      0.5      0                        
+UpperEast        1                juncUpper        5        25       500      0.5      0                        
+Central          1                juncLower        5        25       500      0.5      0                        
+Lower            1                Outfall          5        25       500      0.5      0                        
+
+[SUBAREAS]
+;;Subcatchment   N-Imperv   N-Perv     S-Imperv   S-Perv     PctZero    RouteTo    PctRouted 
+;;-------------- ---------- ---------- ---------- ---------- ---------- ---------- ----------
+UpperWest        0.01       0.1        0.05       0.05       25         OUTLET    
+UpperEast        0.01       0.1        0.05       0.05       25         OUTLET    
+Central          0.01       0.1        0.05       0.05       25         OUTLET    
+Lower            0.01       0.1        0.05       0.05       25         OUTLET    
+
+[INFILTRATION]
+;;Subcatchment   Suction    HydCon     IMDmax    
+;;-------------- ---------- ---------- ----------
+UpperWest        3.0        0.25       4         
+UpperEast        3.0        0.25       4         
+Central          3.0        0.25       4         
+Lower            3.0        0.25       4         
+
+[JUNCTIONS]
+;;               Invert     Max.       Init.      Surcharge  Ponded    
+;;Name           Elev.      Depth      Depth      Depth      Area      
+;;-------------- ---------- ---------- ---------- ---------- ----------
+juncUpper        0          0          0          0          0         
+juncLower        0          0          0          0          0         
+
+[OUTFALLS]
+;;               Invert     Outfall    Stage/Table      Tide
+;;Name           Elev.      Type       Time Series      Gate
+;;-------------- ---------- ---------- ---------------- ----
+Outfall          0          FREE                        NO
+
+[CONDUITS]
+;;               Inlet            Outlet                      Manning    Inlet      Outlet     Init.      Max.      
+;;Name           Node             Node             Length     N          Offset     Offset     Flow       Flow      
+;;-------------- ---------------- ---------------- ---------- ---------- ---------- ---------- ---------- ----------
+1                juncUpper        juncLower        400        0.01       0          0          0          0         
+2                juncLower        Outfall          400        0.01       0          0          0          0         
+
+[XSECTIONS]
+;;Link           Shape        Geom1            Geom2      Geom3      Geom4      Barrels   
+;;-------------- ------------ ---------------- ---------- ---------- ---------- ----------
+1                DUMMY        0                0          0          0          1                    
+2                CIRCULAR     12               0          0          0          1                    
+
+[LOSSES]
+;;Link           Inlet      Outlet     Average    Flap Gate 
+;;-------------- ---------- ---------- ---------- ----------
+
+[POLLUTANTS]
+;;               Mass   Rain       GW         I&I        Decay      Snow  Co-Pollut.       Co-Pollut. DWF       
+;;Name           Units  Concen.    Concen.    Concen.    Coeff.     Only  Name             Fraction   Concen.   
+;;-------------- ------ ---------- ---------- ---------- ---------- ----- ---------------- ---------- ----------
+TSS              MG/L   0          0          0          0          NO    *                0          0         
+TP               MG/L   0          0          0          0          NO    *                0          0         
+TKN              MG/L   0          0          0          0          NO    *                0          0         
+NO3              MG/L   0          0          0          0          NO    *                0          0         
+NH3              MG/L   0          0          0          0          NO    *                0          0         
+TCd              MG/L   0          0          0          0          NO    *                0          0         
+DCu              MG/L   0          0          0          0          NO    *                0          0         
+TCu              MG/L   0          0          0          0          NO    *                0          0         
+DPb              MG/L   0          0          0          0          NO    *                0          0         
+TPb              MG/L   0          0          0          0          NO    *                0          0         
+DZn              MG/L   0          0          0          0          NO    *                0          0         
+TZn              MG/L   0          0          0          0          NO    *                0          0         
+Oil&Grease       MG/L   0          0          0          0          NO    *                0          0         
+E.Coli           MG/L   0          0          0          0          NO    *                0          0         
+
+[LANDUSES]
+;;               Cleaning   Fraction   Last      
+;;Name           Interval   Available  Cleaned   
+;;-------------- ---------- ---------- ----------
+AGR              0          0          0         
+COM              0          0          0         
+HDR              0          0          0         
+IND              0          0          0         
+MXD              0          0          0         
+OPN              0          0          0         
+RCOM             0          0          0         
+RES              0          0          0         
+RIND             0          0          0         
+RMXD             0          0          0         
+ROPN             0          0          0         
+RRES             0          0          0         
+RTRA             0          0          0         
+RUR              0          0          0         
+TRA              0          0          0         
+WATER            0          0          0         
+
+[COVERAGES]
+;;Subcatchment   Land Use         Percent   
+;;-------------- ---------------- ----------
+UpperWest        AGR              9         
+UpperWest        MXD              1         
+UpperWest        OPN              37        
+UpperWest        RRES             44        
+UpperWest        ROPN             9         
+UpperEast        AGR              12        
+UpperEast        OPN              37        
+UpperEast        RES              0         
+UpperEast        RRES             46        
+UpperEast        ROPN             14        
+Central          AGR              7         
+Central          OPN              17        
+Central          RES              9         
+Central          RRES             45        
+Central          ROPN             22        
+Lower            AGR              14        
+Lower            COM              2         
+Lower            HDR              1         
+Lower            OPN              11        
+Lower            RES              7         
+Lower            RRES             42        
+Lower            TRA              1         
+Lower            ROPN             22        
+
+[LOADINGS]
+;;Subcatchment   Pollutant        Loading   
+;;-------------- ---------------- ----------
+
+[BUILDUP]
+;;LandUse        Pollutant        Function   Coeff1     Coeff2     Coeff3     Normalizer
+;;-------------- ---------------- ---------- ---------- ---------- ---------- ----------
+AGR              TSS              NONE       0          0          0          AREA      
+AGR              TP               NONE       0          0          0          AREA      
+AGR              TKN              NONE       0          0          0          AREA      
+AGR              NO3              NONE       0          0          0          AREA      
+AGR              NH3              NONE       0          0          0          AREA      
+AGR              TCd              NONE       0          0          0          AREA      
+AGR              DCu              NONE       0          0          0          AREA      
+AGR              TCu              NONE       0          0          0          AREA      
+AGR              DPb              NONE       0          0          0          AREA      
+AGR              TPb              NONE       0          0          0          AREA      
+AGR              DZn              NONE       0          0          0          AREA      
+AGR              TZn              NONE       0          0          0          AREA      
+AGR              Oil&Grease       NONE       0          0          0          AREA      
+AGR              E.Coli           NONE       0          0          0          AREA      
+COM              TSS              NONE       0          0          0          AREA      
+COM              TP               NONE       0          0          0          AREA      
+COM              TKN              NONE       0          0          0          AREA      
+COM              NO3              NONE       0          0          0          AREA      
+COM              NH3              NONE       0          0          0          AREA      
+COM              TCd              NONE       0          0          0          AREA      
+COM              DCu              NONE       0          0          0          AREA      
+COM              TCu              NONE       0          0          0          AREA      
+COM              DPb              NONE       0          0          0          AREA      
+COM              TPb              NONE       0          0          0          AREA      
+COM              DZn              NONE       0          0          0          AREA      
+COM              TZn              NONE       0          0          0          AREA      
+COM              Oil&Grease       NONE       0          0          0          AREA      
+COM              E.Coli           NONE       0          0          0          AREA      
+HDR              TSS              NONE       0          0          0          AREA      
+HDR              TP               NONE       0          0          0          AREA      
+HDR              TKN              NONE       0          0          0          AREA      
+HDR              NO3              NONE       0          0          0          AREA      
+HDR              NH3              NONE       0          0          0          AREA      
+HDR              TCd              NONE       0          0          0          AREA      
+HDR              DCu              NONE       0          0          0          AREA      
+HDR              TCu              NONE       0          0          0          AREA      
+HDR              DPb              NONE       0          0          0          AREA      
+HDR              TPb              NONE       0          0          0          AREA      
+HDR              DZn              NONE       0          0          0          AREA      
+HDR              TZn              NONE       0          0          0          AREA      
+HDR              Oil&Grease       NONE       0          0          0          AREA      
+HDR              E.Coli           NONE       0          0          0          AREA      
+IND              TSS              NONE       0          0          0          AREA      
+IND              TP               NONE       0          0          0          AREA      
+IND              TKN              NONE       0          0          0          AREA      
+IND              NO3              NONE       0          0          0          AREA      
+IND              NH3              NONE       0          0          0          AREA      
+IND              TCd              NONE       0          0          0          AREA      
+IND              DCu              NONE       0          0          0          AREA      
+IND              TCu              NONE       0          0          0          AREA      
+IND              DPb              NONE       0          0          0          AREA      
+IND              TPb              NONE       0          0          0          AREA      
+IND              DZn              NONE       0          0          0          AREA      
+IND              TZn              NONE       0          0          0          AREA      
+IND              Oil&Grease       NONE       0          0          0          AREA      
+IND              E.Coli           NONE       0          0          0          AREA      
+MXD              TSS              NONE       0          0          0          AREA      
+MXD              TP               NONE       0          0          0          AREA      
+MXD              TKN              NONE       0          0          0          AREA      
+MXD              NO3              NONE       0          0          0          AREA      
+MXD              NH3              NONE       0          0          0          AREA      
+MXD              TCd              NONE       0          0          0          AREA      
+MXD              DCu              NONE       0          0          0          AREA      
+MXD              TCu              NONE       0          0          0          AREA      
+MXD              DPb              NONE       0          0          0          AREA      
+MXD              TPb              NONE       0          0          0          AREA      
+MXD              DZn              NONE       0          0          0          AREA      
+MXD              TZn              NONE       0          0          0          AREA      
+MXD              Oil&Grease       NONE       0          0          0          AREA      
+MXD              E.Coli           NONE       0          0          0          AREA      
+OPN              TSS              NONE       0          0          0          AREA      
+OPN              TP               NONE       0          0          0          AREA      
+OPN              TKN              NONE       0          0          0          AREA      
+OPN              NO3              NONE       0          0          0          AREA      
+OPN              NH3              NONE       0          0          0          AREA      
+OPN              TCd              NONE       0          0          0          AREA      
+OPN              DCu              NONE       0          0          0          AREA      
+OPN              TCu              NONE       0          0          0          AREA      
+OPN              DPb              NONE       0          0          0          AREA      
+OPN              TPb              NONE       0          0          0          AREA      
+OPN              DZn              NONE       0          0          0          AREA      
+OPN              TZn              NONE       0          0          0          AREA      
+OPN              Oil&Grease       NONE       0          0          0          AREA      
+OPN              E.Coli           NONE       0          0          0          AREA      
+RCOM             TSS              NONE       0          0          0          AREA      
+RCOM             TP               NONE       0          0          0          AREA      
+RCOM             TKN              NONE       0          0          0          AREA      
+RCOM             NO3              NONE       0          0          0          AREA      
+RCOM             NH3              NONE       0          0          0          AREA      
+RCOM             TCd              NONE       0          0          0          AREA      
+RCOM             DCu              NONE       0          0          0          AREA      
+RCOM             TCu              NONE       0          0          0          AREA      
+RCOM             DPb              NONE       0          0          0          AREA      
+RCOM             TPb              NONE       0          0          0          AREA      
+RCOM             DZn              NONE       0          0          0          AREA      
+RCOM             TZn              NONE       0          0          0          AREA      
+RCOM             Oil&Grease       NONE       0          0          0          AREA      
+RCOM             E.Coli           NONE       0          0          0          AREA      
+RES              TSS              NONE       0          0          0          AREA      
+RES              TP               NONE       0          0          0          AREA      
+RES              TKN              NONE       0          0          0          AREA      
+RES              NO3              NONE       0          0          0          AREA      
+RES              NH3              NONE       0          0          0          AREA      
+RES              TCd              NONE       0          0          0          AREA      
+RES              DCu              NONE       0          0          0          AREA      
+RES              TCu              NONE       0          0          0          AREA      
+RES              DPb              NONE       0          0          0          AREA      
+RES              TPb              NONE       0          0          0          AREA      
+RES              DZn              NONE       0          0          0          AREA      
+RES              TZn              NONE       0          0          0          AREA      
+RES              Oil&Grease       NONE       0          0          0          AREA      
+RES              E.Coli           NONE       0          0          0          AREA      
+RIND             TSS              NONE       0          0          0          AREA      
+RIND             TP               NONE       0          0          0          AREA      
+RIND             TKN              NONE       0          0          0          AREA      
+RIND             NO3              NONE       0          0          0          AREA      
+RIND             NH3              NONE       0          0          0          AREA      
+RIND             TCd              NONE       0          0          0          AREA      
+RIND             DCu              NONE       0          0          0          AREA      
+RIND             TCu              NONE       0          0          0          AREA      
+RIND             DPb              NONE       0          0          0          AREA      
+RIND             TPb              NONE       0          0          0          AREA      
+RIND             DZn              NONE       0          0          0          AREA      
+RIND             TZn              NONE       0          0          0          AREA      
+RIND             Oil&Grease       NONE       0          0          0          AREA      
+RIND             E.Coli           NONE       0          0          0          AREA      
+RMXD             TSS              NONE       0          0          0          AREA      
+RMXD             TP               NONE       0          0          0          AREA      
+RMXD             TKN              NONE       0          0          0          AREA      
+RMXD             NO3              NONE       0          0          0          AREA      
+RMXD             NH3              NONE       0          0          0          AREA      
+RMXD             TCd              NONE       0          0          0          AREA      
+RMXD             DCu              NONE       0          0          0          AREA      
+RMXD             TCu              NONE       0          0          0          AREA      
+RMXD             DPb              NONE       0          0          0          AREA      
+RMXD             TPb              NONE       0          0          0          AREA      
+RMXD             DZn              NONE       0          0          0          AREA      
+RMXD             TZn              NONE       0          0          0          AREA      
+RMXD             Oil&Grease       NONE       0          0          0          AREA      
+RMXD             E.Coli           NONE       0          0          0          AREA      
+ROPN             TSS              NONE       0          0          0          AREA      
+ROPN             TP               NONE       0          0          0          AREA      
+ROPN             TKN              NONE       0          0          0          AREA      
+ROPN             NO3              NONE       0          0          0          AREA      
+ROPN             NH3              NONE       0          0          0          AREA      
+ROPN             TCd              NONE       0          0          0          AREA      
+ROPN             DCu              NONE       0          0          0          AREA      
+ROPN             TCu              NONE       0          0          0          AREA      
+ROPN             DPb              NONE       0          0          0          AREA      
+ROPN             TPb              NONE       0          0          0          AREA      
+ROPN             DZn              NONE       0          0          0          AREA      
+ROPN             TZn              NONE       0          0          0          AREA      
+ROPN             Oil&Grease       NONE       0          0          0          AREA      
+ROPN             E.Coli           NONE       0          0          0          AREA      
+RRES             TSS              NONE       0          0          0          AREA      
+RRES             TP               NONE       0          0          0          AREA      
+RRES             TKN              NONE       0          0          0          AREA      
+RRES             NO3              NONE       0          0          0          AREA      
+RRES             NH3              NONE       0          0          0          AREA      
+RRES             TCd              NONE       0          0          0          AREA      
+RRES             DCu              NONE       0          0          0          AREA      
+RRES             TCu              NONE       0          0          0          AREA      
+RRES             DPb              NONE       0          0          0          AREA      
+RRES             TPb              NONE       0          0          0          AREA      
+RRES             DZn              NONE       0          0          0          AREA      
+RRES             TZn              NONE       0          0          0          AREA      
+RRES             Oil&Grease       NONE       0          0          0          AREA      
+RRES             E.Coli           NONE       0          0          0          AREA      
+RTRA             TSS              NONE       0          0          0          AREA      
+RTRA             TP               NONE       0          0          0          AREA      
+RTRA             TKN              NONE       0          0          0          AREA      
+RTRA             NO3              NONE       0          0          0          AREA      
+RTRA             NH3              NONE       0          0          0          AREA      
+RTRA             TCd              NONE       0          0          0          AREA      
+RTRA             DCu              NONE       0          0          0          AREA      
+RTRA             TCu              NONE       0          0          0          AREA      
+RTRA             DPb              NONE       0          0          0          AREA      
+RTRA             TPb              NONE       0          0          0          AREA      
+RTRA             DZn              NONE       0          0          0          AREA      
+RTRA             TZn              NONE       0          0          0          AREA      
+RTRA             Oil&Grease       NONE       0          0          0          AREA      
+RTRA             E.Coli           NONE       0          0          0          AREA      
+RUR              TSS              NONE       0          0          0          AREA      
+RUR              TP               NONE       0          0          0          AREA      
+RUR              TKN              NONE       0          0          0          AREA      
+RUR              NO3              NONE       0          0          0          AREA      
+RUR              NH3              NONE       0          0          0          AREA      
+RUR              TCd              NONE       0          0          0          AREA      
+RUR              DCu              NONE       0          0          0          AREA      
+RUR              TCu              NONE       0          0          0          AREA      
+RUR              DPb              NONE       0          0          0          AREA      
+RUR              TPb              NONE       0          0          0          AREA      
+RUR              DZn              NONE       0          0          0          AREA      
+RUR              TZn              NONE       0          0          0          AREA      
+RUR              Oil&Grease       NONE       0          0          0          AREA      
+RUR              E.Coli           NONE       0          0          0          AREA      
+TRA              TSS              NONE       0          0          0          AREA      
+TRA              TP               NONE       0          0          0          AREA      
+TRA              TKN              NONE       0          0          0          AREA      
+TRA              NO3              NONE       0          0          0          AREA      
+TRA              NH3              NONE       0          0          0          AREA      
+TRA              TCd              NONE       0          0          0          AREA      
+TRA              DCu              NONE       0          0          0          AREA      
+TRA              TCu              NONE       0          0          0          AREA      
+TRA              DPb              NONE       0          0          0          AREA      
+TRA              TPb              NONE       0          0          0          AREA      
+TRA              DZn              NONE       0          0          0          AREA      
+TRA              TZn              NONE       0          0          0          AREA      
+TRA              Oil&Grease       NONE       0          0          0          AREA      
+TRA              E.Coli           NONE       0          0          0          AREA      
+WATER            TSS              NONE       0          0          0          AREA      
+WATER            TP               NONE       0          0          0          AREA      
+WATER            TKN              NONE       0          0          0          AREA      
+WATER            NO3              NONE       0          0          0          AREA      
+WATER            NH3              NONE       0          0          0          AREA      
+WATER            TCd              NONE       0          0          0          AREA      
+WATER            DCu              NONE       0          0          0          AREA      
+WATER            TCu              NONE       0          0          0          AREA      
+WATER            DPb              NONE       0          0          0          AREA      
+WATER            TPb              NONE       0          0          0          AREA      
+WATER            DZn              NONE       0          0          0          AREA      
+WATER            TZn              NONE       0          0          0          AREA      
+WATER            Oil&Grease       NONE       0          0          0          AREA      
+WATER            E.Coli           NONE       0          0          0          AREA      
+
+[WASHOFF]
+;;                                                                 Cleaning   BMP       
+;;Land Use       Pollutant        Function   Coeff1     Coeff2     Effic.     Effic.    
+;;-------------- ---------------- ---------- ---------- ---------- ---------- ----------
+AGR              TSS              EMC        97         0          0          0         
+AGR              TP               EMC        0.97       0          0          0         
+AGR              TKN              EMC        3.7        0          0          0         
+AGR              NO3              EMC        1.3        0          0          0         
+AGR              NH3              EMC        0.82       0          0          0         
+AGR              TCd              EMC        0          0          0          0         
+AGR              DCu              EMC        0.005      0          0          0         
+AGR              TCu              EMC        0.0104     0          0          0         
+AGR              DPb              EMC        0.0011     0          0          0         
+AGR              TPb              EMC        0.0026     0          0          0         
+AGR              DZn              EMC        0.018      0          0          0         
+AGR              TZn              EMC        0.023      0          0          0         
+AGR              Oil&Grease       EMC        0          0          0          0         
+AGR              E.Coli           EMC        0          0          0          0         
+COM              TSS              EMC        83         0          0          0         
+COM              TP               EMC        0.4        0          0          0         
+COM              TKN              EMC        1.4        0          0          0         
+COM              NO3              EMC        0.39       0          0          0         
+COM              NH3              EMC        0.33       0          0          0         
+COM              TCd              EMC        0.001      0          0          0         
+COM              DCu              EMC        0.009      0          0          0         
+COM              TCu              EMC        0.026      0          0          0         
+COM              DPb              EMC        0.0041     0          0          0         
+COM              TPb              EMC        0.056      0          0          0         
+COM              DZn              EMC        0.067      0          0          0         
+COM              TZn              EMC        0.157      0          0          0         
+COM              Oil&Grease       EMC        4          0          0          0         
+COM              E.Coli           EMC        4000       0          0          0         
+HDR              TSS              EMC        55         0          0          0         
+HDR              TP               EMC        0.3        0          0          0         
+HDR              TKN              EMC        1.2        0          0          0         
+HDR              NO3              EMC        0.88       0          0          0         
+HDR              NH3              EMC        0.31       0          0          0         
+HDR              TCd              EMC        0.00043    0          0          0         
+HDR              DCu              EMC        0.0062     0          0          0         
+HDR              TCu              EMC        0.013      0          0          0         
+HDR              DPb              EMC        0.0014     0          0          0         
+HDR              TPb              EMC        0.015      0          0          0         
+HDR              DZn              EMC        0.048      0          0          0         
+HDR              TZn              EMC        0.094      0          0          0         
+HDR              Oil&Grease       EMC        3.9        0          0          0         
+HDR              E.Coli           EMC        1600       0          0          0         
+IND              TSS              EMC        150        0          0          0         
+IND              TP               EMC        0.58       0          0          0         
+IND              TKN              EMC        2.1        0          0          0         
+IND              NO3              EMC        0.22       0          0          0         
+IND              NH3              EMC        0.42       0          0          0         
+IND              TCd              EMC        0.0025     0          0          0         
+IND              DCu              EMC        0.0084     0          0          0         
+IND              TCu              EMC        0.046      0          0          0         
+IND              DPb              EMC        0.0024     0          0          0         
+IND              TPb              EMC        0.048      0          0          0         
+IND              DZn              EMC        0.42       0          0          0         
+IND              TZn              EMC        0.525      0          0          0         
+IND              Oil&Grease       EMC        4.9        0          0          0         
+IND              E.Coli           EMC        2900       0          0          0         
+MXD              TSS              EMC        74         0          0          0         
+MXD              TP               EMC        0.23       0          0          0         
+MXD              TKN              EMC        0.9        0          0          0         
+MXD              NO3              EMC        0.61       0          0          0         
+MXD              NH3              EMC        0.15       0          0          0         
+MXD              TCd              EMC        0.00069    0          0          0         
+MXD              DCu              EMC        0.0062     0          0          0         
+MXD              TCu              EMC        0.014      0          0          0         
+MXD              DPb              EMC        0.00097    0          0          0         
+MXD              TPb              EMC        0.021      0          0          0         
+MXD              DZn              EMC        0.048      0          0          0         
+MXD              TZn              EMC        0.089      0          0          0         
+MXD              Oil&Grease       EMC        5.6        0          0          0         
+MXD              E.Coli           EMC        3700       0          0          0         
+OPN              TSS              EMC        34         0          0          0         
+OPN              TP               EMC        0.18       0          0          0         
+OPN              TKN              EMC        1.1        0          0          0         
+OPN              NO3              EMC        1.6        0          0          0         
+OPN              NH3              EMC        0.25       0          0          0         
+OPN              TCd              EMC        0.00032    0          0          0         
+OPN              DCu              EMC        0.0038     0          0          0         
+OPN              TCu              EMC        0.0042     0          0          0         
+OPN              DPb              EMC        0.0011     0          0          0         
+OPN              TPb              EMC        0.0026     0          0          0         
+OPN              DZn              EMC        0.014      0          0          0         
+OPN              TZn              EMC        0.02       0          0          0         
+OPN              Oil&Grease       EMC        0.66       0          0          0         
+OPN              E.Coli           EMC        600        0          0          0         
+RCOM             TSS              EMC        83         0          0          0         
+RCOM             TP               EMC        0.4        0          0          0         
+RCOM             TKN              EMC        1.4        0          0          0         
+RCOM             NO3              EMC        0.39       0          0          0         
+RCOM             NH3              EMC        0.33       0          0          0         
+RCOM             TCd              EMC        0.001      0          0          0         
+RCOM             DCu              EMC        0.009      0          0          0         
+RCOM             TCu              EMC        0.026      0          0          0         
+RCOM             DPb              EMC        0.0041     0          0          0         
+RCOM             TPb              EMC        0.056      0          0          0         
+RCOM             DZn              EMC        0.067      0          0          0         
+RCOM             TZn              EMC        0.157      0          0          0         
+RCOM             Oil&Grease       EMC        4          0          0          0         
+RCOM             E.Coli           EMC        4000       0          0          0         
+RES              TSS              EMC        55         0          0          0         
+RES              TP               EMC        0.3        0          0          0         
+RES              TKN              EMC        1.2        0          0          0         
+RES              NO3              EMC        0.88       0          0          0         
+RES              NH3              EMC        0.31       0          0          0         
+RES              TCd              EMC        0.00043    0          0          0         
+RES              DCu              EMC        0.0062     0          0          0         
+RES              TCu              EMC        0.013      0          0          0         
+RES              DPb              EMC        0.0014     0          0          0         
+RES              TPb              EMC        0.015      0          0          0         
+RES              DZn              EMC        0.048      0          0          0         
+RES              TZn              EMC        0.094      0          0          0         
+RES              Oil&Grease       EMC        3.9        0          0          0         
+RES              E.Coli           EMC        1600       0          0          0         
+RIND             TSS              EMC        150        0          0          0         
+RIND             TP               EMC        0.58       0          0          0         
+RIND             TKN              EMC        2.1        0          0          0         
+RIND             NO3              EMC        0.22       0          0          0         
+RIND             NH3              EMC        0.42       0          0          0         
+RIND             TCd              EMC        0.0025     0          0          0         
+RIND             DCu              EMC        0.0084     0          0          0         
+RIND             TCu              EMC        0.046      0          0          0         
+RIND             DPb              EMC        0.0024     0          0          0         
+RIND             TPb              EMC        0.048      0          0          0         
+RIND             DZn              EMC        0.42       0          0          0         
+RIND             TZn              EMC        0.525      0          0          0         
+RIND             Oil&Grease       EMC        4.9        0          0          0         
+RIND             E.Coli           EMC        2900       0          0          0         
+RMXD             TSS              EMC        74         0          0          0         
+RMXD             TP               EMC        0.23       0          0          0         
+RMXD             TKN              EMC        0.9        0          0          0         
+RMXD             NO3              EMC        0.61       0          0          0         
+RMXD             NH3              EMC        0.15       0          0          0         
+RMXD             TCd              EMC        0.00069    0          0          0         
+RMXD             DCu              EMC        0.0062     0          0          0         
+RMXD             TCu              EMC        0.014      0          0          0         
+RMXD             DPb              EMC        0.00097    0          0          0         
+RMXD             TPb              EMC        0.021      0          0          0         
+RMXD             DZn              EMC        0.048      0          0          0         
+RMXD             TZn              EMC        0.089      0          0          0         
+RMXD             Oil&Grease       EMC        5.6        0          0          0         
+RMXD             E.Coli           EMC        3700       0          0          0         
+ROPN             TSS              EMC        34         0          0          0         
+ROPN             TP               EMC        0.18       0          0          0         
+ROPN             TKN              EMC        1.1        0          0          0         
+ROPN             NO3              EMC        1.6        0          0          0         
+ROPN             NH3              EMC        0.25       0          0          0         
+ROPN             TCd              EMC        0.00032    0          0          0         
+ROPN             DCu              EMC        0.0038     0          0          0         
+ROPN             TCu              EMC        0.0042     0          0          0         
+ROPN             DPb              EMC        0.0011     0          0          0         
+ROPN             TPb              EMC        0.0026     0          0          0         
+ROPN             DZn              EMC        0.014      0          0          0         
+ROPN             TZn              EMC        0.02       0          0          0         
+ROPN             Oil&Grease       EMC        0.66       0          0          0         
+ROPN             E.Coli           EMC        600        0          0          0         
+RRES             TSS              EMC        55         0          0          0         
+RRES             TP               EMC        0.3        0          0          0         
+RRES             TKN              EMC        1.2        0          0          0         
+RRES             NO3              EMC        0.88       0          0          0         
+RRES             NH3              EMC        0.31       0          0          0         
+RRES             TCd              EMC        0.00043    0          0          0         
+RRES             DCu              EMC        0.0062     0          0          0         
+RRES             TCu              EMC        0.013      0          0          0         
+RRES             DPb              EMC        0.0014     0          0          0         
+RRES             TPb              EMC        0.015      0          0          0         
+RRES             DZn              EMC        0.048      0          0          0         
+RRES             TZn              EMC        0.094      0          0          0         
+RRES             Oil&Grease       EMC        3.9        0          0          0         
+RRES             E.Coli           EMC        1600       0          0          0         
+RTRA             TSS              EMC        169        0          0          0         
+RTRA             TP               EMC        0.38       0          0          0         
+RTRA             TKN              EMC        1.8        0          0          0         
+RTRA             NO3              EMC        0.41       0          0          0         
+RTRA             NH3              EMC        0.51       0          0          0         
+RTRA             TCd              EMC        0.0015     0          0          0         
+RTRA             DCu              EMC        0.0084     0          0          0         
+RTRA             TCu              EMC        0.035      0          0          0         
+RTRA             DPb              EMC        0.0033     0          0          0         
+RTRA             TPb              EMC        0.06       0          0          0         
+RTRA             DZn              EMC        0.076      0          0          0         
+RTRA             TZn              EMC        0.236      0          0          0         
+RTRA             Oil&Grease       EMC        9.3        0          0          0         
+RTRA             E.Coli           EMC        10600      0          0          0         
+RUR              TSS              EMC        10         0          0          0         
+RUR              TP               EMC        0.06       0          0          0         
+RUR              TKN              EMC        0.55       0          0          0         
+RUR              NO3              EMC        0.27       0          0          0         
+RUR              NH3              EMC        0.03       0          0          0         
+RUR              TCd              EMC        0          0          0          0         
+RUR              DCu              EMC        0.0039     0          0          0         
+RUR              TCu              EMC        0.005      0          0          0         
+RUR              DPb              EMC        0.001      0          0          0         
+RUR              TPb              EMC        0.0058     0          0          0         
+RUR              DZn              EMC        0.005      0          0          0         
+RUR              TZn              EMC        0.0071     0          0          0         
+RUR              Oil&Grease       EMC        0          0          0          0         
+RUR              E.Coli           EMC        700        0          0          0         
+TRA              TSS              EMC        169        0          0          0         
+TRA              TP               EMC        0.38       0          0          0         
+TRA              TKN              EMC        1.8        0          0          0         
+TRA              NO3              EMC        0.41       0          0          0         
+TRA              NH3              EMC        0.51       0          0          0         
+TRA              TCd              EMC        0.0015     0          0          0         
+TRA              DCu              EMC        0.0084     0          0          0         
+TRA              TCu              EMC        0.035      0          0          0         
+TRA              DPb              EMC        0.0033     0          0          0         
+TRA              TPb              EMC        0.06       0          0          0         
+TRA              DZn              EMC        0.076      0          0          0         
+TRA              TZn              EMC        0.236      0          0          0         
+TRA              Oil&Grease       EMC        9.3        0          0          0         
+TRA              E.Coli           EMC        10600      0          0          0         
+WATER            TSS              EMC        0          0          0          0         
+WATER            TP               EMC        0          0          0          0         
+WATER            TKN              EMC        0          0          0          0         
+WATER            NO3              EMC        0          0          0          0         
+WATER            NH3              EMC        0          0          0          0         
+WATER            TCd              EMC        0          0          0          0         
+WATER            DCu              EMC        0          0          0          0         
+WATER            TCu              EMC        0          0          0          0         
+WATER            DPb              EMC        0          0          0          0         
+WATER            TPb              EMC        0          0          0          0         
+WATER            DZn              EMC        0          0          0          0         
+WATER            TZn              EMC        0          0          0          0         
+WATER            Oil&Grease       EMC        0          0          0          0         
+WATER            E.Coli           EMC        0          0          0          0         
+
+[REPORT]
+INPUT      NO
+CONTROLS   NO
+SUBCATCHMENTS ALL
+NODES Outfall
+LINKS ALL
+
+[TAGS]
+
+[MAP]
+DIMENSIONS 7675122.742 639597.960 7716528.450 661210.971
+Units      None
+
+[COORDINATES]
+;;Node           X-Coord            Y-Coord           
+;;-------------- ------------------ ------------------
+juncUpper        7693263.704        652384.739        
+juncLower        7689884.777        646208.503        
+Outfall          7685342.612        641610.946        
+
+[VERTICES]
+;;Link           X-Coord            Y-Coord           
+;;-------------- ------------------ ------------------
+
+[Polygons]
+;;Subcatchment   X-Coord            Y-Coord           
+;;-------------- ------------------ ------------------
+UpperWest        7693485.273        657536.218        
+UpperEast        7701766.415        652190.866        
+Central          7687188.908        652546.140        
+Lower            7694299.828        644147.416        
+
+[SYMBOLS]
+;;Gage           X-Coord            Y-Coord           
+;;-------------- ------------------ ------------------
+1                7683237.707        661912.206        
+
+
+[BACKDROP]
+FILE       "C:\SWMMExtract04162012\SWMMModel\DemoRockCreekWatershed.jpg"
+DIMENSIONS 7675122.742 639597.960 7716528.450 661210.971
