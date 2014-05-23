@@ -330,6 +330,7 @@ object Form1: TForm1
     Font.Name = 'Tahoma'
     Font.Style = []
     ItemHeight = 13
+    MultiSelect = True
     ParentFont = False
     TabOrder = 4
   end
@@ -344,15 +345,16 @@ object Form1: TForm1
     Font.Name = 'Tahoma'
     Font.Style = []
     ItemHeight = 13
+    MultiSelect = True
     ParentFont = False
     TabOrder = 5
   end
   object btnConstituentInclude: TButton
-    Left = 209
-    Top = 361
+    Left = 208
+    Top = 347
     Width = 75
     Height = 25
-    Caption = 'Include >>'
+    Caption = 'Include >'
     Font.Charset = DEFAULT_CHARSET
     Font.Color = clWindowText
     Font.Height = -11
@@ -363,11 +365,11 @@ object Form1: TForm1
     OnClick = btnConstituentIncludeClick
   end
   object btnConstituentExclude: TButton
-    Left = 209
-    Top = 392
+    Left = 208
+    Top = 370
     Width = 75
     Height = 25
-    Caption = '<< Exclude'
+    Caption = '< Exclude'
     Font.Charset = DEFAULT_CHARSET
     Font.Color = clWindowText
     Font.Height = -11
@@ -388,6 +390,7 @@ object Form1: TForm1
     Font.Name = 'Tahoma'
     Font.Style = []
     ItemHeight = 13
+    MultiSelect = True
     ParentFont = False
     TabOrder = 8
   end
@@ -402,15 +405,16 @@ object Form1: TForm1
     Font.Name = 'Tahoma'
     Font.Style = []
     ItemHeight = 13
+    MultiSelect = True
     ParentFont = False
     TabOrder = 9
   end
   object btnNodeInclude: TButton
     Left = 209
-    Top = 185
+    Top = 177
     Width = 75
     Height = 25
-    Caption = 'Include >>'
+    Caption = 'Include >'
     Font.Charset = DEFAULT_CHARSET
     Font.Color = clWindowText
     Font.Height = -11
@@ -422,10 +426,10 @@ object Form1: TForm1
   end
   object btnNodeExclude: TButton
     Left = 209
-    Top = 216
+    Top = 200
     Width = 75
     Height = 25
-    Caption = '<< Exclude'
+    Caption = '< Exclude'
     Font.Charset = DEFAULT_CHARSET
     Font.Color = clWindowText
     Font.Height = -11
@@ -454,6 +458,66 @@ object Form1: TForm1
     Time = 41775.722280659720000000
     TabOrder = 13
     OnChange = endDatePickerChange
+  end
+  object btnNodeExcludeAll: TButton
+    Left = 209
+    Top = 249
+    Width = 75
+    Height = 25
+    Caption = '<< Exclude All'
+    Font.Charset = DEFAULT_CHARSET
+    Font.Color = clWindowText
+    Font.Height = -11
+    Font.Name = 'Tahoma'
+    Font.Style = []
+    ParentFont = False
+    TabOrder = 14
+    OnClick = btnNodeExcludeAllClick
+  end
+  object btnNodeIncludeAll: TButton
+    Left = 209
+    Top = 226
+    Width = 75
+    Height = 25
+    Caption = 'Include All >>'
+    Font.Charset = DEFAULT_CHARSET
+    Font.Color = clWindowText
+    Font.Height = -11
+    Font.Name = 'Tahoma'
+    Font.Style = []
+    ParentFont = False
+    TabOrder = 15
+    OnClick = btnNodeIncludeAllClick
+  end
+  object btnConstituentExcludeAll: TButton
+    Left = 209
+    Top = 421
+    Width = 75
+    Height = 25
+    Caption = '<< Exclude All'
+    Font.Charset = DEFAULT_CHARSET
+    Font.Color = clWindowText
+    Font.Height = -11
+    Font.Name = 'Tahoma'
+    Font.Style = []
+    ParentFont = False
+    TabOrder = 16
+    OnClick = btnConstituentExcludeAllClick
+  end
+  object btnConstituentIncludeAll: TButton
+    Left = 209
+    Top = 398
+    Width = 75
+    Height = 25
+    Caption = 'Include All >>'
+    Font.Charset = DEFAULT_CHARSET
+    Font.Color = clWindowText
+    Font.Height = -11
+    Font.Name = 'Tahoma'
+    Font.Style = []
+    ParentFont = False
+    TabOrder = 17
+    OnClick = btnConstituentIncludeAllClick
   end
   object OpenTextFileDialog1: TOpenTextFileDialog
     Left = 65525

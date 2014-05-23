@@ -220,7 +220,7 @@ begin
       fwCtrlFileData.swmmTimeSeries[i].Free();
     end;
   end;
-  //fwCtrlFileData.swmmTSFilePaths.Free;
+  // fwCtrlFileData.swmmTSFilePaths.Free;
 end;
 
 function checkForDuplicateTS(tsBlockInsertPosition: Integer;
@@ -275,8 +275,7 @@ var
   NewFileContentsList: TStringList;
   tempInt, i: Integer;
   tsBlockInsertPosition: Integer;
-  tempRec: TMTARecord;
-  tsName: string;
+  tsName, inflowType: string;
   duplicateLineNumber: Integer;
 begin
   NewFileContentsList := TStringList.Create;
@@ -344,8 +343,7 @@ begin
 
       tempInt := 0;
       // check for duplicate TIMESERIES block entries in the SWMM file
-      // for tempRec in ConvertedFWTSArr do
-      for i := 0 to pMapData.numberOfEntries-1 do
+      for i := 0 to pMapData.numberOfEntries - 1 do
       begin
         tsName := pMapData.swmmNames[i] + 'TS';
         if (fwCtrlFileData.swmmTSFilePaths[i] <> '') then
@@ -396,37 +394,30 @@ begin
 
       tempInt := 0;
       // check for duplicate INFLOW block entries in the SWMM file
-      // for tempRec in ConvertedFWTSArr do
-      for i := 0 to pMapData.numberOfEntries-1 do
+      for i := 0 to pMapData.numberOfEntries - 1 do
       begin
         if (fwCtrlFileData.swmmTSFilePaths[i] <> '') then
         begin
           duplicateLineNumber := checkForDuplicateTS(tsBlockInsertPosition,
             SWMMIO.InflowsList, NewFileContentsList, fwCtrlFileData.tsNodeName +
             '        ' + pMapData.swmmNames[i]);
+          if (pMapData.swmmNames[i] = 'FLOW') then
+            inflowType := 'FLOW'
+          else
+            inflowType := 'CONCEN';
           if (duplicateLineNumber <> 0) then
           begin
-            { NewFileContentsList[duplicateLineNumber] := tempRec.tsNodeName +
-              '        ' + tempRec.constituentSWMMName + '        ' +
-              tempRec.constituentSWMMName + 'TS' + '        ' + tempRec.tsType +
-              '        ' + FloatToStr(tempRec.tsUnitsFactor) + '        ' +
-              FloatToStr(tempRec.convFactor); }
             NewFileContentsList[duplicateLineNumber] :=
               fwCtrlFileData.tsNodeName + '        ' + pMapData.swmmNames[i] +
               '        ' + pMapData.swmmNames[i] + 'TS' + '        ' +
-              tempRec.tsType + '        ' + '1' + '        ' +
+              inflowType + '        ' + '1' + '        ' +
               FloatToStr(pMapData.convFactors[0]);
           end
           else
-            { NewFileContentsList.Insert(tsBlockInsertPosition + tempInt,
-              tempRec.tsNodeName + '        ' + tempRec.constituentSWMMName +
-              '        ' + tempRec.constituentSWMMName + 'TS' + '        ' +
-              tempRec.tsType + '        ' + FloatToStr(tempRec.tsUnitsFactor) +
-              '        ' + FloatToStr(tempRec.convFactor)); }
             NewFileContentsList.Insert(tsBlockInsertPosition + tempInt,
               fwCtrlFileData.tsNodeName + '        ' + pMapData.swmmNames[i] +
               '        ' + pMapData.swmmNames[i] + 'TS' + '        ' +
-              tempRec.tsType + '        ' + '1' + '        ' +
+              inflowType + '        ' + '1' + '        ' +
               FloatToStr(pMapData.convFactors[0]));
           inc(tempInt);
         end;

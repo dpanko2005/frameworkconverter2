@@ -68,8 +68,13 @@ type
     lblTimeSpanTitle: TLabel;
     lblStrtDatePicker: TLabel;
     lblEndDatePicker: TLabel;
+    btnNodeExcludeAll: TButton;
+    btnNodeIncludeAll: TButton;
+    btnConstituentExcludeAll: TButton;
+    btnConstituentIncludeAll: TButton;
 
-    procedure transferToFromListBox(lbxFrom: TListBox; lbxTo: TListBox);
+    procedure transferToFromListBox(lbxFrom: TListBox; lbxTo: TListBox;
+      mode: integer);
     /// <summary>
     /// Handler for button used to browse to SWMM file
     /// </summary>
@@ -139,6 +144,10 @@ type
     procedure FormClose(Sender: TObject; var Action: TCloseAction);
     procedure strtDatePickerChange(Sender: TObject);
     procedure endDatePickerChange(Sender: TObject);
+    procedure btnNodeIncludeAllClick(Sender: TObject);
+    procedure btnConstituentIncludeAllClick(Sender: TObject);
+    procedure btnConstituentExcludeAllClick(Sender: TObject);
+    procedure btnNodeExcludeAllClick(Sender: TObject);
 
   private
     workingDirPath: string;
@@ -169,9 +178,28 @@ begin
   Self.Close;
 end;
 
+procedure TForm1.btnConstituentExcludeAllClick(Sender: TObject);
+begin
+  transferToFromListBox(lbxSelectedSWMMConstituents,
+    lbxAvailSWMMConstituents, 1);
+end;
+
 procedure TForm1.btnConstituentExcludeClick(Sender: TObject);
 begin
-  transferToFromListBox(lbxSelectedSWMMConstituents, lbxAvailSWMMConstituents);
+  transferToFromListBox(lbxSelectedSWMMConstituents,
+    lbxAvailSWMMConstituents, 0);
+end;
+
+procedure TForm1.btnConstituentIncludeAllClick(Sender: TObject);
+begin
+  if (Height < 610) then
+    Height := 610;
+  // only enable run button if at least one constituent selected
+  btnRun.Enabled := true;
+
+  // move currently selected constituent to select constituents list box
+  transferToFromListBox(lbxAvailSWMMConstituents,
+    lbxSelectedSWMMConstituents, 1);
 end;
 
 procedure TForm1.btnConstituentIncludeClick(Sender: TObject);
@@ -182,7 +210,8 @@ begin
   btnRun.Enabled := true;
 
   // move currently selected constituent to select constituents list box
-  transferToFromListBox(lbxAvailSWMMConstituents, lbxSelectedSWMMConstituents);
+  transferToFromListBox(lbxAvailSWMMConstituents,
+    lbxSelectedSWMMConstituents, 0);
 end;
 
 procedure TForm1.btnHelpClick(Sender: TObject);
@@ -207,13 +236,14 @@ begin
       mtInformation, [mbOK], 0);
     strtDatePicker.Date := swmmSeriesStrtDate;
   end;
+  InputGroupNames.startDate := strtDatePicker.Date;
 end;
 
 procedure TForm1.btnRunClick(Sender: TObject);
 var
   // lists for holding output filename contents
   lstGroupnames, lstParams, lstFWControlMetafile: TStringList;
-  I: Integer;
+  I: integer;
 begin
 
   // 0. init lists to hold content of output files
@@ -234,7 +264,9 @@ begin
   end;
 
   // 2. create content to be written to - paramslist.txt - file containing list of selected SWMM pollutants
-  lstParams.Add(IntToStr(lbxSelectedSWMMConstituents.Items.Count));
+  lstParams.Add(IntToStr(lbxSelectedSWMMConstituents.Items.Count + 1));
+  // add flow since always included
+  lstParams.Add('FLOW');
   for I := 0 to lbxSelectedSWMMConstituents.Items.Count - 1 do
   begin
     lstParams.Add(lbxSelectedSWMMConstituents.Items[I]);
@@ -245,8 +277,14 @@ begin
   ConverterErrors.reportErrorsToFW();
 
   // 4. write groupnames.txt and paramslist.txt files to disc
+  // if (SWMMIO.operatingMode = SWMMIO.opModes[0]) then
+  // SWMM_TO_FW importing from swmm binary file
+  // begin
   saveTextFileToDisc(lstGroupnames, SWMMIO.workingDir +
     fileNameGroupNames, true);
+  // end;
+
+  // 5. write groupnames.txt and paramslist.txt files to disc
   saveTextFileToDisc(lstParams, SWMMIO.workingDir + fileNameParamsList, true);
 
   // release resources and exit program
@@ -261,37 +299,64 @@ begin
   Self.Close();
 end;
 
-procedure TForm1.transferToFromListBox(lbxFrom: TListBox; lbxTo: TListBox);
+procedure TForm1.transferToFromListBox(lbxFrom: TListBox; lbxTo: TListBox;
+  mode: integer);
 var
   itemName: string;
+  I: integer;
 begin
-  // move currently selected item to select items list box
-  if (lbxFrom.ItemIndex <> -1) then
+  // mode = 1 transfer all items, mode = 0 transfer selected item
+  if mode = 1 then
   begin
-    itemName := lbxFrom.Items.Strings[lbxFrom.ItemIndex];
+    for I := 0 to lbxFrom.Items.Count - 1 do
+    begin
+      itemName := lbxFrom.Items.Strings[0];
+      lbxTo.Items.Add(itemName);
+      lbxFrom.Items.Delete(0);
+    end;
+  end
+  else
+  begin
+    // move currently selected item to select items list box
+    if (lbxFrom.ItemIndex <> -1) then
+    begin
+      itemName := lbxFrom.Items.Strings[lbxFrom.ItemIndex];
 
-    // add selected item to selected items listbox
-    lbxTo.Items.Add(itemName);
-    // deleted items from available items listbox
-    lbxFrom.Items.Delete(lbxFrom.ItemIndex);
+      // add selected item to selected items listbox
+      lbxTo.Items.Add(itemName);
+      // deleted items from available items listbox
+      lbxFrom.Items.Delete(lbxFrom.ItemIndex);
+    end;
   end;
+end;
+
+procedure TForm1.btnNodeExcludeAllClick(Sender: TObject);
+begin
+  transferToFromListBox(lbxSelectedSWMMNodes, lbxAvailSWMMNodes, 0);
 end;
 
 procedure TForm1.btnNodeExcludeClick(Sender: TObject);
 begin
-  transferToFromListBox(lbxSelectedSWMMNodes, lbxAvailSWMMNodes);
+  transferToFromListBox(lbxSelectedSWMMNodes, lbxAvailSWMMNodes, 0);
+end;
+
+procedure TForm1.btnNodeIncludeAllClick(Sender: TObject);
+begin
+  if (Height < 550) then
+    Height := 500;
+  transferToFromListBox(lbxAvailSWMMNodes, lbxSelectedSWMMNodes, 1);
 end;
 
 procedure TForm1.btnNodeIncludeClick(Sender: TObject);
 begin
   if (Height < 550) then
     Height := 500;
-  transferToFromListBox(lbxAvailSWMMNodes, lbxSelectedSWMMNodes);
+  transferToFromListBox(lbxAvailSWMMNodes, lbxSelectedSWMMNodes, 0);
 end;
 
 procedure TForm1.btnSelectSWMMFileClick(Sender: TObject);
 var
-  swmmFileContents:TStringList;
+  swmmFileContents: TStringList;
   TempListArr: TArray<TStringList>;
   swmmIDsListArr: TArray<TStringList>;
 begin
@@ -337,13 +402,6 @@ begin
             swmmSeriesEndDate := EncodeDate(StrToInt(endDateList[0]),
               StrToInt(TempListArr[3][1]), StrToInt(endDateList[2]));
 
-            // if swmm timeseries starts later than FW timespan set start datepicker to swmm timeseries start
-            if (strtDatePicker.Date < swmmSeriesStrtDate) then
-              strtDatePicker.Date := swmmSeriesStrtDate;
-
-            // if swmm timeseries ends earlier than FW timespan set end datepicker to swmm timeseries end
-            if (endDatePicker.Date < swmmSeriesEndDate) then
-              endDatePicker.Date := swmmSeriesEndDate;
           end;
           lblTSStartEndDate.Caption :=
             Format('Simulation Period: From %s to %s',
@@ -354,13 +412,17 @@ begin
         begin
 
           // 0-NodeIDs list, 1-Pollutants list, 2-Timeseries list, 3-Inflows list
-          //swmmIDsListArr := SWMMIO.getSWMMNodeIDsFromTxtInput(swmmFilePath);
+          // swmmIDsListArr := SWMMIO.getSWMMNodeIDsFromTxtInput(swmmFilePath);
           swmmFileContents := readSWMMInputFile(swmmFilePath);
           swmmIDsListArr := SWMMIO.getSWMMNodeIDsFromTxtInput(swmmFileContents);
           SWMMIO.TSList := swmmIDsListArr[2];
           SWMMIO.InflowsList := swmmIDsListArr[3];
           SWMMIO.NodeNameList := swmmIDsListArr[0];
           SWMMIO.PollList := swmmIDsListArr[1];
+
+          swmmSeriesStrtDate := StrToDateTime(swmmIDsListArr[4][0]);
+          swmmSeriesEndDate := StrToDateTime(swmmIDsListArr[4][1]);
+
         end
       end
       else
@@ -368,6 +430,21 @@ begin
         { Otherwise, raise an exception. }
         raise Exception.Create('File does not exist.');
         exit
+      end;
+
+      // check dates in swmm file again dates from groupnames.txt
+      // if swmm timeseries starts later than FW timespan set start datepicker to swmm timeseries start
+      if ((strtDatePicker.Date < swmmSeriesStrtDate) or (strtDatePicker.Date > swmmSeriesEndDate)) then
+      begin
+        strtDatePicker.Date := swmmSeriesStrtDate;
+        InputGroupNames.startDate := swmmSeriesStrtDate;
+      end;
+
+      // if swmm timeseries ends earlier than FW timespan set end datepicker to swmm timeseries end
+      if ((endDatePicker.Date > swmmSeriesEndDate) or (endDatePicker.Date < swmmSeriesStrtDate))then
+      begin
+        endDatePicker.Date := swmmSeriesEndDate;
+        InputGroupNames.endDate := swmmSeriesEndDate;
       end;
 
       lbxAvailSWMMNodes.Items := SWMMIO.NodeNameList;
@@ -387,6 +464,7 @@ begin
       mtInformation, [mbOK], 0);
     endDatePicker.Date := swmmSeriesEndDate;
   end;
+  InputGroupNames.endDate := endDatePicker.Date;
 end;
 
 procedure TForm1.FormClose(Sender: TObject; var Action: TCloseAction);
@@ -399,30 +477,30 @@ end;
 
 procedure TForm1.FormShow(Sender: TObject);
 var
-  numConstituents, I: Integer;
+  numConstituents, I: integer;
 
 begin
   Height := 130;
   Form1.color := clwhite;
 
   // 0. For SWMM_TO_FW, if groupnames file does not exist cannot continue, alert user and exit else get FW time span
-  If (SWMMIO.operatingMode = SWMMIO.opModes[0]) then
+  // If (SWMMIO.operatingMode = SWMMIO.opModes[0]) then
+  // begin
+  If (ConverterErrors.checkInputFiles() = -1) then
   begin
-    If (ConverterErrors.checkInputFiles() = -1) then
-    begin
-      MessageDlg
-        ('A Valid Framework File (groupnames.txt) was not found. SWMM Converter cannot continue',
-        mtInformation, [mbOK], 0);
-      Self.Close();
-    end
-    else
-    begin
-      // read groupnames file, extract dates and list of files for use later and set time span datepickers
-      InputGroupNames := FWIO.readGroupNames();
-      strtDatePicker.DateTime := InputGroupNames.startDate;
-      endDatePicker.DateTime := InputGroupNames.endDate;
-    end;
+    MessageDlg
+      ('A Valid Framework File (groupnames.txt) was not found. SWMM Converter cannot continue',
+      mtInformation, [mbOK], 0);
+    Self.Close();
+  end
+  else
+  begin
+    // read groupnames file, extract dates and list of files for use later and set time span datepickers
+    InputGroupNames := FWIO.readGroupNames();
+    strtDatePicker.DateTime := InputGroupNames.startDate;
+    endDatePicker.DateTime := InputGroupNames.endDate;
   end;
+  // end;
 
   lblTSStartEndDate.Caption := '';
   if (SWMMIO.operatingMode = SWMMIO.opModes[0]) then

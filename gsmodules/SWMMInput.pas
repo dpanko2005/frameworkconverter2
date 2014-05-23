@@ -264,7 +264,7 @@ begin
   fwTS.Add('#');
   tempPollHeader := '# Yr,MM,DD, hours,     FLOW,';
 
-  //for j := 1 to selectedConstituentRecs.numberOfEntries - 1 do
+  // for j := 1 to selectedConstituentRecs.numberOfEntries - 1 do
   for j := 0 to selectedConstituentRecs.numberOfEntries - 1 do
   begin
     if (selectedConstituentRecs.swmmNames[j] <> '') then
@@ -383,27 +383,51 @@ begin
         totalNumOfMatchedFRWPollutants := k;
         fwTS.Add('#' + tempPollHeader); }
 
-      // Matching scheme that includes only user selected fw pollutants
-      // Match swmm pollutants to framework pollutants and determine pollutant order - order by framework pollutants
-      k := 0;
-      for idx := 0 to targetSWMPollutants.Count - 1 do
-      begin
+      { // Matching scheme that includes only user selected fw pollutants
+        // Match swmm pollutants to framework pollutants and determine pollutant order - order by framework pollutants
+        k := 0;
+        for idx := 0 to targetSWMPollutants.Count - 1 do
+        begin
         for j := 0 to numPolls - 1 do
+        begin
+        if (AnsiCompareText(targetSWMPollutants[idx], pollutantIDList[j]) = 0)
+        then
+        begin
+        targetPollutantSWMMOrder[idx] := j;
+        targetPollutantFRWOrder[k] := idx;
+        //tempPollHeader := tempPollHeader +
+        //  Format('%9s,', [targetSWMPollutants[idx]]);
+        tempPollHeader := tempPollHeader +
+        Format('%9s,', [selectedConstituentRecs.fwNames[idx]]);
+        inc(k);
+        break;
+        end;
+        end;
+        end; }
+
+      k := 0;
+      for j := 0 to numPolls - 1 do
+      begin
+        // search through fw names till match is found and save fw index or -1 if no match
+        for idx := 0 to targetSWMPollutants.Count - 1 do
         begin
           if (AnsiCompareText(targetSWMPollutants[idx], pollutantIDList[j]) = 0)
           then
           begin
-            targetPollutantSWMMOrder[idx] := j;
+            targetPollutantSWMMOrder[j] := idx;
             targetPollutantFRWOrder[k] := idx;
-            //tempPollHeader := tempPollHeader +
-            //  Format('%9s,', [targetSWMPollutants[idx]]);
+            // tempPollHeader := tempPollHeader +
+            // Format('%9s,', [targetSWMPollutants[idx]]);
             tempPollHeader := tempPollHeader +
-             Format('%9s,', [selectedConstituentRecs.fwNames[idx]]);
+              Format('%9s,', [selectedConstituentRecs.fwNames[idx]]);
             inc(k);
             break;
-          end;
+          end
+          else
+            targetPollutantSWMMOrder[j] := -1;
         end;
       end;
+
       // totalNumOfMatchedFRWPollutants := k+1;
       totalNumOfMatchedFRWPollutants := k;
       fwTS.Add('#' + tempPollHeader);
@@ -484,10 +508,10 @@ begin
 
       // get node results for all user specified timespan
       targetNodeIndex := nodeIDList.IndexOf(nodeName);
-      if(  targetNodeIndex < 0 ) then
+      if (targetNodeIndex < 0) then
       begin
-        errorsList.add(Errs[8]);
-        exit;
+        errorsList.Add(Errs[8]);
+        Exit;
       end;
       for idx := startPeriod to endPeriod do
       begin
@@ -519,18 +543,31 @@ begin
         // DO NOT DELETE may revert to this in future for pollIdx := 1 to High(constituentNames) do // pollIdx = 1 if flow
 
         // alternative below outputs results for matched fw pollutants only
-        for pollIdx := 0 to totalNumOfMatchedFRWPollutants - 1 do    //outputs results for matched fw pollutants only
+        // for pollIdx := 0 to totalNumOfMatchedFRWPollutants - 1 do    //outputs results for matched fw pollutants only
+        // loop through all swmm pollutants and save results for those with matching fw polls
+        for pollIdx := 0 to numPolls - 1 do
+        // outputs results for matched fw pollutants only
         begin
-          if ((nodeResultsForPeriod[NODE_INFLOW] < MIN_WQ_FLOW) or
-            (targetPollutantSWMMOrder[pollIdx] < 0)) then
-            tsResultEntryStr := Format('%s,%9.3f', [tsResultEntryStr, 0.0])
-          else
+          if (targetPollutantSWMMOrder[pollIdx] > -1) then // there was a match
           begin
-            tsResultEntryStr := Format('%s,%9.3f',
-              [tsResultEntryStr, nodeResultsForPeriod[NODE_QUAL +
-              targetPollutantSWMMOrder[pollIdx]] *
-              selectedConstituentRecs.convFactors[targetPollutantSWMMOrder
-              [pollIdx]]]);
+            if ((nodeResultsForPeriod[NODE_INFLOW] < MIN_WQ_FLOW)) then
+              tsResultEntryStr := Format('%s,%9.3f', [tsResultEntryStr, 0.0])
+            else
+            begin
+              { tsResultEntryStr := Format('%s,%9.3f',
+                [tsResultEntryStr, nodeResultsForPeriod[NODE_QUAL +
+                targetPollutantSWMMOrder[pollIdx]] *
+                selectedConstituentRecs.convFactors[targetPollutantSWMMOrder
+                [pollIdx]]]); }
+
+              // Note: since flow is included as a pollutant in parametermap.txt but not in swmm the first position
+              // of targetPollutantSWMMOrder[pollIdx] shd be occupied by the m
+              tsResultEntryStr :=
+                Format('%s,%9.3f', [tsResultEntryStr,
+                nodeResultsForPeriod[NODE_QUAL + pollIdx] *
+                selectedConstituentRecs.convFactors[targetPollutantSWMMOrder
+                [pollIdx]]]);
+            end;
           end;
         end;
         fwTS.Add(tsResultEntryStr);
@@ -539,7 +576,7 @@ begin
       rslt.scratchFilePath := FWCtrlRec.scratchFilePath;
       rslt.tsNodeName := FWCtrlRec.tsNodeName;
       rslt.flowConvFactor := selectedConstituentRecs.convFactors[0];
-      //rslt.numPolls := selectedConstituentRecs.numberOfEntries;
+      // rslt.numPolls := selectedConstituentRecs.numberOfEntries;
       rslt.description := 'Converted from SWMM 5';
       // selectedConstituentRecs[0].ModelRunScenarioID;
 

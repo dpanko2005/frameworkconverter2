@@ -97,7 +97,8 @@ var
   PollList, NodeNameList: TStringList;
   frameCtrlFilePath, mtaFilePath: string;
 
-function getSWMMNodeIDsFromTxtInput(swmmFileContentsList: TStringList): TArray<TStringList>;
+function getSWMMNodeIDsFromTxtInput(swmmFileContentsList: TStringList)
+  : TArray<TStringList>;
 function getSWMMNodeIDsFromBinary(SWMMFilePath: string): TArray<TStringList>;
 procedure Split(const Delimiter: Char; Input: string; const Strings: TStrings);
 procedure saveTextFileToDisc(FileContentsList: TStringList; filePath: string;
@@ -108,13 +109,14 @@ implementation
 
 uses FWIO;
 
-function getSWMMNodeIDsFromTxtInput(swmmFileContentsList: TStringList): TArray<TStringList>;
+function getSWMMNodeIDsFromTxtInput(swmmFileContentsList: TStringList)
+  : TArray<TStringList>;
 var
   // tempList: TStringList;
   rsltLists: TArray<TStringList>;
   SwmmTokens: TStringList;
   lineNumber, intTokenLoc, tempInt, i: integer;
-  strLine, strToken, strObjectID: string;
+  strLine, strToken, strObjectID, strStartDate, strEndDate: string;
 begin
   intTokenLoc := 0;
   // tempList := TStringList.Create;
@@ -122,7 +124,7 @@ begin
   // tempList := readLongTxtFile(SWMMFilePath);
   // tempList.LoadFromFile(SWMMFilePath);
 
-  SetLength(rsltLists, 4);
+  SetLength(rsltLists, 5);
   for i := Low(rsltLists) to High(rsltLists) do
     rsltLists[i] := TStringList.Create;
 
@@ -130,7 +132,19 @@ begin
   while lineNumber < swmmFileContentsList.Count - 1 do
   begin
     strLine := LowerCase(swmmFileContentsList[lineNumber]);
-    for i := 0 to High(SWMMINPUTTOKENS) - 1 do
+
+    // save simulation and end dates start date - converts to lower case so search for lower case version
+    tempInt := Pos('start_date', strLine);
+    if (tempInt = 1) then
+      strStartDate := Trim(ReplaceStr(strLine, 'start_date', '') )
+    else
+    begin
+      tempInt := Pos('end_date', strLine);
+    if (tempInt = 1) then
+      strEndDate := Trim(ReplaceStr(strLine, 'end_date', ''));
+    end;
+
+    for i := 0 to High(SWMMINPUTTOKENS) do
     begin
       strToken := LowerCase(SWMMINPUTTOKENS[i]);
       intTokenLoc := Pos(strToken, strLine);
@@ -185,6 +199,8 @@ begin
     end;
     inc(lineNumber);
   end;
+  rsltLists[4].Add(strStartDate);
+  rsltLists[4].Add(strEndDate);
   result := rsltLists;
 end;
 

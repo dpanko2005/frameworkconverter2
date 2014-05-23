@@ -1,1 +1,1 @@
-SWMM results file not found at: 
+F002 - The file provided is either the wrong file or has the wrong extention: C:\Framework\Demo\RockCreekDemo.inp
