@@ -18,7 +18,7 @@ uses
   Vcl.Forms, Vcl.Dialogs, Vcl.StdCtrls, Vcl.ExtDlgs,
   UserInputConfirmationDlg, OperationStatusDlgFrm,
   ImportHelpDialogFrm, ExportHelpDlgFrm, SWMMIO, ConverterErrors,
-  SWMMInput, SWMMOutput, ReadMTA, WriteMTA, ComCtrls, BusyDialogFrm, GIFImg,
+  SWMMInput, SWMMOutput, ComCtrls, BusyDialogFrm, GIFImg,
   StrUtils, GSControlGrid, Vcl.Controls, FWIO;
 
 const
@@ -111,14 +111,6 @@ type
     /// Owner of the button (this form)
     /// </param>
     procedure btnCancelClick(Sender: TObject);
-
-    /// <summary>
-    /// Change handler for SWMM node selection combo box
-    /// </summary>
-    /// <param name="Sender">
-    /// Owner of the combo box (this form)
-    /// </param>
-    // procedure cbxSwmmNodeChange(Sender: TObject);
 
     /// <summary>
     /// Handler for help button. Displays a dialog with help on how to use
@@ -249,7 +241,6 @@ begin
   // 0. init lists to hold content of output files
   lstGroupnames := TStringList.Create;
   lstParams := TStringList.Create;
-  // lstFWControlMetafile := TStringList.Create;
 
   // 1. create content to be written to - groupnames.txt - file containing file, and node names
   lstGroupnames.Add('''' + StringReplace(FormatDateTime('yyyy,mm,d',

@@ -16,9 +16,7 @@ interface
 
 uses
   Windows, Messages, SysUtils, Variants, Classes, StrUtils, SWMMIO,
-  ConverterErrors, ReadMTA,
-  FWIO,
-  ComCtrls;
+  ConverterErrors,FWIO,ComCtrls;
 
 var
   swmmIDsListArr: TArray<TStringList>;
@@ -104,7 +102,6 @@ implementation
 
 function consoleExportFromFWToSWMM(MTAFilePath: string): Integer;
 var
-  // mtaData: TArray<TMTARecord>;
   fwCtrlFileData: FWCtrlMetadataRecord;
   pMapData: ParameterMapRecord;
   tempStr: string;

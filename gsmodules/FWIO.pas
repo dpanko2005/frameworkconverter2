@@ -82,15 +82,6 @@ type
 
 implementation
 
-{ function readFile(filePath: string): TStringList;
-  var
-  tempList: TStringList;
-  begin
-  tempList := TStringList.Create;
-  tempList.LoadFromFile(filePath);
-  result := tempList;
-  end; }
-
 function writeFWControlMetadataFile(FWCtrlRecord: FWCtrlMetadataRecord)
   : Boolean;
 var

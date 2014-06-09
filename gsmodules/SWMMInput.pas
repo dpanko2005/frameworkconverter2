@@ -14,8 +14,7 @@ unit SWMMInput;
 interface
 
 uses
-  Windows, Messages, SysUtils, DateUtils, Variants, Classes, StrUtils, SWMMIO,
-  ReadMTA, ComCtrls, Vcl.Forms, FWIO, ConverterErrors;
+  Windows, Messages, SysUtils, DateUtils, Variants, Classes, StrUtils, SWMMIO, ComCtrls, Vcl.Forms, FWIO, ConverterErrors;
 
 // var
 // errorsList: TStringList;
@@ -475,7 +474,7 @@ begin
 
         // add formatted flow entry
         tsResultEntryStr :=
-          (Format('%s,%s,%12.5f', [formattedTSDate, formattedTSTime,
+          (Format('%s,%s,%12.6e', [formattedTSDate, formattedTSTime,
           nodeResultsForPeriod[NODE_INFLOW] *
           selectedConstituentRecs.convFactors[0]]));
         if (appType = appTypes[0]) then
@@ -494,7 +493,7 @@ begin
           if (targetPollutantSWMMOrder[pollIdx] > -1) then // there was a match
           begin
             if ((nodeResultsForPeriod[NODE_INFLOW] < MIN_WQ_FLOW)) then
-              tsResultEntryStr := Format('%s,%12.5f', [tsResultEntryStr, 0.0])
+              tsResultEntryStr := Format('%s,%12.6e', [tsResultEntryStr, 0.0])
             else
             begin
               { tsResultEntryStr := Format('%s,%12.5f',
@@ -506,7 +505,7 @@ begin
               // Note: since flow is included as a pollutant in parametermap.txt but not in swmm the first position
               // of targetPollutantSWMMOrder[pollIdx] shd be occupied by the m
               tsResultEntryStr :=
-                Format('%s,%12.5f', [tsResultEntryStr,
+                Format('%s,%12.6e', [tsResultEntryStr,
                 nodeResultsForPeriod[NODE_QUAL + pollIdx] *
                 selectedConstituentRecs.convFactors[targetPollutantSWMMOrder
                 [pollIdx]]]);

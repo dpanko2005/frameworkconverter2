@@ -1,5 +1,5 @@
-'C:\Framework\Demo\versionMay2014\RockCreekDemo.out'
-'juncLower'
+'C:\Framework\Demo\RockCreekDemo.out'
+'Outfall'
 '1991','11','10'
 '1992','11','1'
 0
