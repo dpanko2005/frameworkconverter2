@@ -78,7 +78,7 @@ type
   function readFWParameterMapFile(): ParameterMapRecord;
   function readInFrameworkTSFile(pMapData: ParameterMapRecord;
     fwCtrlFileData: FWCtrlMetadataRecord): FWCtrlMetadataRecord;
-  function readSWMMInputFile(swmmInputFilePath:String): TStringList;
+  function readSWMMInputFile(swmmInputFilePath: String): TStringList;
 
 implementation
 
@@ -216,7 +216,7 @@ begin
   end;
 end;
 
-function readSWMMInputFile(swmmInputFilePath:String): TStringList;
+function readSWMMInputFile(swmmInputFilePath: String): TStringList;
 var
   FileContentsList: TStringList;
 begin
@@ -312,27 +312,20 @@ begin
       TempTokens.Delimiter := ','; // Each list item will be comma separated
       TempTokens.QuoteChar := ''''; // And each item will be quoted with '
 
-      while lineNumber < FileContentsList.Count do
+      // split first line, extract FLOW and other constituent names
+      strLine := FileContentsList[0];
+      TempTokens.DelimitedText := strLine;
+      for I := 0 to TempTokens.Count - 1 do
+        fwCtrlFileData.fwTimeSeriesNames.Add(TempTokens[I]);
+
+      // process timeseries data is remainder of the lines
+      for lineNumber := 1 to FileContentsList.Count - 1 do
+      // while lineNumber < FileContentsList.Count do
       begin
         strLine := FileContentsList[lineNumber];
-
-        // extract names of polls in the scratch file to convert to swmm names later in other routines
-        if (Pos('##', strLine) > 0) and (Length(strLine) > 1) then
-        begin
-          // split line, extract FLOW and other constituent names
-          TempTokens.DelimitedText := strLine;
-          // strLine := StringReplace(strLine, '##', '', [rfReplaceAll]);
-          // ExtractStrings([','], [], PChar(strLine), tempStrList);
-          // FLOW starts at index 4 in scratch file
-          for I := 5 to TempTokens.Count - 1 do
-            fwCtrlFileData.fwTimeSeriesNames.Add(TempTokens[I]);
-        end;
-
         // ignore comment lines
-        if (Pos('#', strLine) < 1) and (Length(strLine) > 1) then
+        if (Length(strLine) > 1) then
         begin
-          // tempStrList.Clear();
-          // ExtractStrings([','], [], PChar(strLine), tempStrList);
           TempTokens.DelimitedText := strLine;
           tempTimeVal := StrToFloat(TempTokens[3]);
           tempTimeStr := FloatToStr(int(tempTimeVal)) + ':' +
@@ -352,7 +345,6 @@ begin
             end;
           end;
         end;
-        inc(lineNumber);
       end;
     end;
   finally

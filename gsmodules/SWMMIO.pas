@@ -78,13 +78,13 @@ const
   // provides FW timespan and hold file paths for batching
   fileNameGroupNames = 'groupnames.txt';
 
-  fileNameParamsList = 'params.txt'; // number and list of constituents
+  fileNameParamsList = 'parameterlist.txt'; // number and list of constituents
   fileNameParamsMatch = 'parametermap.txt';
   // mapping of fw constituents to swmm
   fileNameScratch = 'scratch'; // fw times series file
   fileNameFWControlFile = 'swmmconvertstrings.txt';
   // fw times series control metatadata file
-  fileNameMessages = 'messages.txt';
+  fileNameMessages = 'message.txt';
   // communicates successes and errors to framework
 
 var

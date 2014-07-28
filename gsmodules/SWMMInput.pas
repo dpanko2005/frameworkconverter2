@@ -259,10 +259,11 @@ begin
   SetLength(pollUnits, selectedConstituentRecs.numberOfEntries);
 
   // save headers for output FW TS file#SWMM Trial Run Under pre-BMP conditions
-  fwTS.Add(Format('#NodeID:%s', [nodeName]));
-  fwTS.Add('#');
-  fwTS.Add('#');
-  tempPollHeader := '# Yr,MM,DD, hours,     FLOW,';
+  //fwTS.Add(Format('#NodeID:%s', [nodeName]));
+  //fwTS.Add('#');
+  //fwTS.Add('#');
+  //tempPollHeader := '# Yr,MM,DD, hours,     FLOW,';
+  tempPollHeader := 'FLOW,';
 
   // for j := 1 to selectedConstituentRecs.numberOfEntries - 1 do
   for j := 0 to selectedConstituentRecs.numberOfEntries - 1 do
@@ -361,7 +362,8 @@ begin
             // tempPollHeader := tempPollHeader +
             // Format('%9s,', [targetSWMPollutants[idx]]);
             tempPollHeader := tempPollHeader +
-              Format('%9s,', [selectedConstituentRecs.fwNames[idx]]);
+              //Format('%9s,', [selectedConstituentRecs.fwNames[idx]]);
+              Format('%s,', [selectedConstituentRecs.fwNames[idx]]);
             inc(k);
             break;
           end
@@ -372,7 +374,8 @@ begin
 
       // totalNumOfMatchedFRWPollutants := k+1;
       totalNumOfMatchedFRWPollutants := k;
-      fwTS.Add('#' + tempPollHeader);
+      //fwTS.Add('#' + tempPollHeader);
+      fwTS.Add(tempPollHeader);
 
       // skip to section in file we reached when we read in node names
       Stream.Seek(SWMMFileStreamPosition, soBeginning);

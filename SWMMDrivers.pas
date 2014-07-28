@@ -235,6 +235,7 @@ procedure TForm1.btnRunClick(Sender: TObject);
 var
   // lists for holding output filename contents
   lstGroupnames, lstParams, lstFWControlMetafile: TStringList;
+  myYear, myMonth, myDay: Word;
   I: integer;
 begin
 
@@ -243,10 +244,12 @@ begin
   lstParams := TStringList.Create;
 
   // 1. create content to be written to - groupnames.txt - file containing file, and node names
-  lstGroupnames.Add('''' + StringReplace(FormatDateTime('yyyy,mm,d',
-    InputGroupNames.startDate), ',', ''',''', [rfReplaceAll]) + '''');
-  lstGroupnames.Add('''' + StringReplace(FormatDateTime('yyyy,mm,d',
-    InputGroupNames.endDate), ',', ''',''', [rfReplaceAll]) + '''');
+  DecodeDate(InputGroupNames.startDate, myYear, myMonth, myDay);
+  lstGroupnames.Add('''' + IntToStr(myYear) + ',''' + IntToStr(myMonth) + ','''
+    + IntToStr(myDay) + '''');
+  DecodeDate(InputGroupNames.endDate, myYear, myMonth, myDay);
+  lstGroupnames.Add('''' + IntToStr(myYear) + ',''' + IntToStr(myMonth) + ','''
+    + IntToStr(myDay) + '''');
 
   for I := 0 to lbxSelectedSWMMNodes.Items.Count - 1 do
   begin
@@ -425,14 +428,16 @@ begin
 
       // check dates in swmm file again dates from groupnames.txt
       // if swmm timeseries starts later than FW timespan set start datepicker to swmm timeseries start
-      if ((strtDatePicker.Date < swmmSeriesStrtDate) or (strtDatePicker.Date > swmmSeriesEndDate)) then
+      if ((strtDatePicker.Date < swmmSeriesStrtDate) or
+        (strtDatePicker.Date > swmmSeriesEndDate)) then
       begin
         strtDatePicker.Date := swmmSeriesStrtDate;
         InputGroupNames.startDate := swmmSeriesStrtDate;
       end;
 
       // if swmm timeseries ends earlier than FW timespan set end datepicker to swmm timeseries end
-      if ((endDatePicker.Date > swmmSeriesEndDate) or (endDatePicker.Date < swmmSeriesStrtDate))then
+      if ((endDatePicker.Date > swmmSeriesEndDate) or
+        (endDatePicker.Date < swmmSeriesStrtDate)) then
       begin
         endDatePicker.Date := swmmSeriesEndDate;
         InputGroupNames.endDate := swmmSeriesEndDate;
