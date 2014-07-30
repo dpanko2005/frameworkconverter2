@@ -1,5 +1,4 @@
-'1991,'8,'8'
-'1991','08','8'
-'1993','10','4'
-'1993,'10,'4'
-'C:\Framework\Demo\RockCreekDemo.out','Outfall'
+'1991',' 8',' 1'
+'1993','10',' 4'
+SWMM5_Group_1993104134755
+'C:\Users\dpankani\Downloads\Test\Temp\RockCreekDemo.out','juncUpper'

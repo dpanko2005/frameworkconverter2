@@ -77,7 +77,8 @@ end;
 procedure reportErrorsToFW();
 begin
   if (errorsList.Count < 1) then
-    errorsList.Add('''ALL OK''');
+    //errorsList.Add('''ALL OK''');
+    errorsList.Add('ALL OK');
   SWMMIO.saveTextFileToDisc(errorsList, SWMMIO.workingDir +
     SWMMIO.fileNameMessages, true);
 end;

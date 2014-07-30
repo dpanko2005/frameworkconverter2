@@ -1,0 +1,4 @@
+'1991',' 8',' 1'
+'1992','12','31'
+SWMM5_Group_1992123114325
+'C:\Data\FRAMEWORK\Utilities\Converters\SWMM5\RockCreekDemo.inp','juncUpper'

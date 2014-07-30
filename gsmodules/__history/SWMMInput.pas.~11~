@@ -259,10 +259,11 @@ begin
   SetLength(pollUnits, selectedConstituentRecs.numberOfEntries);
 
   // save headers for output FW TS file#SWMM Trial Run Under pre-BMP conditions
-  fwTS.Add(Format('#NodeID:%s', [nodeName]));
-  fwTS.Add('#');
-  fwTS.Add('#');
-  tempPollHeader := '# Yr,MM,DD, hours,     FLOW,';
+  //fwTS.Add(Format('#NodeID:%s', [nodeName]));
+  //fwTS.Add('#');
+  //fwTS.Add('#');
+  //tempPollHeader := '# Yr,MM,DD, hours,     FLOW,';
+  tempPollHeader := 'Q,';
 
   // for j := 1 to selectedConstituentRecs.numberOfEntries - 1 do
   for j := 0 to selectedConstituentRecs.numberOfEntries - 1 do
@@ -361,7 +362,8 @@ begin
             // tempPollHeader := tempPollHeader +
             // Format('%9s,', [targetSWMPollutants[idx]]);
             tempPollHeader := tempPollHeader +
-              Format('%9s,', [selectedConstituentRecs.fwNames[idx]]);
+              //Format('%9s,', [selectedConstituentRecs.fwNames[idx]]);
+              Format('%s,', [selectedConstituentRecs.fwNames[idx]]);
             inc(k);
             break;
           end
@@ -372,7 +374,8 @@ begin
 
       // totalNumOfMatchedFRWPollutants := k+1;
       totalNumOfMatchedFRWPollutants := k;
-      fwTS.Add('#' + tempPollHeader);
+      //fwTS.Add('#' + tempPollHeader);
+      fwTS.Add(tempPollHeader);
 
       // skip to section in file we reached when we read in node names
       Stream.Seek(SWMMFileStreamPosition, soBeginning);
@@ -474,12 +477,12 @@ begin
 
         // add formatted flow entry
         tsResultEntryStr :=
-          (Format('%s,%s,%12.5f', [formattedTSDate, formattedTSTime,
+          (Format('%s,%s,%12.6e', [formattedTSDate, formattedTSTime,
           nodeResultsForPeriod[NODE_INFLOW] *
           selectedConstituentRecs.convFactors[0]]));
-        if (appType = appTypes[0]) then
+        {if (appType = appTypes[0]) then
           Writeln('Exporting data for: ' + formattedTSDate + ' ' +
-            formattedTSTime);
+            formattedTSTime); }
 
         // write results for all framework pollutants fill in zeros for fw polls that were not selected by the user
         // DO NOT DELETE may revert to this in future for pollIdx := 1 to High(constituentNames) do // pollIdx = 1 if flow
@@ -493,7 +496,7 @@ begin
           if (targetPollutantSWMMOrder[pollIdx] > -1) then // there was a match
           begin
             if ((nodeResultsForPeriod[NODE_INFLOW] < MIN_WQ_FLOW)) then
-              tsResultEntryStr := Format('%s,%12.5f', [tsResultEntryStr, 0.0])
+              tsResultEntryStr := Format('%s,%12.6e', [tsResultEntryStr, 0.0])
             else
             begin
               { tsResultEntryStr := Format('%s,%12.5f',
@@ -505,7 +508,7 @@ begin
               // Note: since flow is included as a pollutant in parametermap.txt but not in swmm the first position
               // of targetPollutantSWMMOrder[pollIdx] shd be occupied by the m
               tsResultEntryStr :=
-                Format('%s,%12.5f', [tsResultEntryStr,
+                Format('%s,%12.6e', [tsResultEntryStr,
                 nodeResultsForPeriod[NODE_QUAL + pollIdx] *
                 selectedConstituentRecs.convFactors[targetPollutantSWMMOrder
                 [pollIdx]]]);

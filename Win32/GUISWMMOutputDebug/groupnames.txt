@@ -1,3 +1,4 @@
-'1991,'8,'1'
-'1993,'10,'4'
-'C:\Framework\Demo\RockCreekDemo.inp','Outfall'
+'1991',' 8',' 1'
+'1993','10',' 4'
+SWMM5_Group_1993104173854
+'C:\Data\FRAMEWORK\Utilities\Converters\SWMM5\RockCreekDemo.inp','Outfall'

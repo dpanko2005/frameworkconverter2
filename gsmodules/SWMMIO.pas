@@ -40,6 +40,8 @@ type
   end;
 
 const
+  //Development computer height - used to scale form resizing
+  devComputerScreenHeight : integer = 768;
   // includes NsubcatchResults,SUBCATCH_RAINFALL,SUBCATCH_SNOWDEPTH,SUBCATCH_LOSSES,SUBCATCH_RUNOFF,SUBCATCH_GW_FLOW,SUBCATCH_GW_ELEV;
   NUMSUBCATCHVARS: integer = 7;
   // MIN_WQ_FLOW: Double = 0.001; // minmun water quality flow from swmm
@@ -76,15 +78,15 @@ const
 
   // input/output file names
   // provides FW timespan and hold file paths for batching
-  fileNameGroupNames = 'groupnames.txt';
+  fileNameGroupNames = 'GroupNames.txt';
 
-  fileNameParamsList = 'parameterlist.txt'; // number and list of constituents
-  fileNameParamsMatch = 'parametermap.txt';
+  fileNameParamsList = 'ParameterList.txt'; // number and list of constituents
+  fileNameParamsMatch = 'ParameterMap.txt';
   // mapping of fw constituents to swmm
-  fileNameScratch = 'scratch'; // fw times series file
-  fileNameFWControlFile = 'swmmconvertstrings.txt';
+  fileNameScratch = 'Scratch'; // fw times series file
+  fileNameFWControlFile = 'SwmmConvertStrings.txt';
   // fw times series control metatadata file
-  fileNameMessages = 'message.txt';
+  fileNameMessages = 'Message.txt';
   // communicates successes and errors to framework
 
 var

@@ -263,7 +263,7 @@ begin
   //fwTS.Add('#');
   //fwTS.Add('#');
   //tempPollHeader := '# Yr,MM,DD, hours,     FLOW,';
-  tempPollHeader := 'FLOW,';
+  tempPollHeader := 'Q';
 
   // for j := 1 to selectedConstituentRecs.numberOfEntries - 1 do
   for j := 0 to selectedConstituentRecs.numberOfEntries - 1 do
@@ -363,7 +363,7 @@ begin
             // Format('%9s,', [targetSWMPollutants[idx]]);
             tempPollHeader := tempPollHeader +
               //Format('%9s,', [selectedConstituentRecs.fwNames[idx]]);
-              Format('%s,', [selectedConstituentRecs.fwNames[idx]]);
+              Format(',%s', [selectedConstituentRecs.fwNames[idx]]);
             inc(k);
             break;
           end
@@ -480,9 +480,9 @@ begin
           (Format('%s,%s,%12.6e', [formattedTSDate, formattedTSTime,
           nodeResultsForPeriod[NODE_INFLOW] *
           selectedConstituentRecs.convFactors[0]]));
-        if (appType = appTypes[0]) then
+        {if (appType = appTypes[0]) then
           Writeln('Exporting data for: ' + formattedTSDate + ' ' +
-            formattedTSTime);
+            formattedTSTime); }
 
         // write results for all framework pollutants fill in zeros for fw polls that were not selected by the user
         // DO NOT DELETE may revert to this in future for pollIdx := 1 to High(constituentNames) do // pollIdx = 1 if flow

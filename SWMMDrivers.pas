@@ -44,11 +44,11 @@ type
     Label3: TLabel;
     Label5: TLabel;
     Label6: TLabel;
-    Label8: TLabel;
+    lblSect3Num: TLabel;
     lblOperatingMode: TLabel;
     lblHelp: TLabel;
     Label10: TLabel;
-    Label11: TLabel;
+    lblSect2Num: TLabel;
     lbxAvailSWMMConstituents: TListBox;
     lbxSelectedSWMMConstituents: TListBox;
     btnConstituentInclude: TButton;
@@ -172,20 +172,26 @@ end;
 
 procedure TForm1.btnConstituentExcludeAllClick(Sender: TObject);
 begin
+  // to account for different screen resolution set form height base on control positions
+  Height := btnRun.Top + 90;
   transferToFromListBox(lbxSelectedSWMMConstituents,
     lbxAvailSWMMConstituents, 1);
 end;
 
 procedure TForm1.btnConstituentExcludeClick(Sender: TObject);
 begin
+  // to account for different screen resolution set form height base on control positions
+  Height := btnRun.Top + 90;
   transferToFromListBox(lbxSelectedSWMMConstituents,
     lbxAvailSWMMConstituents, 0);
 end;
 
 procedure TForm1.btnConstituentIncludeAllClick(Sender: TObject);
 begin
-  if (Height < 610) then
-    Height := 610;
+  // if (Height < 610) then
+  // Height := 610;
+  // to account for different screen resolution set form height base on control positions
+  Height := btnRun.Top + 90;
   // only enable run button if at least one constituent selected
   btnRun.Enabled := true;
 
@@ -196,8 +202,8 @@ end;
 
 procedure TForm1.btnConstituentIncludeClick(Sender: TObject);
 begin
-  if (Height < 610) then
-    Height := 610;
+  // to account for different screen resolution set form height base on control positions
+  Height := btnRun.Top + 90;
   // only enable run button if at least one constituent selected
   btnRun.Enabled := true;
 
@@ -235,7 +241,7 @@ procedure TForm1.btnRunClick(Sender: TObject);
 var
   // lists for holding output filename contents
   lstGroupnames, lstParams, lstFWControlMetafile: TStringList;
-  myYear, myMonth, myDay: Word;
+  myYear, myMonth, myDay, hr, mn, sc, ms: Word;
   I: integer;
 begin
 
@@ -245,15 +251,20 @@ begin
 
   // 1. create content to be written to - groupnames.txt - file containing file, and node names
   DecodeDate(InputGroupNames.startDate, myYear, myMonth, myDay);
-  lstGroupnames.Add('''' + IntToStr(myYear) + ',''' + IntToStr(myMonth) + ','''
-    + IntToStr(myDay) + '''');
+  lstGroupnames.Add('''' + IntToStr(myYear) + ''',''' + Format('%2d',[myMonth]) +
+    ''',''' + Format('%2d',[myDay]) + '''');
   DecodeDate(InputGroupNames.endDate, myYear, myMonth, myDay);
-  lstGroupnames.Add('''' + IntToStr(myYear) + ',''' + IntToStr(myMonth) + ','''
-    + IntToStr(myDay) + '''');
+  lstGroupnames.Add('''' + IntToStr(myYear) + ''',''' + Format('%2d',[myMonth]) + ''','''
+    + Format('%2d',[myDay]) + '''');
+
+  // Add group name string
+  decodeTime(now, hr, mn, sc, ms);
+  lstGroupnames.Add('SWMM5_Group_' + IntToStr(myYear) + IntToStr(myMonth) + IntToStr(myDay) + IntToStr(hr) + IntToStr(mn) +
+    IntToStr(sc));
 
   for I := 0 to lbxSelectedSWMMNodes.Items.Count - 1 do
   begin
-    lstGroupnames.Add('''' + swmmFilePath + ''',''' + lbxSelectedSWMMNodes.Items
+      lstGroupnames.Add('''' + swmmFilePath + ''',''' + lbxSelectedSWMMNodes.Items
       [I] + '''');
   end;
 
@@ -326,6 +337,10 @@ end;
 
 procedure TForm1.btnNodeExcludeAllClick(Sender: TObject);
 begin
+  // if (Height < 550) then
+  // Height := 500;
+  // to account for different screen resolution set form height base on control positions
+  Height := lblTimeSpanTitleNo.Top + 30;
   transferToFromListBox(lbxSelectedSWMMNodes, lbxAvailSWMMNodes, 0);
 end;
 
@@ -336,15 +351,19 @@ end;
 
 procedure TForm1.btnNodeIncludeAllClick(Sender: TObject);
 begin
-  if (Height < 550) then
-    Height := 500;
+  // if (Height < 550) then
+  // Height := 500;
+  // to account for different screen resolution set form height base on control positions
+  Height := lblTimeSpanTitleNo.Top + 30;
   transferToFromListBox(lbxAvailSWMMNodes, lbxSelectedSWMMNodes, 1);
 end;
 
 procedure TForm1.btnNodeIncludeClick(Sender: TObject);
 begin
-  if (Height < 550) then
-    Height := 500;
+  // if (Height < 550) then
+  // Height := 500;
+  // to account for different screen resolution set form height base on control positions
+  Height := lblTimeSpanTitleNo.Top + 30;
   transferToFromListBox(lbxAvailSWMMNodes, lbxSelectedSWMMNodes, 0);
 end;
 
@@ -354,14 +373,16 @@ var
   TempListArr: TArray<TStringList>;
   swmmIDsListArr: TArray<TStringList>;
 begin
-
+  // ShowMessage('Height' + Format('%d',[Screen.WorkAreaHeight]));
   try
     if OpenTextFileDialog1.Execute then
     begin
       { First check if the file exists. }
       if FileExists(OpenTextFileDialog1.FileName) then
       begin
-        Height := 325;
+        // Height := 325;
+        // to account for different screen resolution set form height base on control positions
+        Height := lblSect3Num.Top + 30;
         // save the directory so can write TS to same directory later
         workingDirPath := ExtractFileDir(OpenTextFileDialog1.FileName);
         swmmFilePath := OpenTextFileDialog1.FileName;
@@ -476,7 +497,9 @@ var
   numConstituents, I: integer;
 
 begin
-  Height := 130;
+  // Height := 130;
+  // to account for different screen resolution set form height base on control positions
+  Height := lblSect2Num.Top + 30;
   Form1.color := clwhite;
 
   // 0. For SWMM_TO_FW, if groupnames file does not exist cannot continue, alert user and exit else get FW time span

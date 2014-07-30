@@ -105,6 +105,14 @@ begin
       FileContentsList.Add(Format('''%d'',''%d'',''%d''',
         [FWCtrlRecord.userEndYear, FWCtrlRecord.userEndMonth,
         FWCtrlRecord.userEndDay]));
+
+      //repeat node name - not needed in fw for swmm but other converters need it
+      FileContentsList.Add('''' + FWCtrlRecord.tsNodeName + '''');
+
+      //write down time step
+      FileContentsList.Add(Format('%e',
+        [FWCtrlRecord.swmmReportTimestepSecs / 3600]));
+
       // number of custom strings following this line - currently 0 for SWMM converter
       FileContentsList.Add('0');
       // FileContentsList.Add(FloatToStr(FWCtrlRecord.convFactor));
@@ -170,10 +178,10 @@ begin
       TempTokens.DelimitedText := FileContentsList[I];
       if (TempTokens.DelimitedText <> '') then
       begin
-        Rslt.fwNames.Add(TempTokens[0]);
+        Rslt.fwNames.Add(TempTokens[3]);
         Rslt.convFactors[I - 1] := StrToFloat(TempTokens[1]);
         Rslt.futureFactors[I - 1] := StrToFloat(TempTokens[2]);
-        Rslt.swmmNames.Add(TempTokens[3]);
+        Rslt.swmmNames.Add(TempTokens[0]);
       end;
     end;
 
@@ -301,7 +309,7 @@ begin
     begin
       // includes flow so do not subtract 1
       SetLength(fwCtrlFileData.swmmTimeSeries, pMapData.numberOfEntries);
-      for I := 0 to pMapData.numberOfEntries do
+      for I := 0 to pMapData.numberOfEntries-1 do
       begin
         fwCtrlFileData.swmmTimeSeries[I] := TStringList.Create;
       end;
@@ -318,7 +326,7 @@ begin
       for I := 0 to TempTokens.Count - 1 do
         fwCtrlFileData.fwTimeSeriesNames.Add(TempTokens[I]);
 
-      // process timeseries data is remainder of the lines
+      // process timeseries data in remainder of the lines
       for lineNumber := 1 to FileContentsList.Count - 1 do
       // while lineNumber < FileContentsList.Count do
       begin

@@ -68,7 +68,7 @@ object Form1: TForm1
     ParentColor = False
     ParentFont = False
   end
-  object Label8: TLabel
+  object lblSect3Num: TLabel
     Left = 11
     Top = 287
     Width = 15
@@ -126,7 +126,7 @@ object Form1: TForm1
     ParentColor = False
     ParentFont = False
   end
-  object Label11: TLabel
+  object lblSect2Num: TLabel
     Left = 19
     Top = 119
     Width = 15
@@ -283,9 +283,9 @@ object Form1: TForm1
     WordWrap = True
   end
   object btnSelectSWMMFile: TButton
-    Left = 168
+    Left = 209
     Top = 52
-    Width = 240
+    Width = 199
     Height = 25
     Caption = 'Browse...'
     TabOrder = 0
