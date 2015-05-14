@@ -1,3 +1,14 @@
+{*------------------------------------------------------------------------------
+  Delphi Pascal unit containing various utility functions related to error
+  message handling, display and serialization
+
+  @unit:    FWIO.pas
+  @project: WERF Framework - SWMM Converter
+  @version: 2.0
+  @date:    2/28/2014
+  @author:  Gesoyntec (D. Pankani)
+------------------------------------------------------------------------------- }
+
 unit ConverterErrors;
 
 interface
@@ -6,6 +17,9 @@ uses
   Classes, SysUtils;
 
 const
+{*------------------------------------------------------------------------------
+  List of pre-defined error messages with associated codes
+------------------------------------------------------------------------------- }
   Errs: array [0 .. 9] of string = ('F001 - Input file does not exist',
     'S001 - An unknown error occurred when reading the SWMM file',
     'S002 - An unknown error occurred when saving the new SWMM file',
@@ -18,12 +32,50 @@ const
     'F003 - Framework time series data file not found at:');
 
 var
+{*------------------------------------------------------------------------------
+  List of errors that have occured in the course of execution
+------------------------------------------------------------------------------- }
   errorsList: TStringList;
 
+{*------------------------------------------------------------------------------
+  For both import and export mode checks to see if groupnames.txt exists.
+
+  @return TRUE if succesfull, FALSE otherwise
+-------------------------------------------------------------------------------}
 function checkInputFiles(): integer;
+
+{*------------------------------------------------------------------------------
+  Given a file path, checks to see if a file exists at that file path.
+
+  @param fileNameOrPath Location on file system to check for file
+  @return 1 if files exists, -1 otherwise
+-------------------------------------------------------------------------------}
 function checkIfFileExists(fileNameOrPath: string): integer;
+
+{*------------------------------------------------------------------------------
+  Given a file path and a file extention, checks the file path to see if its
+  extention matches the desired extention.
+
+  @param filePath Location on file system to check for file
+  @param desiredExt Desired extention to check the file path for
+  @return 1 if file path extention matches desired extention, -1 otherwise
+-------------------------------------------------------------------------------}
 function checkFileExt(filePath: string; desiredExt: string): integer;
+
+{*------------------------------------------------------------------------------
+  Saves errors accumulated from various routines in the course of execution of
+  the converter to a text file on disc.
+
+  @return none
+-------------------------------------------------------------------------------}
 procedure reportErrorsToFW();
+
+{*------------------------------------------------------------------------------
+  Displays errors accumulated from various routines in the course of execution of
+  the converter on the console.
+
+  @return none
+-------------------------------------------------------------------------------}
 procedure displayErrors();
 
 implementation

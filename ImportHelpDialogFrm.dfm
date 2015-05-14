@@ -37,7 +37,7 @@ object ImportHelpDialog: TImportHelpDialog
   object Label2: TLabel
     Left = 24
     Top = 72
-    Width = 522
+    Width = 521
     Height = 26
     Caption = 
       '2. The list of nodes in the SWMM5 file will be extracted and mad' +
@@ -48,7 +48,7 @@ object ImportHelpDialog: TImportHelpDialog
   object Label3: TLabel
     Left = 24
     Top = 119
-    Width = 522
+    Width = 518
     Height = 26
     Caption = 
       '3. Now proceed to match pollutant names from the SWMM5 file to t' +
@@ -59,8 +59,8 @@ object ImportHelpDialog: TImportHelpDialog
   object Label4: TLabel
     Left = 24
     Top = 168
-    Width = 522
-    Height = 25
+    Width = 509
+    Height = 26
     Caption = 
       '4. When satisfied with your inputs push Next button to proceed t' +
       'o the user input verification dialog which shows a summary of th' +
@@ -70,8 +70,8 @@ object ImportHelpDialog: TImportHelpDialog
   object Label5: TLabel
     Left = 24
     Top = 213
-    Width = 522
-    Height = 28
+    Width = 497
+    Height = 26
     Caption = 
       '5. Hit the Run button on the user input verification dialog to p' +
       'rocess the import or the Cancel button to return to the main for' +

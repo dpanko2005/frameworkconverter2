@@ -7,6 +7,17 @@
 { }
 { Delphi Pascal unit that for the main interface GUI that }
 { ------------------------------------------------------------------- }
+
+{*------------------------------------------------------------------------------
+  Delphi Pascal unit containing code for the primary user interface for
+  exporting and importing timeseries from SWMM
+
+  @unit:    SWMMDrivers.pas
+  @project: WERF Framework - SWMM Converter
+  @version: 2.0
+  @date:    2/28/2014
+  @author:  Gesoyntec (D. Pankani)
+------------------------------------------------------------------------------- }
 unit SWMMDrivers;
 
 interface
@@ -22,7 +33,9 @@ uses
   StrUtils, GSControlGrid, Vcl.Controls, FWIO;
 
 const
-
+{*------------------------------------------------------------------------------
+  List of pre-defined error messages with associated codes
+------------------------------------------------------------------------------- }
   Errs: array [0 .. 6] of string =
     ('An unknown error occured when reading the SWMM file',
     'An unknown error occured when saving the new SWMM file',
@@ -32,125 +45,332 @@ const
     'User specified time span begins earlier than available swmm data',
     'User specified time span ends later than available swmm data');
 
+
 type
+{*------------------------------------------------------------------------------
+  Main form, primary user interface for both import and export operations.
+  Controls are hidden or shown as needed based on the type of operation
+-------------------------------------------------------------------------------}
   TForm1 = class(TForm)
-    OpenTextFileDialog1: TOpenTextFileDialog;
-    SaveTextFileDialog1: TSaveTextFileDialog;
+{*------------------------------------------------------------------------------
+  Open text file dialog
+-------------------------------------------------------------------------------}
+  OpenTextFileDialog1: TOpenTextFileDialog;
+{*------------------------------------------------------------------------------
+  Save text file dialog
+-------------------------------------------------------------------------------}
+  SaveTextFileDialog1: TSaveTextFileDialog;
+{*------------------------------------------------------------------------------
+  button for browsing to swmm file
+-------------------------------------------------------------------------------}
     btnSelectSWMMFile: TButton;
+{*------------------------------------------------------------------------------
+  Selected swmm filepath
+-------------------------------------------------------------------------------}
     txtSwmmFilePath: TLabel;
+{*------------------------------------------------------------------------------
+  Cancel button
+-------------------------------------------------------------------------------}
     btnCancel: TButton;
+{*------------------------------------------------------------------------------
+  Help button
+-------------------------------------------------------------------------------}
     btnHelp: TButton;
+{*------------------------------------------------------------------------------
+  Run button for starting execution
+-------------------------------------------------------------------------------}
     btnRun: TButton;
+{*------------------------------------------------------------------------------
+  End date label
+-------------------------------------------------------------------------------}
     Label3: TLabel;
+{*------------------------------------------------------------------------------
+  Select SWMM file label
+-------------------------------------------------------------------------------}
     Label5: TLabel;
+{*------------------------------------------------------------------------------
+  Numbered item label
+-------------------------------------------------------------------------------}
     Label6: TLabel;
+{*------------------------------------------------------------------------------
+  Numbered item label
+-------------------------------------------------------------------------------}
     Label8: TLabel;
+{*------------------------------------------------------------------------------
+  Operating model label
+-------------------------------------------------------------------------------}
     lblOperatingMode: TLabel;
+{*------------------------------------------------------------------------------
+  Help link label
+-------------------------------------------------------------------------------}
     lblHelp: TLabel;
+{*------------------------------------------------------------------------------
+  SWMM file selection label
+-------------------------------------------------------------------------------}
     Label10: TLabel;
+{*------------------------------------------------------------------------------
+  Label number for start / end dates label
+-------------------------------------------------------------------------------}
     Label11: TLabel;
+{*------------------------------------------------------------------------------
+  Available SWMM constituents listbox
+-------------------------------------------------------------------------------}
     lbxAvailSWMMConstituents: TListBox;
+{*------------------------------------------------------------------------------
+  Selected SWMM constituents listbox
+-------------------------------------------------------------------------------}
     lbxSelectedSWMMConstituents: TListBox;
+{*------------------------------------------------------------------------------
+  Button to include constituent
+-------------------------------------------------------------------------------}
     btnConstituentInclude: TButton;
+{*------------------------------------------------------------------------------
+  Button to exclude constituent
+-------------------------------------------------------------------------------}
     btnConstituentExclude: TButton;
+{*------------------------------------------------------------------------------
+  Available swmm constituents label
+-------------------------------------------------------------------------------}
     Label15: TLabel;
+{*------------------------------------------------------------------------------
+  Selected framework constituents label
+-------------------------------------------------------------------------------}
     lblSelectedFWConstituents: TLabel;
+{*------------------------------------------------------------------------------
+  Available SWMM nodes listbox
+-------------------------------------------------------------------------------}
     lbxAvailSWMMNodes: TListBox;
+{*------------------------------------------------------------------------------
+  Selected SWMM nodes listbox
+-------------------------------------------------------------------------------}
     lbxSelectedSWMMNodes: TListBox;
+{*------------------------------------------------------------------------------
+  Button to include node
+-------------------------------------------------------------------------------}
     btnNodeInclude: TButton;
+{*------------------------------------------------------------------------------
+  Button to exclude node
+-------------------------------------------------------------------------------}
     btnNodeExclude: TButton;
+{*------------------------------------------------------------------------------
+  Available swmm nodes label
+-------------------------------------------------------------------------------}
     Label9: TLabel;
+{*------------------------------------------------------------------------------
+  End date label
+-------------------------------------------------------------------------------}
     Label13: TLabel;
+    {*------------------------------------------------------------------------------
+  Timeseries start/end date label
+-------------------------------------------------------------------------------}
     lblTSStartEndDate: TLabel;
+{*------------------------------------------------------------------------------
+  Start date Datepicker
+-------------------------------------------------------------------------------}
     strtDatePicker: TDateTimePicker;
+{*------------------------------------------------------------------------------
+  End date Datepicker
+-------------------------------------------------------------------------------}
     endDatePicker: TDateTimePicker;
+{*------------------------------------------------------------------------------
+  Timespan label number
+-------------------------------------------------------------------------------}
     lblTimeSpanTitleNo: TLabel;
+{*------------------------------------------------------------------------------
+  Timespan label
+-------------------------------------------------------------------------------}
     lblTimeSpanTitle: TLabel;
+{*------------------------------------------------------------------------------
+  Start date Datepicker label
+-------------------------------------------------------------------------------}
     lblStrtDatePicker: TLabel;
+{*------------------------------------------------------------------------------
+  End date Datepicker label
+-------------------------------------------------------------------------------}
     lblEndDatePicker: TLabel;
+{*------------------------------------------------------------------------------
+  Button for excluding all constituents in set of selected nodes
+-------------------------------------------------------------------------------}
     btnNodeExcludeAll: TButton;
+{*------------------------------------------------------------------------------
+  Button for including all nodes in set of selected nodes
+-------------------------------------------------------------------------------}
     btnNodeIncludeAll: TButton;
+{*------------------------------------------------------------------------------
+  Button for excluding all constituents in set of selected constituents
+-------------------------------------------------------------------------------}
     btnConstituentExcludeAll: TButton;
+{*------------------------------------------------------------------------------
+  Button for including all constituents in set of selected constituents
+-------------------------------------------------------------------------------}
     btnConstituentIncludeAll: TButton;
 
+{*------------------------------------------------------------------------------
+  Generic helper function for transferring items from one listbox to another
+
+  @param lbxFrom Listbox to transfer from
+  @param lbxTo Listbox to transfer to
+  @param mode if 0 transfers selected item only otherwise transfers all items
+-------------------------------------------------------------------------------}
     procedure transferToFromListBox(lbxFrom: TListBox; lbxTo: TListBox;
       mode: integer);
-    /// <summary>
-    /// Handler for button used to browse to SWMM file
-    /// </summary>
-    /// <param name="Sender">
-    /// Owner of the button (this form)
-    /// </param>
+
+{*------------------------------------------------------------------------------
+  Handler for button used to browse to SWMM file
+
+  @param Sender Owner of the button (this form)
+-------------------------------------------------------------------------------}
     procedure btnSelectSWMMFileClick(Sender: TObject);
 
-    /// <summary>
-    /// Handler for form show event. Most of the setup of the form occurs in
-    /// this method
-    /// </summary>
-    /// <param name="Sender">
-    /// Owner (this form)
-    /// </param>
+{*------------------------------------------------------------------------------
+  Handler for form show event. Most of the setup of the form occurs in
+  this method
+
+  @param Sender Owner of the button (this form)
+-------------------------------------------------------------------------------}
     procedure FormShow(Sender: TObject);
 
-    /// <summary>
-    /// Displays a dialog to the user for confirmation of user input
-    /// parameters and then processes the user import or export request when
-    /// the confirmation dialog is dismissed
-    /// </summary>
-    /// <param name="Sender">
-    /// Parent form - currently not used
-    /// </param>
-    procedure btnRunClick(Sender: TObject);
-    // procedure ProgressCallback(InProgressOverall: TProgressBar);
-    // procedure RadioGroup1Click(Sender: TObject);
+{*------------------------------------------------------------------------------
+  Displays a dialog to the user for confirmation of user input
+  parameters and then processes the user import or export request when
+  the confirmation dialog is dismissed
 
-    /// <summary>
-    /// Handler for cancel button
-    /// </summary>
-    /// <param name="Sender">
-    /// Owner of the button (this form)
-    /// </param>
+  @param Sender Parent form - currently not used
+-------------------------------------------------------------------------------}
+    procedure btnRunClick(Sender: TObject);
+
+{*------------------------------------------------------------------------------
+  Handler for cancel button
+
+  @param Sender Owner of the button (this form)
+-------------------------------------------------------------------------------}
     procedure btnCancelClick(Sender: TObject);
 
-    /// <summary>
-    /// Handler for help button. Displays a dialog with help on how to use
-    /// this tool
-    /// </summary>
-    /// <param name="Sender">
-    /// Owner of the button (this form)
-    /// </param>
+{*------------------------------------------------------------------------------
+  Handler for help button. Displays a dialog with help on how to use
+  this tool
+
+  @param Sender Owner of the button (this form)
+-------------------------------------------------------------------------------}
     procedure btnHelpClick(Sender: TObject);
 
-    /// <summary>
-    /// Handler for help link. Displays a dialog with help on how to use this
-    /// tool
-    /// </summary>
-    /// <param name="Sender">
-    /// Owner of the button (this form)
-    /// </param>
+{*------------------------------------------------------------------------------
+  Handler for help link. Displays a dialog with help on how to use this
+  tool
+
+  @param Sender Owner of the button (this form)
+-------------------------------------------------------------------------------}
     procedure lblHelpClick(Sender: TObject);
+
+{*------------------------------------------------------------------------------
+  Add node to the currently selected list of nodes
+
+  @param Sender Owner of the button (this form)
+-------------------------------------------------------------------------------}
     procedure btnNodeIncludeClick(Sender: TObject);
+
+{*------------------------------------------------------------------------------
+  Add constituent to the list of currently selected constituents
+
+  @param Sender Owner of the button (this form)
+-------------------------------------------------------------------------------}
     procedure btnConstituentIncludeClick(Sender: TObject);
+
+{*------------------------------------------------------------------------------
+  Exludes nodes from the currently selected list of nodes
+
+  @param Sender Owner of the button (this form)
+-------------------------------------------------------------------------------}
     procedure btnNodeExcludeClick(Sender: TObject);
+
+{*------------------------------------------------------------------------------
+   Excludes constituents from the list of currently selected constituents
+
+  @param Sender Owner of the button (this form)
+-------------------------------------------------------------------------------}
     procedure btnConstituentExcludeClick(Sender: TObject);
+
+{*------------------------------------------------------------------------------
+   Closes form
+
+  @param Sender Owner of the form
+-------------------------------------------------------------------------------}
     procedure FormClose(Sender: TObject; var Action: TCloseAction);
+
+{*------------------------------------------------------------------------------
+   Handler for datePicker used to select start of analysis period
+
+  @param Sender Owner of the datePicker (this form)
+-------------------------------------------------------------------------------}
     procedure strtDatePickerChange(Sender: TObject);
+
+{*------------------------------------------------------------------------------
+   Handler for datePicker used to select end of analysis period
+
+  @param Sender Owner of the datePicker (this form)
+-------------------------------------------------------------------------------}
     procedure endDatePickerChange(Sender: TObject);
+
+{*------------------------------------------------------------------------------
+  Add all nodes to the currently selected list of nodes
+
+  @param Sender Owner of the button (this form)
+-------------------------------------------------------------------------------}
     procedure btnNodeIncludeAllClick(Sender: TObject);
+
+{*------------------------------------------------------------------------------
+  Add all constituents to the list of currently selected constituents
+
+  @param Sender Owner of the button (this form)
+-------------------------------------------------------------------------------}
     procedure btnConstituentIncludeAllClick(Sender: TObject);
+
+{*------------------------------------------------------------------------------
+  Exclude all constituents to the list of currently selected constituents
+
+  @param Sender Owner of the button (this form)
+-------------------------------------------------------------------------------}
     procedure btnConstituentExcludeAllClick(Sender: TObject);
+
+{*------------------------------------------------------------------------------
+  Exclude all nodes to the list of currently selected nodes
+
+  @param Sender Owner of the button (this form)
+-------------------------------------------------------------------------------}
     procedure btnNodeExcludeAllClick(Sender: TObject);
 
   private
+{*------------------------------------------------------------------------------
+  Working directory file path
+-------------------------------------------------------------------------------}
     workingDirPath: string;
 
     { Private declarations }
 
   var
+{*------------------------------------------------------------------------------
+  SWMM file path (can be input or output file)
+-------------------------------------------------------------------------------}
     swmmFilePath: string;
-    startDateList, endDateList: TStringList;
+{*------------------------------------------------------------------------------
+  Temporary variable used in parsing start dates
+-------------------------------------------------------------------------------}
+    startDateList: TStringList;
+{*------------------------------------------------------------------------------
+  Temporary variable used in parsing end dates
+-------------------------------------------------------------------------------}
+    endDateList: TStringList;
+{*------------------------------------------------------------------------------
+  SWMM timeseries start date
+-------------------------------------------------------------------------------}
     swmmSeriesStrtDate: TDateTime;
+{*------------------------------------------------------------------------------
+  SWMM timeseries end date
+-------------------------------------------------------------------------------}
     swmmSeriesEndDate: TDateTime;
+{*------------------------------------------------------------------------------
+  Groupnames record
+-------------------------------------------------------------------------------}
     InputGroupNames: GroupNames;
 
   public
@@ -159,6 +379,10 @@ type
   end;
 
 var
+{*------------------------------------------------------------------------------
+  Handle for main form, primary user interface for both import and export operations.
+  Controls are hidden or shown as needed based on the type of operation
+-------------------------------------------------------------------------------}
   Form1: TForm1;
 
 implementation
@@ -268,12 +492,8 @@ begin
   ConverterErrors.reportErrorsToFW();
 
   // 4. write groupnames.txt and paramslist.txt files to disc
-  // if (SWMMIO.operatingMode = SWMMIO.opModes[0]) then
-  // SWMM_TO_FW importing from swmm binary file
-  // begin
   saveTextFileToDisc(lstGroupnames, SWMMIO.workingDir +
     fileNameGroupNames, true);
-  // end;
 
   // 5. write groupnames.txt and paramslist.txt files to disc
   saveTextFileToDisc(lstParams, SWMMIO.workingDir + fileNameParamsList, true);
@@ -403,7 +623,6 @@ begin
         begin
 
           // 0-NodeIDs list, 1-Pollutants list, 2-Timeseries list, 3-Inflows list
-          // swmmIDsListArr := SWMMIO.getSWMMNodeIDsFromTxtInput(swmmFilePath);
           swmmFileContents := readSWMMInputFile(swmmFilePath);
           swmmIDsListArr := SWMMIO.getSWMMNodeIDsFromTxtInput(swmmFileContents);
           SWMMIO.TSList := swmmIDsListArr[2];
@@ -413,7 +632,6 @@ begin
 
           swmmSeriesStrtDate := StrToDateTime(swmmIDsListArr[4][0]);
           swmmSeriesEndDate := StrToDateTime(swmmIDsListArr[4][1]);
-
         end
       end
       else

@@ -10,6 +10,17 @@
 { in SWMM input file }
 { ------------------------------------------------------------------- }
 
+{*------------------------------------------------------------------------------
+  DDelphi Pascal unit containing various utility functions, global variables
+  and constants, primarily used for converting timeseries from the framework
+  to SWMM5
+
+  @unit:    SWMMOutput.pas
+  @project: WERF Framework - SWMM Converter
+  @version: 2.0
+  @date:    2/28/2014
+  @author:  Gesoyntec (D. Pankani)
+------------------------------------------------------------------------------- }
 unit SWMMOutput;
 
 interface
@@ -19,81 +30,66 @@ uses
   ConverterErrors,FWIO,ComCtrls;
 
 var
+{*------------------------------------------------------------------------------
+  Data structure for holding list of SWMM IDs/names for timeseries, inflows,
+  pollutants and node blocks
+------------------------------------------------------------------------------- }
   swmmIDsListArr: TArray<TStringList>;
 
-  /// <summary>
-  /// Command line version of function that takes timeseries from the framework
-  /// into SWMM 5
-  /// </summary>
-  /// <param name="MTAFilePath">
-  /// The SWMM 5 converter control file path that contains SWMM specific
-  /// information needed for the operation
-  /// </param>
-  /// <returns>
-  /// Returns 1 if operation was successful; 0 if operation had to be abandoned
-  /// due to an error or missing data
-  /// </returns>
+{*------------------------------------------------------------------------------
+  Command line version of function that takes timeseries from the framework
+  into SWMM 5
+
+  @param MTAFilePath The SWMM 5 converter control file path that contains SWMM
+  specific information needed for the operation
+  @return Returns 1 if operation was successful, 0 if operation had to be
+  abandoned
+------------------------------------------------------------------------------- }
 function consoleExportFromFWToSWMM(MTAFilePath: string): Integer;
 
-/// <summary>
-/// Function that finalizes the export from the framework to SWMM by writing
-/// time series to disc that are formatted for use in SWMM 5
-/// </summary>
-/// <param name="Conv">
-/// Conversion factor
-/// </param>
-/// <param name="filePathDir">
-/// Directory where times series formatted for SWMM 5 will be saved
-/// </param>
+{*------------------------------------------------------------------------------
+  Function that finalizes the export from the framework to SWMM by writing
+  time series to disc that are formatted for use in SWMM 5
+
+  @param Conv Conversion factor
+  specific information needed for the operation
+  @param filePathDir Directory where times series formatted for SWMM 5 will
+  be saved
+------------------------------------------------------------------------------- }
 procedure finalizeExport(pMapData: ParameterMapRecord;
   var fwCtrlFileData: FWCtrlMetadataRecord);
 
-/// <summary>
-/// Inspects portions of the SWMM 5 input file to see if entries pertaining
-/// to the framwork time series that is being exported already exist in the
-/// SWMM input file
-/// </summary>
-/// <param name="tsBlockInsertPosition">
-/// searches the contents of the SWMM 5 input file from this point forward
-/// </param>
-/// <param name="TSList">
-/// Saved list of SWMM 5 time series names to check for against SWMM 5 input
-/// file for duplicates
-/// </param>
-/// <param name="NewFileContentsList">
-/// Contents of the SWMM 5 input file receiving the export from the framework
-/// </param>
-/// <param name="tsName">
-/// Name of the current time series for which the duplicate check is being
-/// executed
-/// </param>
-/// <returns>
-/// Returns 0 if no duplicates and position of duplicate otherwise
-/// </returns>
+{*------------------------------------------------------------------------------
+  Inspects portions of the SWMM 5 input file to see if entries pertaining
+  to the framwork time series that is being exported already exist in the
+  SWMM input file
+
+  @param tsBlockInsertPosition arches the contents of the SWMM 5 input file
+  from this point forward
+  @param TSList Saved list of SWMM 5 time series names to check for against
+  SWMM 5 input file for duplicates
+  @param NewFileContentsList Contents of the SWMM 5 input file receiving the
+  export from the framework
+  @param tsName Name of the current time series for which the duplicate check
+  is being
+  @return Returns 0 if no duplicates and position of duplicate otherwise
+------------------------------------------------------------------------------- }
 function checkForDuplicateTS(tsBlockInsertPosition: Integer;
   TSList: TStringList; NewFileContentsList: TStringList;
   tsName: string): Integer;
 
-/// <summary>
-/// Updates a SWMM 5 input file by writting TIMESERIES and INFLOWS block ///
-/// entries that associated exported framework timeseries with the ///
-/// appropriate SWMM node and point SWMM to the external exported time series
-/// /// files
-/// </summary>
-/// <param name="ConvertedFWTSArr">
-/// array of converted framework time series
-/// </param>
-/// <param name="origSWMMInputFilePath">
-/// path to the original SWMM 5 input file to be edited and saved as a new
-/// file
-/// </param>
-/// <param name="newSWMMInputFilePath">
-/// path to new file to be created from modified original SWMM 5 input file
-/// to be edited
-/// </param>
-/// ///	<returns>
-/// Returns path to modified SWMM 5 input file saved to a new location
-/// </returns>
+{*------------------------------------------------------------------------------
+  Updates a SWMM 5 input file by writting TIMESERIES and INFLOWS block
+  entries that associated exported framework timeseries with the
+  appropriate SWMM node and point SWMM to the external exported time series
+
+  @param ConvertedFWTSArr array of converted framework time series
+  @param origSWMMInputFilePath path to the original SWMM 5 input file to be
+  edited and saved as a new file
+  @param newSWMMInputFilePath path to new file to be created from modified 
+  original SWMM 5 input file to be edited
+  @return Returns path to modified SWMM 5 input file saved to a new location
+------------------------------------------------------------------------------- }
 function updateSWMMInputFile(swmmFileContentsList: TStringList;
   pMapData: ParameterMapRecord;
   var fwCtrlFileData: FWCtrlMetadataRecord): string;

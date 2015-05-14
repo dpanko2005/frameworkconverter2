@@ -1,3 +1,13 @@
+{*------------------------------------------------------------------------------
+  DDelphi Pascal unit containing various utility functions, and records,
+  primarily used for reading and writting input/output files for the framework
+
+  @unit:    FWIO.pas
+  @project: WERF Framework - SWMM Converter
+  @version: 2.0
+  @date:    2/28/2014
+  @author:  Gesoyntec (D. Pankani)
+------------------------------------------------------------------------------- }
 unit FWIO;
 
 interface
@@ -6,79 +16,250 @@ uses
   Classes, DateUtils, SysUtils, StrUtils, Variants, SWMMIO, Windows,
   ConverterErrors;
 
+
 type
+{*------------------------------------------------------------------------------
+  Data structure for holding groupname input variables read in from
+  groupnames.txt
+
+-------------------------------------------------------------------------------}
   GroupNames = record
     // converted framework groupnames.txt contents data structure
-    startDate, endDate: TDateTime;
+{*------------------------------------------------------------------------------
+  groupnames.txt contents start date
+-------------------------------------------------------------------------------}
+    startDate: TDateTime;
+{*------------------------------------------------------------------------------
+  groupnames.txt contents end date
+-------------------------------------------------------------------------------}
+    endDate: TDateTime;
+{*------------------------------------------------------------------------------
+  list of swmm output file paths to be processed
+-------------------------------------------------------------------------------}
     fileNames: TStringList;
   end;
 
+
 type
-  // converted framework timeseries data structure
+{*------------------------------------------------------------------------------
+  Data structure for holding control input variables read in from text input
+  files.
+-------------------------------------------------------------------------------}
   FWCtrlMetadataRecord = record
-    sourceFilePath, scratchFilePath, scratchControlFilePath, tsNodeName,
+    // converted framework timeseries data structure
+    //sourceFilePath, scratchFilePath, scratchControlFilePath, tsNodeName,
+    //  description: string;
+{*------------------------------------------------------------------------------
+  File path of the framework control file
+-------------------------------------------------------------------------------}
+      sourceFilePath: string;
+{*------------------------------------------------------------------------------
+  scratch file path
+-------------------------------------------------------------------------------}
+      scratchFilePath: string;
+{*------------------------------------------------------------------------------
+  scratch control file path
+-------------------------------------------------------------------------------}
+      scratchControlFilePath: string;
+{*------------------------------------------------------------------------------
+  desired timeseries node name
+-------------------------------------------------------------------------------}
+      tsNodeName: string;
+{*------------------------------------------------------------------------------
+  framework control file description entry
+-------------------------------------------------------------------------------}
       description: string;
-    flowConvFactor, endHourFrac, startHourFrac, userStartHourFrac,
+    //flowConvFactor, endHourFrac, startHourFrac, userStartHourFrac,
+    //  userEndHourFrac: double;
+
+
+{*------------------------------------------------------------------------------
+  framework flow conversion factor
+-------------------------------------------------------------------------------}
+      flowConvFactor: double;
+{*------------------------------------------------------------------------------
+  framework timespan end hour fraction
+-------------------------------------------------------------------------------}
+      endHourFrac: double;
+{*------------------------------------------------------------------------------
+  framework timespan start hour fraction
+-------------------------------------------------------------------------------}
+      startHourFrac: double;
+{*------------------------------------------------------------------------------
+  framework timespan user start hour fraction
+-------------------------------------------------------------------------------}
+      userStartHourFrac: double;
+{*------------------------------------------------------------------------------
+  framework timespan user end hour fraction
+-------------------------------------------------------------------------------}
       userEndHourFrac: double;
+
     // swmm time series timespan variables
-    startDate, endDate: TDateTime;
-    startYear, startMonth, startDay: integer;
-    endYear, endMonth, endDay: integer;
-    // user specified timespan variables
-    userStartYear, userStartMonth, userStartDay: integer;
-    userEndYear, userEndMonth, userEndDay: integer;
+{*------------------------------------------------------------------------------
+  swmm time series timespan - start date
+-------------------------------------------------------------------------------}
+    startDate: TDateTime;
+{*------------------------------------------------------------------------------
+  swmm time series timespan - end date
+-------------------------------------------------------------------------------}
+    endDate: TDateTime;
+
+{*------------------------------------------------------------------------------
+  swmm time series timespan - start year
+-------------------------------------------------------------------------------}
+    startYear: integer;
+{*------------------------------------------------------------------------------
+  swmm time series timespan - start month
+-------------------------------------------------------------------------------}
+    startMonth: integer;
+{*------------------------------------------------------------------------------
+  swmm time series timespan - start day
+-------------------------------------------------------------------------------}
+    startDay: integer;
+{*------------------------------------------------------------------------------
+  swmm time series timespan - end year
+-------------------------------------------------------------------------------}
+    endYear : integer;
+{*------------------------------------------------------------------------------
+  swmm time series timespan - end month
+-------------------------------------------------------------------------------}
+    endMonth: integer;
+{*------------------------------------------------------------------------------
+  swmm time series timespan - end day
+-------------------------------------------------------------------------------}
+    endDay: integer;
+
+{*------------------------------------------------------------------------------
+  user specified timespan - start year
+-------------------------------------------------------------------------------}
+    userStartYear: integer;
+{*------------------------------------------------------------------------------
+  user specified timespan - start month
+-------------------------------------------------------------------------------}
+    userStartMonth: integer;
+{*------------------------------------------------------------------------------
+  user specified timespan - start day
+-------------------------------------------------------------------------------}
+    userStartDay: integer;
+{*------------------------------------------------------------------------------
+  user specified timespan - end day
+-------------------------------------------------------------------------------}
+    userEndDay: integer;
+{*------------------------------------------------------------------------------
+  user specified timespan - end month
+-------------------------------------------------------------------------------}
+    userEndMonth: integer;
+{*------------------------------------------------------------------------------
+  user specified timespan - end year
+-------------------------------------------------------------------------------}
+    userEndYear: integer;
+{*------------------------------------------------------------------------------
+  SWMM simulation reporting timestep
+-------------------------------------------------------------------------------}
     swmmReportTimestepSecs: integer;
+{*------------------------------------------------------------------------------
+  SWMM simulation timestep
+-------------------------------------------------------------------------------}
     numberOfTimesteps: long;
-    fwTimeSeries, swmmTSFilePaths: TStringList;
-    swmmTimeSeries: TArray<TStringList>; // holds converted swmm TS
-    fwTimeSeriesNames: TStringList // holds fw TS names in order of scratchfile
+{*------------------------------------------------------------------------------
+  Framework timeseries
+-------------------------------------------------------------------------------}
+    fwTimeSeries: TStringList;
+{*------------------------------------------------------------------------------
+  SWMM timeseries file paths
+-------------------------------------------------------------------------------}
+    swmmTSFilePaths: TStringList;
+{*------------------------------------------------------------------------------
+  holds converted swmm timeseries
+-------------------------------------------------------------------------------}
+    swmmTimeSeries: TArray<TStringList>;
+{*------------------------------------------------------------------------------
+  holds fw TS names in order of scratchfile
+-------------------------------------------------------------------------------}
+    fwTimeSeriesNames: TStringList
     end;
 
+
   type
-    // converted framework timeseries data structure
+{*------------------------------------------------------------------------------
+  Data structure for holding a converted framework timeseries.
+-------------------------------------------------------------------------------}
     ParameterMapRecord = record
+{*------------------------------------------------------------------------------
+  Number of entries in the record.
+-------------------------------------------------------------------------------}
       numberOfEntries: integer;
-      fwNames, swmmNames: TStringList;
+{*------------------------------------------------------------------------------
+  List of framework parameter names, each one has a corresponding swmm parameter
+  name
+-------------------------------------------------------------------------------}
+      fwNames: TStringList;
+{*------------------------------------------------------------------------------
+  List of SWMM parameter names, each one has a corresponding framework parameter
+  name
+-------------------------------------------------------------------------------}
+      swmmNames: TStringList;
+{*------------------------------------------------------------------------------
+  Framework to swmm conversion factors
+-------------------------------------------------------------------------------}
       convFactors: TArray<double>;
+{*------------------------------------------------------------------------------
+  Factors for future features not currently used
+-------------------------------------------------------------------------------}
       futureFactors: TArray<double>; // not used in current version
     end;
 
-    /// <summary>
-    /// Function for reading contents of framework control scratch file. Outputs
-    /// a structured representation of the contents of the framework control
-    /// scratch file
-    /// </summary>
-    /// <param name="fwCtrlFilePath">
-    /// full path to the framework control scratch file to be read
-    /// </param>
-    /// <returns>
-    /// Structured record data structure with contents of the framework control
-    /// file
-    /// </returns>
-    // function Read(fwCtrlFilePath: string): FWCtrlMetadataRecord;
+  {*------------------------------------------------------------------------------
+    Function to write a framework control scratch file to disc as text file.
+    Also writes the framework timeseries reference in the file to disc
 
-    /// <summary>
-    /// Function to write a framework control scratch file to disc as text file. Also writes the framework
-    /// timeseries reference in the file to disc
-    /// </summary>
-    /// <param name="FWCtrlRecord">
-    /// Data structure for holding contents of framework control file. Has
-    /// properties that map to the various options in the framework scratch file
-    /// </param>
-    /// <returns>
-    /// True if write operation is successful
-    /// </returns>
-    /// <remarks>
-    /// None
-    /// </remarks>
+    @param Data structure for holding contents of framework control file. Has
+    properties that map to the various options in the framework scratch file
+    @param desiredExt Desired extention to check the file path for
+    @return TRUE if write operation is successful, FALSE otherwise
+  ------------------------------------------------------------------------------- }
   function writeFWControlMetadataFile(FWCtrlRecord
     : FWCtrlMetadataRecord): Boolean;
+
+  {*------------------------------------------------------------------------------
+    Reads framework group names from group names file on disc
+
+    @return GroupNames record if successful and nothing otherwise
+  ------------------------------------------------------------------------------- }
   function readGroupNames(): GroupNames;
+
+  {*------------------------------------------------------------------------------
+    Reads framework control file from disc
+
+    @return FWCtrlMetadataRecord record if successful and nothing otherwise
+  ------------------------------------------------------------------------------- }
   function readFWControlMetadataFile(): FWCtrlMetadataRecord;
+
+  {*------------------------------------------------------------------------------
+    Reads framework parmeter file from disc
+
+    @return ParameterMapRecord record if successful and nothing otherwise
+  ------------------------------------------------------------------------------- }
   function readFWParameterMapFile(): ParameterMapRecord;
+
+  {*------------------------------------------------------------------------------
+    Reads framework timeseries file for subsequent conversion into other forms
+
+    @param pMapData ParameterMapRecord that maps framework constituents to SWMM
+    constituents
+    @param fwCtrlFileData record holding Framework control file inputs
+    @return FWCtrlMetadataRecord record if successful and nothing otherwise
+  ------------------------------------------------------------------------------- }
   function readInFrameworkTSFile(pMapData: ParameterMapRecord;
     fwCtrlFileData: FWCtrlMetadataRecord): FWCtrlMetadataRecord;
-  function readSWMMInputFile(swmmInputFilePath:String): TStringList;
+
+  {*------------------------------------------------------------------------------
+    Reads in SWMM input file
+
+    @param swmmInputFilePath path to SWMM input file on disc
+    @return Stringlist containing lines of text from SWMM input file
+  ------------------------------------------------------------------------------- }
+  function readSWMMInputFile(swmmInputFilePath: String): TStringList;
 
 implementation
 
@@ -96,7 +277,6 @@ begin
         FWCtrlRecord.description := 'Converted from SWMM 5';
 
       // add structured data record contents as an ordered set of entries
-      // FileContentsList.Add('''' + FWCtrlRecord.scratchFilePath + '''');
       FileContentsList.Add('''' + FWCtrlRecord.sourceFilePath + '''');
       FileContentsList.Add('''' + FWCtrlRecord.tsNodeName + '''');
       FileContentsList.Add(Format('''%d'',''%d'',''%d''',
@@ -107,9 +287,6 @@ begin
         FWCtrlRecord.userEndDay]));
       // number of custom strings following this line - currently 0 for SWMM converter
       FileContentsList.Add('0');
-      // FileContentsList.Add(FloatToStr(FWCtrlRecord.convFactor));
-      // FileContentsList.Add(IntToStr(FWCtrlRecord.numPolls) + '''');
-      // FileContentsList.Add(FWCtrlRecord.description);
       FileContentsList.Add(IntToStr(FWCtrlRecord.userStartYear));
       FileContentsList.Add(IntToStr(FWCtrlRecord.userStartMonth));
       FileContentsList.Add(IntToStr(FWCtrlRecord.userStartDay));
@@ -128,8 +305,6 @@ begin
       end;
 
       // save the framework control metadata scratchfile
-      { fwControlFilePath := ExtractFilePath(FWCtrlRecord.scratchFilePath) +
-        'swmmconvertstring.txt'; }
       saveTextFileToDisc(FileContentsList,
         FWCtrlRecord.scratchControlFilePath, true);
     end;
@@ -216,7 +391,7 @@ begin
   end;
 end;
 
-function readSWMMInputFile(swmmInputFilePath:String): TStringList;
+function readSWMMInputFile(swmmInputFilePath: String): TStringList;
 var
   FileContentsList: TStringList;
 begin
@@ -244,7 +419,6 @@ begin
     Rslt.sourceFilePath := AnsiDequotedStr(FileContentsList[0], '''');
 
     // SWMMFileContentsList.LoadFromFile(Rslt.sourceFilePath);
-    // Rslt.SWMMFileContentsList := SWMMFileContentsList;
     // store scratchfile path for convenience
     Rslt.scratchFilePath := SWMMIO.workingDir + SWMMIO.fileNameScratch;
     // store scratch control file path for convenience
@@ -287,8 +461,6 @@ var
   j: integer;
 begin
   FileContentsList := TStringList.Create;
-  // tempStrList := TStringList.Create;
-  // errorsList := TStringList.Create;
   fwCtrlFileData.fwTimeSeriesNames := TStringList.Create;
 
   { First check if the file exists. }
@@ -321,8 +493,7 @@ begin
         begin
           // split line, extract FLOW and other constituent names
           TempTokens.DelimitedText := strLine;
-          // strLine := StringReplace(strLine, '##', '', [rfReplaceAll]);
-          // ExtractStrings([','], [], PChar(strLine), tempStrList);
+
           // FLOW starts at index 4 in scratch file
           for I := 5 to TempTokens.Count - 1 do
             fwCtrlFileData.fwTimeSeriesNames.Add(TempTokens[I]);
@@ -331,8 +502,6 @@ begin
         // ignore comment lines
         if (Pos('#', strLine) < 1) and (Length(strLine) > 1) then
         begin
-          // tempStrList.Clear();
-          // ExtractStrings([','], [], PChar(strLine), tempStrList);
           TempTokens.DelimitedText := strLine;
           tempTimeVal := StrToFloat(TempTokens[3]);
           tempTimeStr := FloatToStr(int(tempTimeVal)) + ':' +

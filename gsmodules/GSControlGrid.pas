@@ -1,5 +1,14 @@
 // adapted from http://delphi.xcjc.net/viewthread.php?tid=44064
+{*------------------------------------------------------------------------------
+  Delphi Pascal unit containing custom stringgrid that allows a combobox to be
+  created in a cell
 
+  @unit:    GSControlGrid.pas
+  @project: WERF Framework - SWMM Converter
+  @version: 2.0
+  @date:    2/28/2014
+  @author:  Gesoyntec (D. Pankani)
+------------------------------------------------------------------------------- }
 unit GSControlGrid;
 
 interface
@@ -8,26 +17,80 @@ uses
   Windows, Messages, SysUtils, Classes, Graphics, Controls, Forms, Dialogs,
   Grids, stdctrls;
 
+{*------------------------------------------------------------------------------
+  Custom class derived from TStringGrid used in the GUI to create comboboxes
+  within TStringGrids
+
+-------------------------------------------------------------------------------}
 type
+{*------------------------------------------------------------------------------
+  Custom class derived from TStringGrid used in the GUI to create comboboxes
+  within TStringGrids
+-------------------------------------------------------------------------------}
   TGSControlGrid = class(TStringGrid)
   private
+{*------------------------------------------------------------------------------
+  Combobox to be drawn in string grid
+-------------------------------------------------------------------------------}
     fComboBox: TCombobox;
+{*------------------------------------------------------------------------------
+  Handles messages sent to control
+  @param msg message sent to the control
+-------------------------------------------------------------------------------}
     Procedure WMCommand(var msg: TWMCommand); message WM_COMMAND;
+
+  {*------------------------------------------------------------------------------
+    Double-click handler override
+
+  ------------------------------------------------------------------------------- }
     procedure DblClick; override;
+
+  {*------------------------------------------------------------------------------
+    Click handler override
+
+  ------------------------------------------------------------------------------- }
     procedure Click; override;
+
+  {*------------------------------------------------------------------------------
+    Draws combobox at location specified by selection
+
+  ------------------------------------------------------------------------------- }
     procedure RelocateComboBox;
+
+  {*------------------------------------------------------------------------------
+    Hides the combobox
+
+  ------------------------------------------------------------------------------- }
     procedure HideCombobox;
 
+
   protected
+  {*------------------------------------------------------------------------------
+    Keypress handler override
+
+    @param Key key that was pressed
+  ------------------------------------------------------------------------------- }
     procedure KeyPress(var Key: Char); override;
 
   public
+  {*------------------------------------------------------------------------------
+    Class constructor
+
+    @param AOWner class owner
+  ------------------------------------------------------------------------------- }
     Constructor Create(AOWner: TComponent); override;
+
+  {*------------------------------------------------------------------------------
+    Class destructor
+  ------------------------------------------------------------------------------- }
     Destructor Destroy; override;
 
   published
   end;
 
+{*------------------------------------------------------------------------------
+  Procedure to register the component
+-------------------------------------------------------------------------------}
 procedure Register;
 
 implementation

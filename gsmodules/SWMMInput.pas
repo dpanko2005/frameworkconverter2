@@ -9,6 +9,17 @@
 { binary file and formats it for use in the the Framework. }
 { ------------------------------------------------------------------- }
 
+{*------------------------------------------------------------------------------
+  DDelphi Pascal unit containing various utility functions, global variables
+  and constants, primarily used for converting timeseries
+  from the SWMM5 to the framework
+
+  @unit:    SWMMInput.pas
+  @project: WERF Framework - SWMM Converter
+  @version: 2.0
+  @date:    2/28/2014
+  @author:  Gesoyntec (D. Pankani)
+------------------------------------------------------------------------------- }
 unit SWMMInput;
 
 interface
@@ -16,100 +27,65 @@ interface
 uses
   Windows, Messages, SysUtils, DateUtils, Variants, Classes, StrUtils, SWMMIO, ComCtrls, Vcl.Forms, FWIO, ConverterErrors;
 
-// var
-// errorsList: TStringList;
+{*------------------------------------------------------------------------------
+  Command line version of function that takes timeseries from SWMM into the
 
-/// <summary>
-/// Command line version of function that takes timeseries from SWMM into the
-/// framework
-/// </summary>
-/// <param name="MTAFilePath">
-/// Path to SWMM 5 control file with user options for the conversions
-/// </param>
-/// <returns>
-/// Returns 1 if the operation was successful
-/// </returns>
+  @param MTAFilePath Path to SWMM 5 control file with user options for the
+  conversions
+  @return Returns 1 if the operation was successful
+------------------------------------------------------------------------------- }
 function consoleImportFromSWMMToFW(MTAFilePath: string): Integer;
 
-/// <summary>
-/// Function to read computed results for a single node at a specific time
-/// period or time step
-/// </summary>
-/// <param name="period">
-/// Time period or time step for which node results will be read
-/// </param>
-/// <param name="nodeIndex">
-/// Array index of node for which node results will be read
-/// </param>
-/// <param name="numNodeResults">
-/// Total number of node results to be read
-/// </param>
-/// <param name="numSubCatchs">
-/// Total number of subcatchments for which results are saved
-/// </param>
-/// <param name="numSubCatchRslts">
-/// Total number of types of subcatchment results saved by the simulation
-/// </param>
-/// <param name="outputStartPos">
-/// Binary file position to begin reading from
-/// </param>
-/// <param name="bytesPerPeriod">
-/// Number of bytes save to binary file for each time period or time step of
-/// the simulation
-/// </param>
-/// <param name="Reader">
-/// File stream reader
-/// </param>
-/// <returns>
-/// Array of node results for the desired time period or time step
-/// </returns>
+{*------------------------------------------------------------------------------
+  Function to read computed results for a single node at a specific time
+  period or time step
+
+  @param period Time period or time step for which node results will be read
+  @param nodeIndex Array index of node for which node results will be read
+  @param numNodeResults Total number of node results to be read
+  @param numSubCatchs Total number of subcatchments for which results are saved
+  @param numSubCatchRslts Total number of types of subcatchment results saved
+  by the simulation
+  @param outputStartPos Binary file position to begin reading from
+  @param bytesPerPeriod Number of bytes save to binary file for each time period
+  or time step of the simulation
+  @param Reader File stream reader
+  @return Array of node results for the desired time period or time step
+------------------------------------------------------------------------------- }
 function output_readNodeResults(period: Integer; nodeIndex: Integer;
   numNodeResults: Integer; numSubCatchs: Integer; numSubCatchRslts: Integer;
   outputStartPos: Integer; bytesPerPeriod: Integer; Reader: TBinaryReader)
   : TArray<single>;
 
-/// <summary>
-/// Function to read SWMM node results from SWMM 5 binary results file for
-/// flow and all framework pollutants. Framework pollutants without matching
-/// SWMM pollutants are filled in with 0s
-/// </summary>
-/// <param name="SWMMFilePath">
-/// Path to binary SWMM 5 output file
-/// </param>
-/// <param name="nodeName">
-/// SWMM5 node name for which results will be extracted
-/// </param>
-/// <param name="selectedConstituentRecs">
-/// Data strucutre of constituents and user selected options
-/// </param>
-/// <returns>
-/// Framework record / data structure to hold extracted result and timeseiries
-/// </returns>
-{ function getSWMMNodeResults(SWMMFilePath: string; nodeName: string;
-  selectedConstituentRecs: ParameterMapRecord): FWCtrlScratchRecord; }
+{*------------------------------------------------------------------------------
+  Function to read SWMM node results from SWMM 5 binary results file for
+  flow and all framework pollutants. Framework pollutants without matching
+  SWMM pollutants are filled in with 0s
+
+  @param SWMMFilePath Path to binary SWMM 5 output file
+  @param nodeName SWMM5 node name for which results will be extracted
+  @param selectedConstituentRecs Data strucutre of constituents and user
+  selected options
+  @return FWCtrlMetadataRecord Framework record / data structure to hold
+  extracted result and timeseiries
+------------------------------------------------------------------------------- }
 function getSWMMNodeResults(SWMMFilePath: string; nodeName: string;
   selectedConstituentRecs: ParameterMapRecord; FWCtrlRec: FWCtrlMetadataRecord)
   : FWCtrlMetadataRecord;
 
-/// <summary>
-/// Wrapper function that processes conversions from SWMM to the framework
-/// </summary>
-/// <param name="SWMMFilePath">
-/// Path to binary SWMM 5 output file
-/// </param>
-/// <param name="fwTSFileToCreatePath">
-/// Path to the location where the resulting framework timeseries will be
-/// created
-/// </param>
-/// <param name="nodeName">
-/// Name of node for which results will be extracted
-/// </param>
-/// <param name="selectedConstituentRecs">
-/// Data strucutre of constituents and user selected options
-/// </param>
-/// <returns>
-/// Framework record / data structure to hold extracted result and timeseiries
-/// </returns>
+{*------------------------------------------------------------------------------
+  Wrapper function that processes conversions from SWMM to the framework
+  Also writes the framework timeseries reference in the file to disc
+
+  @param SWMMFilePath Path to binary SWMM 5 output file
+  @param fwTSFileToCreatePath Path to the location where the resulting framework
+  timeseries will be created
+  @param nodeName Name of node for which results will be extracted
+  @param selectedConstituentRecs Data strucutre of constituents and user
+  selected options
+  @return FWCtrlMetadataRecord Framework record / data structure to hold
+  extracted result and timeseiries
+------------------------------------------------------------------------------- }
 function importFromSWMMToFW(SWMMFilePath: string; fwTSFileToCreatePath: string;
   nodeName: string; selectedConstituentRecs: ParameterMapRecord;
   FWCtrlRec: FWCtrlMetadataRecord): FWCtrlMetadataRecord;
