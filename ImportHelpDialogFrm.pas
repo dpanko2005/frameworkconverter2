@@ -2,11 +2,11 @@
 {*------------------------------------------------------------------------------
   Delphi Pascal unit containing code for dialog that displays help
 
-  @unit:    ImportHelpDialogFrm.pas
-  @project: WERF Framework - SWMM Converter
-  @version: 2.0
-  @date:    2/28/2014
-  @author:  Gesoyntec (D. Pankani)
+  @Unit    ImportHelpDialogFrm.pas
+  @Project WERF Framework - SWMM Converter
+  @Version 2.0
+  @Date    2/28/2014
+  @Author  Gesoyntec Consultants Inc (D. Pankani)
 ------------------------------------------------------------------------------- }
 unit ImportHelpDialogFrm;
 

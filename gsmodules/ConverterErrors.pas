@@ -2,11 +2,11 @@
   Delphi Pascal unit containing various utility functions related to error
   message handling, display and serialization
 
-  @unit:    FWIO.pas
-  @project: WERF Framework - SWMM Converter
-  @version: 2.0
-  @date:    2/28/2014
-  @author:  Gesoyntec (D. Pankani)
+  @Unit    FWIO.pas
+  @Project WERF Framework - SWMM Converter
+  @Version 2.0
+  @Date    2/28/2014
+  @Author  Gesoyntec Consultants Inc (D. Pankani)
 ------------------------------------------------------------------------------- }
 
 unit ConverterErrors;

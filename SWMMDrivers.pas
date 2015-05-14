@@ -1,22 +1,12 @@
-{ ------------------------------------------------------------------- }
-{ Unit:    SWMMDrivers.pas }
-{ Project: WERF Framework - SWMM Converter }
-{ Version: 2.0 }
-{ Date:    2/28/2014 }
-{ Author:  Gesoyntec (D. Pankani) }
-{ }
-{ Delphi Pascal unit that for the main interface GUI that }
-{ ------------------------------------------------------------------- }
-
 {*------------------------------------------------------------------------------
   Delphi Pascal unit containing code for the primary user interface for
-  exporting and importing timeseries from SWMM
+  exporting and importing timeseries to and from SWMM
 
-  @unit:    SWMMDrivers.pas
-  @project: WERF Framework - SWMM Converter
-  @version: 2.0
-  @date:    2/28/2014
-  @author:  Gesoyntec (D. Pankani)
+  @Unit    SWMMDrivers.pas
+  @Project WERF Framework - SWMM Converter
+  @Version 2.0
+  @Date    2/28/2014
+  @Author  Gesoyntec Consultants Inc (D. Pankani)
 ------------------------------------------------------------------------------- }
 unit SWMMDrivers;
 

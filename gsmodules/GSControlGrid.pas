@@ -1,13 +1,13 @@
 // adapted from http://delphi.xcjc.net/viewthread.php?tid=44064
 {*------------------------------------------------------------------------------
-  Delphi Pascal unit containing custom stringgrid that allows a combobox to be
+  Delphi Pascal unit containing custom string grid that allows a combobox to be
   created in a cell
 
-  @unit:    GSControlGrid.pas
-  @project: WERF Framework - SWMM Converter
-  @version: 2.0
-  @date:    2/28/2014
-  @author:  Gesoyntec (D. Pankani)
+  @Unit    GSControlGrid.pas
+  @Project WERF Framework - SWMM Converter
+  @Version 2.0
+  @Date    2/28/2014
+  @Author  Gesoyntec Consultants Inc (D. Pankani)
 ------------------------------------------------------------------------------- }
 unit GSControlGrid;
 

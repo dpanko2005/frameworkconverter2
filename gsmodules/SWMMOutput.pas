@@ -11,15 +11,14 @@
 { ------------------------------------------------------------------- }
 
 {*------------------------------------------------------------------------------
-  DDelphi Pascal unit containing various utility functions, global variables
-  and constants, primarily used for converting timeseries from the framework
-  to SWMM5
+  Delphi Pascal unit containing various utility functions primarily used for
+  converting timeseries from the framework format into SWMM5
 
-  @unit:    SWMMOutput.pas
-  @project: WERF Framework - SWMM Converter
-  @version: 2.0
-  @date:    2/28/2014
-  @author:  Gesoyntec (D. Pankani)
+  @Unit    SWMMOutput.pas
+  @Project WERF Framework - SWMM Converter
+  @Version 2.0
+  @Date    2/28/2014
+  @Author  Gesoyntec Consultants Inc (D. Pankani)
 ------------------------------------------------------------------------------- }
 unit SWMMOutput;
 

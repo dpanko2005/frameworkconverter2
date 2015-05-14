@@ -1,12 +1,12 @@
 {*------------------------------------------------------------------------------
-  DDelphi Pascal unit containing various utility functions, and records,
+  Delphi Pascal unit containing various utility functions, and records,
   primarily used for reading and writting input/output files for the framework
 
-  @unit:    FWIO.pas
-  @project: WERF Framework - SWMM Converter
-  @version: 2.0
-  @date:    2/28/2014
-  @author:  Gesoyntec (D. Pankani)
+  @unit    FWIO.pas
+  @project WERF Framework - SWMM Converter
+  @version 2.0
+  @date    2/28/2014
+  @Author  Gesoyntec Consultants Inc (D. Pankani)
 ------------------------------------------------------------------------------- }
 unit FWIO;
 
