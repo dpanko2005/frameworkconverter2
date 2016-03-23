@@ -1,14 +1,4 @@
-'C:\Framework\Demo\versionMay2014\RockCreekDemo.inp'
-'Outfall'
-'1991','10','11'
-'1991','12','1'
-0
-1991
-11
-11
-0
-1991
-12
-1
-0
-76344
+C:\Data\FRAMEWORK\Utilities\Converters\SWMM5\RockCreekDemo.inp
+Outfall
+'1991',' 8',' 1'
+'1992','12','31'

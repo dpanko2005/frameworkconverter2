@@ -10,85 +10,90 @@
 { in SWMM input file }
 { ------------------------------------------------------------------- }
 
-{*------------------------------------------------------------------------------
-  Delphi Pascal unit containing various utility functions primarily used for
-  converting timeseries from the framework format into SWMM5
-
-  @Unit    SWMMOutput.pas
-  @Project WERF Framework - SWMM Converter
-  @Version 2.0
-  @Date    2/28/2014
-  @Author  Gesoyntec Consultants Inc (D. Pankani)
-------------------------------------------------------------------------------- }
 unit SWMMOutput;
 
 interface
 
 uses
   Windows, Messages, SysUtils, Variants, Classes, StrUtils, SWMMIO,
-  ConverterErrors,FWIO,ComCtrls;
+  ConverterErrors, FWIO, ComCtrls;
 
 var
-{*------------------------------------------------------------------------------
-  Data structure for holding list of SWMM IDs/names for timeseries, inflows,
-  pollutants and node blocks
-------------------------------------------------------------------------------- }
   swmmIDsListArr: TArray<TStringList>;
 
-{*------------------------------------------------------------------------------
-  Command line version of function that takes timeseries from the framework
-  into SWMM 5
-
-  @param MTAFilePath The SWMM 5 converter control file path that contains SWMM
-  specific information needed for the operation
-  @return Returns 1 if operation was successful, 0 if operation had to be
-  abandoned
-------------------------------------------------------------------------------- }
+  /// <summary>
+  /// Command line version of function that takes timeseries from the framework
+  /// into SWMM 5
+  /// </summary>
+  /// <param name="MTAFilePath">
+  /// The SWMM 5 converter control file path that contains SWMM specific
+  /// information needed for the operation
+  /// </param>
+  /// <returns>
+  /// Returns 1 if operation was successful; 0 if operation had to be abandoned
+  /// due to an error or missing data
+  /// </returns>
 function consoleExportFromFWToSWMM(MTAFilePath: string): Integer;
 
-{*------------------------------------------------------------------------------
-  Function that finalizes the export from the framework to SWMM by writing
-  time series to disc that are formatted for use in SWMM 5
-
-  @param Conv Conversion factor
-  specific information needed for the operation
-  @param filePathDir Directory where times series formatted for SWMM 5 will
-  be saved
-------------------------------------------------------------------------------- }
+/// <summary>
+/// Function that finalizes the export from the framework to SWMM by writing
+/// time series to disc that are formatted for use in SWMM 5
+/// </summary>
+/// <param name="Conv">
+/// Conversion factor
+/// </param>
+/// <param name="filePathDir">
+/// Directory where times series formatted for SWMM 5 will be saved
+/// </param>
 procedure finalizeExport(pMapData: ParameterMapRecord;
   var fwCtrlFileData: FWCtrlMetadataRecord);
 
-{*------------------------------------------------------------------------------
-  Inspects portions of the SWMM 5 input file to see if entries pertaining
-  to the framwork time series that is being exported already exist in the
-  SWMM input file
-
-  @param tsBlockInsertPosition arches the contents of the SWMM 5 input file
-  from this point forward
-  @param TSList Saved list of SWMM 5 time series names to check for against
-  SWMM 5 input file for duplicates
-  @param NewFileContentsList Contents of the SWMM 5 input file receiving the
-  export from the framework
-  @param tsName Name of the current time series for which the duplicate check
-  is being
-  @return Returns 0 if no duplicates and position of duplicate otherwise
-------------------------------------------------------------------------------- }
+/// <summary>
+/// Inspects portions of the SWMM 5 input file to see if entries pertaining
+/// to the framwork time series that is being exported already exist in the
+/// SWMM input file
+/// </summary>
+/// <param name="tsBlockInsertPosition">
+/// searches the contents of the SWMM 5 input file from this point forward
+/// </param>
+/// <param name="TSList">
+/// Saved list of SWMM 5 time series names to check for against SWMM 5 input
+/// file for duplicates
+/// </param>
+/// <param name="NewFileContentsList">
+/// Contents of the SWMM 5 input file receiving the export from the framework
+/// </param>
+/// <param name="tsName">
+/// Name of the current time series for which the duplicate check is being
+/// executed
+/// </param>
+/// <returns>
+/// Returns 0 if no duplicates and position of duplicate otherwise
+/// </returns>
 function checkForDuplicateTS(tsBlockInsertPosition: Integer;
   TSList: TStringList; NewFileContentsList: TStringList;
   tsName: string): Integer;
 
-{*------------------------------------------------------------------------------
-  Updates a SWMM 5 input file by writting TIMESERIES and INFLOWS block
-  entries that associated exported framework timeseries with the
-  appropriate SWMM node and point SWMM to the external exported time series
-
-  @param ConvertedFWTSArr array of converted framework time series
-  @param origSWMMInputFilePath path to the original SWMM 5 input file to be
-  edited and saved as a new file
-  @param newSWMMInputFilePath path to new file to be created from modified 
-  original SWMM 5 input file to be edited
-  @return Returns path to modified SWMM 5 input file saved to a new location
-------------------------------------------------------------------------------- }
+/// <summary>
+/// Updates a SWMM 5 input file by writting TIMESERIES and INFLOWS block ///
+/// entries that associated exported framework timeseries with the ///
+/// appropriate SWMM node and point SWMM to the external exported time series
+/// /// files
+/// </summary>
+/// <param name="ConvertedFWTSArr">
+/// array of converted framework time series
+/// </param>
+/// <param name="origSWMMInputFilePath">
+/// path to the original SWMM 5 input file to be edited and saved as a new
+/// file
+/// </param>
+/// <param name="newSWMMInputFilePath">
+/// path to new file to be created from modified original SWMM 5 input file
+/// to be edited
+/// </param>
+/// ///	<returns>
+/// Returns path to modified SWMM 5 input file saved to a new location
+/// </returns>
 function updateSWMMInputFile(swmmFileContentsList: TStringList;
   pMapData: ParameterMapRecord;
   var fwCtrlFileData: FWCtrlMetadataRecord): string;
@@ -152,7 +157,7 @@ begin
     Writeln('Total number of pollutants:' + IntToStr(pMapData.numberOfEntries));
 
     // print all included pollutants to the console
-    for i := 0 + 1 to pMapData.numberOfEntries - 1 do
+    for i := 0 to pMapData.numberOfEntries - 1 do
     begin
       Writeln(Format
         ('Pollutant %d: framework name: %s SWMM name: %s conversion factor: %12.5f',
@@ -163,6 +168,16 @@ begin
     // begin extracting and formatting the framework time series for SWMM 5
     Writeln('Now extracting FW timeseries and formatting for SWMM. Please wait...');
     fwCtrlFileData := FWIO.readInFrameworkTSFile(pMapData, fwCtrlFileData);
+    // report any errors that might have occured during read of fw ts
+    if (ConverterErrors.errorsList.Count > 0) then
+    begin
+      displayErrors();
+      reportErrorsToFW();
+      Writeln('Operation failed.');
+      result := -1;
+      ConverterErrors.errorsList.Free;
+      Exit;
+    end;
 
     // finalize the export by writting the extracted framework time series to disc in SWMM 5 format
     finalizeExport(pMapData, fwCtrlFileData);
@@ -194,6 +209,7 @@ var
   pathPrefix: string;
   pathSuffix: string;
   i, nameIndex: Integer;
+  tempArr: array of string;
 begin
   fwCtrlFileData.swmmTSFilePaths := TStringList.Create();
   // export framework time series are placed in TS direction with the following naming convention
@@ -206,7 +222,9 @@ begin
   pathSuffix := '.dat';
 
   // loop through aray of converted framework time series and write them to disc in format usable in SWMM
-  for i := 0 to pMapData.numberOfEntries - 1 do
+  // for i := 0 to pMapData.numberOfEntries - 1 do
+  SetLength(tempArr, fwCtrlFileData.fwTimeSeriesNames.Count);
+  for i := 0 to fwCtrlFileData.fwTimeSeriesNames.Count - 1 do
   begin
     nameIndex := pMapData.fwNames.IndexOf(fwCtrlFileData.fwTimeSeriesNames[i]);
     if ((nameIndex > -1) and (pMapData.convFactors[nameIndex] <> 0)) then
@@ -216,8 +234,8 @@ begin
       // swmmName := pMapData.fwNames[i];
       // following above name convention for file names, save to TS subdirectory
       filePath := pathPrefix + swmmName + pathSuffix;
-      fwCtrlFileData.swmmTSFilePaths.Add(filePath);
-
+      // fwCtrlFileData.swmmTSFilePaths.Add(filePath);
+      tempArr[nameIndex] := filePath;
       // delegate to SWMMIO to do the actual save operation
       SWMMIO.saveTextFileToDisc(fwCtrlFileData.swmmTimeSeries[i],
         filePath, true);
@@ -226,6 +244,9 @@ begin
     end;
   end;
   // fwCtrlFileData.swmmTSFilePaths.Free;
+  //fwCtrlFileData.swmmTSFilePaths.AddStrings(tempArr);
+  for i := low(tempArr) to high(tempArr) do
+    fwCtrlFileData.swmmTSFilePaths.Add(tempArr[i]);
 end;
 
 function checkForDuplicateTS(tsBlockInsertPosition: Integer;
@@ -348,14 +369,18 @@ begin
 
       tempInt := 0;
       // check for duplicate TIMESERIES block entries in the SWMM file
-      for i := 0 to pMapData.numberOfEntries - 1 do
+      // for i := 0 to pMapData.numberOfEntries - 1 do
+      for i := 0 to fwCtrlFileData.fwTimeSeriesNames.Count - 1 do
       begin
         nameIndex := pMapData.fwNames.IndexOf
           (fwCtrlFileData.fwTimeSeriesNames[i]);
+        // nameIndex := fwCtrlFileData.fwTimeSeriesNames.IndexOf
+        // (pMapData.fwNames[i]);
         if ((nameIndex > -1) and (pMapData.convFactors[nameIndex] <> 0)) then
         begin
-        //tsName := pMapData.swmmNames[i] + 'TS';
+          // tsName := pMapData.swmmNames[i] + 'TS';
           tsName := pMapData.swmmNames[nameIndex] + 'TS';
+          // if (fwCtrlFileData.swmmTSFilePaths[nameIndex] <> '') then
           if (fwCtrlFileData.swmmTSFilePaths[nameIndex] <> '') then
           begin
             duplicateLineNumber := checkForDuplicateTS(tsBlockInsertPosition,
@@ -363,13 +388,16 @@ begin
             if (duplicateLineNumber <> 0) then
             begin
               NewFileContentsList[duplicateLineNumber] := tsName +
-                '      FILE      "' + fwCtrlFileData.swmmTSFilePaths[i] + '"';
+                '      FILE      "' + fwCtrlFileData.swmmTSFilePaths
+                [nameIndex] + '"';
             end
             else
+            begin
               NewFileContentsList.Insert(tsBlockInsertPosition + tempInt,
                 tsName + '      FILE      "' + fwCtrlFileData.swmmTSFilePaths
-                [i] + '"');
-            inc(tempInt);
+                [nameIndex] + '"');
+              inc(tempInt);
+            end;
           end;
         end;
       end;
@@ -412,7 +440,8 @@ begin
       // check for duplicate INFLOW block entries in the SWMM file
       for i := 0 to pMapData.numberOfEntries - 1 do
       begin
-        if (fwCtrlFileData.swmmTSFilePaths[i] <> '') then
+        if ((i < fwCtrlFileData.swmmTSFilePaths.Count) and
+          (fwCtrlFileData.swmmTSFilePaths[i] <> '')) then
         begin
           duplicateLineNumber := checkForDuplicateTS(tsBlockInsertPosition,
             SWMMIO.InflowsList, NewFileContentsList, fwCtrlFileData.tsNodeName +

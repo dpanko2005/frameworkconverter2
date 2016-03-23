@@ -1,0 +1,11 @@
+10
+FLOW
+Ammonia
+BOD5
+Ecoli
+Floatables
+N+N
+TDS
+TOC
+TP
+TSS

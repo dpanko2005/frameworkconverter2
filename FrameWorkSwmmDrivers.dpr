@@ -1,13 +1,3 @@
-{*------------------------------------------------------------------------------
-  Delphi Pascal program for converting SWMM timeseries files back and forth
-  from/to SWMM and the framework and vice versa
-
-  @Unit:    FrameWorkSwmmDrivers.exe
-  @Project: WERF Framework - SWMM Converter
-  @Version: 2.0
-  @Date:    2/28/2014
-  @Author:  Gesoyntec (D. Pankani)
-------------------------------------------------------------------------------- }
 program FrameWorkSwmmDrivers;
 {$IFDEF SWMM_CONSOLE}
 {$APPTYPE CONSOLE}

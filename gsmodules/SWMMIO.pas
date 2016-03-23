@@ -1,298 +1,110 @@
-{*------------------------------------------------------------------------------
-  Delphi Pascal unit containing various utility functions, global variables
-  and constants, primarily used for interacting with SWMM5 input / output
-  files
+{ ------------------------------------------------------------------- }
+{ Unit:    SWMMIO.pas }
+{ Project: WERF Framework - SWMM Converter }
+{ Version: 2.0 }
+{ Date:    2/28/2014 }
+{ Author:  Gesoyntec (D. Pankani) }
+{ }
+{ Delphi Pascal unit containing various utility functions, global variables }
+{ and constants, primarily used for interacting with SWMM5 input / output }
+{ files }
+{ ------------------------------------------------------------------- }
 
-  @Unit    SWMMIO.pas
-  @Project WERF Framework - SWMM Converter
-  @Version 2.0
-  @Date    2/28/2014
-  @Author  Gesoyntec Consultants Inc (D. Pankani)
-------------------------------------------------------------------------------- }
 unit SWMMIO;
 
 interface
 
 uses
+  {Windows, Messages, SysUtils, Variants, Classes, Graphics, Controls, Forms,
+    ConverterErrors,
+    StrUtils, Dialogs, jpeg, ExtCtrls, ComCtrls, StdCtrls, Buttons, DateUtils;}
+
   Windows, Messages, SysUtils, Variants, Classes, Graphics,
   ConverterErrors, StrUtils, DateUtils;
 
-
-
 type
-{*------------------------------------------------------------------------------
-  Data structure for holding converted framwork timeseries
-------------------------------------------------------------------------------- }
   TMTARecord = record // converted framework timeseries data structure
-  {*------------------------------------------------------------------------------
-    timeseries name
-  ------------------------------------------------------------------------------- }
     tsName: string;
-  {*------------------------------------------------------------------------------
-    timeseries node name
-  ------------------------------------------------------------------------------- }
     tsNodeName: string;
-  {*------------------------------------------------------------------------------
-    timeseries type
-  ------------------------------------------------------------------------------- }
     tsType: string; // FLOW or CONCEN
-  {*------------------------------------------------------------------------------
-    timeseries units factor
-  ------------------------------------------------------------------------------- }
     tsUnitsFactor: Double; // default 1.0
-  {*------------------------------------------------------------------------------
-    SWMM constituent name
-  ------------------------------------------------------------------------------- }
     constituentSWMMName: string;
-  {*------------------------------------------------------------------------------
-    framework constituent name
-  ------------------------------------------------------------------------------- }
     constituentFWName: string;
-  {*------------------------------------------------------------------------------
-    conversion factor
-  ------------------------------------------------------------------------------- }
     convFactor: Double; // default 1.0
-  {*------------------------------------------------------------------------------
-    converted timeseries
-  ------------------------------------------------------------------------------- }
     convertedTS: TStringList;
-  {*------------------------------------------------------------------------------
-    converted timeseries filepath
-  ------------------------------------------------------------------------------- }
     convertedTSFilePath: string;
-  {*------------------------------------------------------------------------------
-    current scenario id
-  ------------------------------------------------------------------------------- }
     ModelRunScenarioID: string;
-  {*------------------------------------------------------------------------------
-    SWMM filepath
-  ------------------------------------------------------------------------------- }
     SWMMFilePath: string;
-  {*------------------------------------------------------------------------------
-    temporary filepath
-  ------------------------------------------------------------------------------- }
     scratchFilePath: string;
-{*------------------------------------------------------------------------------
-  mta file path
--------------------------------------------------------------------------------}
-   mtaFilePath: string;
-
+    mtaFilePath: string;
   end;
 
 const
+  //Development computer height - used to scale form resizing
+  devComputerScreenHeight : integer = 768;
   // includes NsubcatchResults,SUBCATCH_RAINFALL,SUBCATCH_SNOWDEPTH,SUBCATCH_LOSSES,SUBCATCH_RUNOFF,SUBCATCH_GW_FLOW,SUBCATCH_GW_ELEV;
-  {*------------------------------------------------------------------------------
-    number of subcatchment variables
-  ------------------------------------------------------------------------------- }
   NUMSUBCATCHVARS: integer = 7;
-
-  {*------------------------------------------------------------------------------
-    minmun water quality flow from swmm
-  ------------------------------------------------------------------------------- }
+  // MIN_WQ_FLOW: Double = 0.001; // minmun water quality flow from swmm
   MIN_WQ_FLOW: Double = 0.00001;
-  {*------------------------------------------------------------------------------
-    SWMM input file block tokens
-  ------------------------------------------------------------------------------- }
   SWMMINPUTTOKENS: array [0 .. 6] of string = ('[DIVIDERS]', '[JUNCTIONS]',
     '[OUTFALLS]', '[STORAGE]', '[POLLUTANTS]', '[TIMESERIES]', '[INFLOWS]');
 
   // SWMM Node results types from enum NodeResultType in SWMM v5.022 enums.h
   // not all being used. Let here for future
-  {*------------------------------------------------------------------------------
-    Node depth
-  ------------------------------------------------------------------------------- }
   NODE_DEPTH: integer = 0; // not used - water depth above invert
-  {*------------------------------------------------------------------------------
-    Node head
-  ------------------------------------------------------------------------------- }
   NODE_HEAD: integer = 1; // not used - hydraulic head
-  {*------------------------------------------------------------------------------
-    Node volume
-  ------------------------------------------------------------------------------- }
   NODE_VOLUME: integer = 2; // not used - volume stored & ponded
-  {*------------------------------------------------------------------------------
-    Node lateral flow
-  ------------------------------------------------------------------------------- }
   NODE_LATFLOW: integer = 3; // not used - lateral inflow rate
-  {*------------------------------------------------------------------------------
-    Node inflow
-  ------------------------------------------------------------------------------- }
   NODE_INFLOW: integer = 4; // *used - total inflow rate
-  {*------------------------------------------------------------------------------
-    Node overflow
-  ------------------------------------------------------------------------------- }
   NODE_OVERFLOW: integer = 5; // not used - overflow rate
-  {*------------------------------------------------------------------------------
-    Node quality
-  ------------------------------------------------------------------------------- }
   NODE_QUAL: integer = 6; // not used - concentration of each pollutant
-  {*------------------------------------------------------------------------------
-    Maximun node results
-  ------------------------------------------------------------------------------- }
+
   MAX_NODE_RESULTS = 7;
-  {*------------------------------------------------------------------------------
-    Maximun subcatchment results
-  ------------------------------------------------------------------------------- }
   MAX_SUBCATCH_RESULTS = 7;
-  {*------------------------------------------------------------------------------
-    Maximun link results
-  ------------------------------------------------------------------------------- }
   MAX_LINK_RESULTS = 6;
-  {*------------------------------------------------------------------------------
-    Maximun system results
-  ------------------------------------------------------------------------------- }
   MAX_SYS_RESULTS = 14;
-  {*------------------------------------------------------------------------------
-    Operating modes
-  ------------------------------------------------------------------------------- }
   opModes: array [0 .. 1] of string = ('SWMM_TO_FW', 'SWMM_FROM_FW');
-  {*------------------------------------------------------------------------------
-    Applicaiton moodes
-  ------------------------------------------------------------------------------- }
   appTypes: array [0 .. 1] of string = ('SWMM_CONSOLE', 'SWMM_GUI');
-  {*------------------------------------------------------------------------------
-    Constituent names
-  ------------------------------------------------------------------------------- }
+  { constituentNames: array [0 .. 7] of string = ('FLOW', 'TSS', 'TP', 'DP',
+    'DZn', 'TZN', 'DCU', 'TCU'); }
   constituentNames: array [0 .. 22] of string = ('Q', 'FC', 'TSS1', 'TSS2',
     'TSS3', 'TSS4', 'TSS5', 'TSS', 'TP', 'TDS', 'POO4', 'NO3', 'LDOM', 'RDOM',
     'LPOM', 'RPOM', 'BOD1', 'ALGAE', 'DO', 'TIC', 'ALK', 'Gen 1', 'NH4');
   // NnodeResults,NODE_DEPTH,NODE_HEAD,NODE_VOLUME,NODE_LATFLOW,NODE_INFLO,NODE_OVERFLOW;
-  {*------------------------------------------------------------------------------
-    Number of node variables
-  ------------------------------------------------------------------------------- }
   NUMNODEVARS: integer = 7;
 
   // NlinkResults,LINK_FLOW,LINK_DEPTH,LINK_VELOCITY,LINK_FROUDE,LINK_CAPACITY;
-  {*------------------------------------------------------------------------------
-    Number of node link variables
-  ------------------------------------------------------------------------------- }
   NUMLINKVARS: integer = 6;
 
   // input/output file names
   // provides FW timespan and hold file paths for batching
-  {*------------------------------------------------------------------------------
-    Groupnames file name
-  ------------------------------------------------------------------------------- }
-  fileNameGroupNames = 'groupnames.txt';
+  fileNameGroupNames = 'GroupNames.txt';
 
-  {*------------------------------------------------------------------------------
-    Parameter names file name
-  ------------------------------------------------------------------------------- }
-  fileNameParamsList = 'params.txt'; // number and list of constituents
-
-  {*------------------------------------------------------------------------------
-    Parameter names matching (framework / SWMM) file name
-  ------------------------------------------------------------------------------- }
-  fileNameParamsMatch = 'parametermap.txt';
+  fileNameParamsList = 'ParameterList.txt'; // number and list of constituents
+  fileNameParamsMatch = 'ParameterMap.txt';
   // mapping of fw constituents to swmm
-
-  {*------------------------------------------------------------------------------
-    Temporary file name
-  ------------------------------------------------------------------------------- }
-  fileNameScratch = 'scratch'; // fw times series file
-
-  {*------------------------------------------------------------------------------
-    Framework control file path
-  ------------------------------------------------------------------------------- }
-  fileNameFWControlFile = 'swmmconvertstrings.txt';
-
+  fileNameScratch = 'Scratch'; // fw times series file
+  fileNameFWControlFile = 'SwmmConvertStrings.txt';
   // fw times series control metatadata file
-  {*------------------------------------------------------------------------------
-    Messages file name
-  ------------------------------------------------------------------------------- }
-  fileNameMessages = 'messages.txt';
+  fileNameMessages = 'Message.txt';
   // communicates successes and errors to framework
 
 var
-  {*------------------------------------------------------------------------------
-    Working directory
-  ------------------------------------------------------------------------------- }
   workingDir: string; // exe folder
-  {*------------------------------------------------------------------------------
-    Filestream position
-  ------------------------------------------------------------------------------- }
   SWMMFileStreamPosition: long;
-  {*------------------------------------------------------------------------------
-    App operating mode SWMM_TO_FW or  SWMM_FROM_FW'
-  ------------------------------------------------------------------------------- }
-  operatingMode: string;
-  {*------------------------------------------------------------------------------
-    App type SWMM_CONSOLE or SWMM_GUI
-  ------------------------------------------------------------------------------- }
-  appType: string;
+  operatingMode: string; // SWMM_TO_FW or  SWMM_FROM_FW'
+  appType: string; // SWMM_CONSOLE or SWMM_GUI
+  // stores existing swmm TS and Inflow block names in swmm inputfile
+  TSList, InflowsList: TStringList;
+  PollList, NodeNameList: TStringList;
+  frameCtrlFilePath, mtaFilePath: string;
 
-  {*------------------------------------------------------------------------------
-    Stores lists of timeseries
-  ------------------------------------------------------------------------------- }
-  TSList: TStringList;
-
-  {*------------------------------------------------------------------------------
-    Stores inflow timeseries lists
-  ------------------------------------------------------------------------------- }
-  InflowsList: TStringList;
-  {*------------------------------------------------------------------------------
-    Stores pollutant list
-  ------------------------------------------------------------------------------- }
-  PollList: TStringList;
-  {*------------------------------------------------------------------------------
-    Stores node names
-  ------------------------------------------------------------------------------- }
-  NodeNameList: TStringList;
-  {*------------------------------------------------------------------------------
-    Framework control file path
-  ------------------------------------------------------------------------------- }
-  frameCtrlFilePath: string;
-  {*------------------------------------------------------------------------------
-    mta file path
-  ------------------------------------------------------------------------------- }
-  mtaFilePath: string;
-
-
-{*------------------------------------------------------------------------------
-  Extracts SWMM node, inflow, timeseries, and pollutant block names or ids
-  ids from the contents of a SWMM input file
-
-  @param swmmFileContentsList SWMM input file previous read into stringlist
-  @return Array of string lists of SWMM various names/IDs
-------------------------------------------------------------------------------- }
 function getSWMMNodeIDsFromTxtInput(swmmFileContentsList: TStringList)
   : TArray<TStringList>;
-
-{*------------------------------------------------------------------------------
-  Extracts SWMM node, inflow, timeseries, and pollutant block names or ids
-  ids from the contents of a SWMM input file
-
-  @param SWMMFilePath Binary SWMM output file path
-  @return Array of string lists of SWMM various names/IDs
-------------------------------------------------------------------------------- }
 function getSWMMNodeIDsFromBinary(SWMMFilePath: string): TArray<TStringList>;
-
-{*------------------------------------------------------------------------------
-  Utility function to split a delimitted string into its token parts
-
-  @param Delimiter the delimiter for spliting the string
-  @param Input input delimitted string to be split
-  @param result list of string tokens
-------------------------------------------------------------------------------- }
 procedure Split(const Delimiter: Char; Input: string; const Strings: TStrings);
-
-{*------------------------------------------------------------------------------
-  Utility function to save a text file to disc
-
-  @param FileContentsList the contents to be saved to disc
-  @param filePath location to save to on disc
-  @param shdOverwrite flag dictating where file will be overwritten if it
-  already exists
-------------------------------------------------------------------------------- }
 procedure saveTextFileToDisc(FileContentsList: TStringList; filePath: string;
   shdOverwrite: boolean = false);
-
-{*------------------------------------------------------------------------------
-  Utility function to read very long text files while avoiding memomry issues
-
-  @param filePath path to long text file to be read
-  @return TStringList stringlist containing contents of text file read in
-------------------------------------------------------------------------------- }
 function readLongTxtFile(filePath: string): TStringList;
 
 implementation
@@ -302,12 +114,18 @@ uses FWIO;
 function getSWMMNodeIDsFromTxtInput(swmmFileContentsList: TStringList)
   : TArray<TStringList>;
 var
+  // tempList: TStringList;
   rsltLists: TArray<TStringList>;
   SwmmTokens: TStringList;
   lineNumber, intTokenLoc, tempInt, i: integer;
   strLine, strToken, strObjectID, strStartDate, strEndDate: string;
 begin
   intTokenLoc := 0;
+  // tempList := TStringList.Create;
+  // tempList.LoadFromFile(SWMMIO.workingDir + 'RockCreekDemoTest.inp');
+  // tempList := readLongTxtFile(SWMMFilePath);
+  // tempList.LoadFromFile(SWMMFilePath);
+
   SetLength(rsltLists, 5);
   for i := Low(rsltLists) to High(rsltLists) do
     rsltLists[i] := TStringList.Create;
