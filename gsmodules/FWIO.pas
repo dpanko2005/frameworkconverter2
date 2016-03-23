@@ -106,12 +106,12 @@ begin
         [FWCtrlRecord.userEndYear, FWCtrlRecord.userEndMonth,
         FWCtrlRecord.userEndDay]));
 
-      //repeat node name - not needed in fw for swmm but other converters need it
+      // repeat node name - not needed in fw for swmm but other converters need it
       FileContentsList.Add('''' + FWCtrlRecord.tsNodeName + '''');
 
-      //write down time step
-      FileContentsList.Add(Format('%e',
-        [FWCtrlRecord.swmmReportTimestepSecs / 3600]));
+      // write down time step
+      FileContentsList.Add(Format('%e', [FWCtrlRecord.swmmReportTimestepSecs
+        / 3600]));
 
       // number of custom strings following this line - currently 0 for SWMM converter
       FileContentsList.Add('0');
@@ -162,6 +162,13 @@ begin
     { load the data into the stringlist. }
     FileContentsList.LoadFromFile(SWMMIO.workingDir +
       SWMMIO.fileNameParamsMatch);
+
+        // loop through and remove blank lines
+    for I := FileContentsList.Count - 1 downto 0 do
+    begin
+      if (trim(FileContentsList.strings[I]) = '') then
+        FileContentsList.delete(I);
+    end;
 
     // 0. read number of constituents
     Rslt.numberOfEntries := StrToInt(FileContentsList[0]);
@@ -239,6 +246,7 @@ function readFWControlMetadataFile(): FWCtrlMetadataRecord;
 var
   Rslt: FWCtrlMetadataRecord;
   FileContentsList, SWMMFileContentsList, TempDateTokens: TStringList;
+  I: integer;
 begin
 
   FileContentsList := TStringList.Create;
@@ -247,6 +255,13 @@ begin
     { load the data into the stringlist. }
     FileContentsList.LoadFromFile(SWMMIO.workingDir +
       SWMMIO.fileNameFWControlFile);
+
+    // loop through and remove blank lines
+    for I := FileContentsList.Count - 1 downto 0 do
+    begin
+      if (trim(FileContentsList.strings[I]) = '') then
+        FileContentsList.delete(I);
+    end;
 
     // 0. read file path from control file
     Rslt.sourceFilePath := AnsiDequotedStr(FileContentsList[0], '''');
@@ -307,12 +322,12 @@ begin
   end;
   try
     begin
-      // includes flow so do not subtract 1
+      {// includes flow so do not subtract 1
       SetLength(fwCtrlFileData.swmmTimeSeries, pMapData.numberOfEntries);
-      for I := 0 to pMapData.numberOfEntries-1 do
+      for I := 0 to pMapData.numberOfEntries - 1 do
       begin
         fwCtrlFileData.swmmTimeSeries[I] := TStringList.Create;
-      end;
+      end; }
 
       FileContentsList.LoadFromFile(fwCtrlFileData.scratchFilePath);
       lineNumber := 0;
@@ -326,6 +341,25 @@ begin
       for I := 0 to TempTokens.Count - 1 do
         fwCtrlFileData.fwTimeSeriesNames.Add(TempTokens[I]);
 
+      // includes flow so do not subtract 1
+      SetLength(fwCtrlFileData.swmmTimeSeries, fwCtrlFileData.fwTimeSeriesNames.Count);
+      for I := 0 to fwCtrlFileData.fwTimeSeriesNames.Count - 1 do
+      begin
+        fwCtrlFileData.swmmTimeSeries[I] := TStringList.Create;
+      end;
+
+      // check if number of mappings is equal to number of data colums in fw ts file minus date time columns
+      if (pMapData.numberOfEntries > fwCtrlFileData.fwTimeSeriesNames.Count)
+      then
+      begin
+        errorsList.Add
+          (Format('''Number of constituent mappings (%d) do not match number of timeseries (%d) in scratch file''',
+          [pMapData.numberOfEntries, fwCtrlFileData.fwTimeSeriesNames.Count]));
+          result := fwCtrlFileData;
+        //FileContentsList.Free;
+        //TempTokens.Free;
+        //exit;
+      end;
       // process timeseries data in remainder of the lines
       for lineNumber := 1 to FileContentsList.Count - 1 do
       // while lineNumber < FileContentsList.Count do
@@ -342,7 +376,8 @@ begin
             [StrToInt(TempTokens[1]), StrToInt(TempTokens[2]),
             trim(TempTokens[0]), tempTimeStr]);
 
-          for I := 0 to pMapData.numberOfEntries - 1 do
+          //for I := 0 to pMapData.numberOfEntries - 1 do
+          for I := 0 to fwCtrlFileData.fwTimeSeriesNames.Count - 1 do
           begin
             j := I + 4;
             if (j < TempTokens.Count) then

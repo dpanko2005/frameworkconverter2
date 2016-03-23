@@ -179,6 +179,7 @@
 			<DCC_Define>SWMM_TO_FW;SWMM_CONSOLE;$(DCC_Define)</DCC_Define>
 		</PropertyGroup>
 		<PropertyGroup Condition="'$(Cfg_4_Win32)'!=''">
+			<DCC_RangeChecking>true</DCC_RangeChecking>
 			<Debugger_RunParams>&quot;C:\Users\dpankani\Framework\Projects\Demo\OutfallSWMM_FROM_FW.mta&quot;</Debugger_RunParams>
 			<VerInfo_IncludeVerInfo>true</VerInfo_IncludeVerInfo>
 			<VerInfo_Locale>1033</VerInfo_Locale>

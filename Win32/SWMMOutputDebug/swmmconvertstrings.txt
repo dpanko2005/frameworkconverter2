@@ -1,4 +1,4 @@
-C:\Data\FRAMEWORK\Utilities\Converters\SWMM5\RockCreekDemo.inp
-juncUpper
-'1991',' 8',' 1'
-'1992','12','31'
+C:\Data\FRAMEWORK\Utilities\Converters\SWMM5\RockCreekDemo.inp
+Outfall
+'1991',' 8',' 1'
+'1992','12','31'

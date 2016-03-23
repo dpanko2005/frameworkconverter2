@@ -520,11 +520,11 @@ object Form1: TForm1
     OnClick = btnConstituentIncludeAllClick
   end
   object OpenTextFileDialog1: TOpenTextFileDialog
-    Left = 65525
+    Left = 37
     Top = 520
   end
   object SaveTextFileDialog1: TSaveTextFileDialog
-    Left = 69
-    Top = 536
+    Left = 125
+    Top = 528
   end
 end

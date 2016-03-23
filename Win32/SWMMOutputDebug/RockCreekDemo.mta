@@ -1,0 +1,43 @@
+############################################
+#####  SWMM CONVERTER CONTROL FILE #########
+############################################
+
+
+## NAME: ModelRunScenarioID: STRING
+## DSCR: Used by the user to identify the run with a user friendly long name
+'SWMM Trial Run Under pre-BMP conditions'
+
+## NAME: SWMMNodeID: STRING
+## DSCR: This is the identifier of the SWMM node for which the timeseries will be retrieved
+'Outfall'
+
+## NAME: SWMMFilePath: STRING
+## DSCR: Path to swmm output file from which timeseries will be extracted
+'F:\Data\temp\RockCreekDemo.out'
+
+## NAME: scratchFilePath : STRING
+## DSCR: Scratch File Path 
+'C:\Data\FRAMEWORK\Utilities\Converters\SWMM5\SCRATCH'
+
+## NAME: FlowConv: FLOAT
+## DSCR: Flow Unit Conversion Factor to potentially convert SWMM Flow Time Series to other units (e.g. metric, user-define, etc)
+## DFLT: 1.0 - [no conversion]
+## OTHR: 2.2 - [user defined]
+1
+
+## NAME: NumPolls
+## DSCR: Total number of Pollutants in SWMM Model
+3
+
+## NAME: FrameworkPollutants 
+## DSCR: SWMM Pollutant Matching - use na if pollutant not available in SWMM model / Concentration Unit Conversion Factor to mg/L
+## FRMT: ['Framework Pollutant: STRING' = 'SWMM Pollutant : STRING' / 'Concentration conversion factor : FLOAT'] 
+'TSSf = TSS / 1'
+'TPf  = TP / 1'
+'TCuf = TCu / 1'
+'DPf  = na / 1'
+'DZnf = na / 0.2330'
+'TZnf = na / 0.135'
+'DCuf = na / 0.56'
+
+

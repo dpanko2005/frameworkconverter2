@@ -1,4 +1,4 @@
-'1991',' 8',' 1'
-'1993','10',' 4'
-SWMM5_Group_1993104134755
-'C:\Users\dpankani\Downloads\Test\Temp\RockCreekDemo.out','juncUpper'
+'2009','12','31'
+'2015',' 1',' 1'
+SWMM5_Group_201511172037
+'C:\Users\dpankani\Downloads\PhaseII_20160316\TRWD_CurrentCondition_PhaseII_node.out','djCF_14'

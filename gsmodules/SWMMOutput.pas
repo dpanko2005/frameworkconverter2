@@ -16,7 +16,7 @@ interface
 
 uses
   Windows, Messages, SysUtils, Variants, Classes, StrUtils, SWMMIO,
-  ConverterErrors,FWIO,ComCtrls;
+  ConverterErrors, FWIO, ComCtrls;
 
 var
   swmmIDsListArr: TArray<TStringList>;
@@ -157,7 +157,7 @@ begin
     Writeln('Total number of pollutants:' + IntToStr(pMapData.numberOfEntries));
 
     // print all included pollutants to the console
-    for i := 0 + 1 to pMapData.numberOfEntries - 1 do
+    for i := 0 to pMapData.numberOfEntries - 1 do
     begin
       Writeln(Format
         ('Pollutant %d: framework name: %s SWMM name: %s conversion factor: %12.5f',
@@ -168,6 +168,16 @@ begin
     // begin extracting and formatting the framework time series for SWMM 5
     Writeln('Now extracting FW timeseries and formatting for SWMM. Please wait...');
     fwCtrlFileData := FWIO.readInFrameworkTSFile(pMapData, fwCtrlFileData);
+    // report any errors that might have occured during read of fw ts
+    if (ConverterErrors.errorsList.Count > 0) then
+    begin
+      displayErrors();
+      reportErrorsToFW();
+      Writeln('Operation failed.');
+      result := -1;
+      ConverterErrors.errorsList.Free;
+      Exit;
+    end;
 
     // finalize the export by writting the extracted framework time series to disc in SWMM 5 format
     finalizeExport(pMapData, fwCtrlFileData);
@@ -199,6 +209,7 @@ var
   pathPrefix: string;
   pathSuffix: string;
   i, nameIndex: Integer;
+  tempArr: array of string;
 begin
   fwCtrlFileData.swmmTSFilePaths := TStringList.Create();
   // export framework time series are placed in TS direction with the following naming convention
@@ -211,7 +222,9 @@ begin
   pathSuffix := '.dat';
 
   // loop through aray of converted framework time series and write them to disc in format usable in SWMM
-  for i := 0 to pMapData.numberOfEntries - 1 do
+  // for i := 0 to pMapData.numberOfEntries - 1 do
+  SetLength(tempArr, fwCtrlFileData.fwTimeSeriesNames.Count);
+  for i := 0 to fwCtrlFileData.fwTimeSeriesNames.Count - 1 do
   begin
     nameIndex := pMapData.fwNames.IndexOf(fwCtrlFileData.fwTimeSeriesNames[i]);
     if ((nameIndex > -1) and (pMapData.convFactors[nameIndex] <> 0)) then
@@ -221,8 +234,8 @@ begin
       // swmmName := pMapData.fwNames[i];
       // following above name convention for file names, save to TS subdirectory
       filePath := pathPrefix + swmmName + pathSuffix;
-      fwCtrlFileData.swmmTSFilePaths.Add(filePath);
-
+      // fwCtrlFileData.swmmTSFilePaths.Add(filePath);
+      tempArr[nameIndex] := filePath;
       // delegate to SWMMIO to do the actual save operation
       SWMMIO.saveTextFileToDisc(fwCtrlFileData.swmmTimeSeries[i],
         filePath, true);
@@ -231,6 +244,9 @@ begin
     end;
   end;
   // fwCtrlFileData.swmmTSFilePaths.Free;
+  //fwCtrlFileData.swmmTSFilePaths.AddStrings(tempArr);
+  for i := low(tempArr) to high(tempArr) do
+    fwCtrlFileData.swmmTSFilePaths.Add(tempArr[i]);
 end;
 
 function checkForDuplicateTS(tsBlockInsertPosition: Integer;
@@ -353,14 +369,18 @@ begin
 
       tempInt := 0;
       // check for duplicate TIMESERIES block entries in the SWMM file
-      for i := 0 to pMapData.numberOfEntries - 1 do
+      // for i := 0 to pMapData.numberOfEntries - 1 do
+      for i := 0 to fwCtrlFileData.fwTimeSeriesNames.Count - 1 do
       begin
         nameIndex := pMapData.fwNames.IndexOf
           (fwCtrlFileData.fwTimeSeriesNames[i]);
+        // nameIndex := fwCtrlFileData.fwTimeSeriesNames.IndexOf
+        // (pMapData.fwNames[i]);
         if ((nameIndex > -1) and (pMapData.convFactors[nameIndex] <> 0)) then
         begin
-        //tsName := pMapData.swmmNames[i] + 'TS';
+          // tsName := pMapData.swmmNames[i] + 'TS';
           tsName := pMapData.swmmNames[nameIndex] + 'TS';
+          // if (fwCtrlFileData.swmmTSFilePaths[nameIndex] <> '') then
           if (fwCtrlFileData.swmmTSFilePaths[nameIndex] <> '') then
           begin
             duplicateLineNumber := checkForDuplicateTS(tsBlockInsertPosition,
@@ -368,13 +388,16 @@ begin
             if (duplicateLineNumber <> 0) then
             begin
               NewFileContentsList[duplicateLineNumber] := tsName +
-                '      FILE      "' + fwCtrlFileData.swmmTSFilePaths[i] + '"';
+                '      FILE      "' + fwCtrlFileData.swmmTSFilePaths
+                [nameIndex] + '"';
             end
             else
+            begin
               NewFileContentsList.Insert(tsBlockInsertPosition + tempInt,
                 tsName + '      FILE      "' + fwCtrlFileData.swmmTSFilePaths
-                [i] + '"');
-            inc(tempInt);
+                [nameIndex] + '"');
+              inc(tempInt);
+            end;
           end;
         end;
       end;
@@ -417,7 +440,8 @@ begin
       // check for duplicate INFLOW block entries in the SWMM file
       for i := 0 to pMapData.numberOfEntries - 1 do
       begin
-        if (fwCtrlFileData.swmmTSFilePaths[i] <> '') then
+        if ((i < fwCtrlFileData.swmmTSFilePaths.Count) and
+          (fwCtrlFileData.swmmTSFilePaths[i] <> '')) then
         begin
           duplicateLineNumber := checkForDuplicateTS(tsBlockInsertPosition,
             SWMMIO.InflowsList, NewFileContentsList, fwCtrlFileData.tsNodeName +

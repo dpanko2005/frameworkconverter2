@@ -1,3 +1,6 @@
-2
-FLOW
-TSS
+5
+FLOW
+TSS
+TKN
+NO3
+TP
