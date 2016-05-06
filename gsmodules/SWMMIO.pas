@@ -59,10 +59,18 @@ const
   NODE_OVERFLOW: integer = 5; // not used - overflow rate
   NODE_QUAL: integer = 6; // not used - concentration of each pollutant
 
-  MAX_NODE_RESULTS = 7;
+  { for swmm v 5.0.022}
+  {MAX_NODE_RESULTS = 7;
   MAX_SUBCATCH_RESULTS = 7;
   MAX_LINK_RESULTS = 6;
-  MAX_SYS_RESULTS = 14;
+  MAX_SYS_RESULTS = 14; }
+
+  { for swmm v 5.1.010}
+  MAX_NODE_RESULTS = 7;
+  MAX_SUBCATCH_RESULTS = 9;
+  MAX_LINK_RESULTS = 6;
+  MAX_SYS_RESULTS = 15;
+
   opModes: array [0 .. 1] of string = ('SWMM_TO_FW', 'SWMM_FROM_FW');
   appTypes: array [0 .. 1] of string = ('SWMM_CONSOLE', 'SWMM_GUI');
   { constituentNames: array [0 .. 7] of string = ('FLOW', 'TSS', 'TP', 'DP',

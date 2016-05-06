@@ -512,6 +512,9 @@ begin
                 nodeResultsForPeriod[NODE_QUAL + pollIdx] *
                 selectedConstituentRecs.convFactors[targetPollutantSWMMOrder
                 [pollIdx]]]);
+
+                //dp 2016 delete after debugging
+                Writeln('Exporting data for: ' + formattedTSDate + ' ' + tsResultEntryStr);
             end;
           end;
         end;
